@@ -1,0 +1,21 @@
+{
+  "id": "sc-item-rarity-colors",
+  "title": "SC - Item Rarity Colors",
+  "version": "0.0.0",
+  "compatibility": {
+    "minimum": "13",
+    "verified": "13"
+  },
+  "authors": [
+    {
+      "name": "Bruno Branco Bicudo",
+      "discord": "o_burno",
+      "flags": {}
+    }
+  ],
+  "url": "https://github.com/Shattered-Codex/sc-item-rarity-colors",
+  "flags": {
+    "canUpload": true
+  },
+  "description": ""
+}
