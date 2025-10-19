@@ -1,0 +1,50 @@
+{{!-- Preview partial item. --}}
+{{> item-template 
+    backgroundColor=this.backgroundColor
+    gradient=this.gradient
+    glow=this.glow
+}}
+
+<form class="sc-item-rarity-colors__form flexcol">
+  <h2>{{title}}</h2>
+
+  {{#each fields}}
+    <div class="sc-item-rarity-colors__form-group form-group">
+      <label for="{{this.name}}">{{this.label}}</label>
+
+      {{!-- Color field. --}}
+      {{#if (eq this.type "color")}}
+        <input 
+          type="color" 
+          id="{{this.name}}" 
+          name="{{this.name}}" 
+          value="{{this.value}}" 
+        />
+
+      {{!-- Checkbox --}}
+      {{else if (eq this.type "checkbox")}}
+        <input 
+          type="checkbox" 
+          id="{{this.name}}" 
+          name="{{this.name}}" 
+          {{#if this.value}}checked{{/if}} 
+        />
+
+      {{!-- Other input types. --}}
+      {{else}}
+        <input 
+          type="{{this.type}}" 
+          id="{{this.name}}" 
+          name="{{this.name}}" 
+          value="{{this.value}}" 
+        />
+      {{/if}}
+    </div>
+  {{/each}}
+
+  <footer class="sc-item-rarity-colors__form-footer form-footer flexrow">
+    <button type="submit" class="btn btn-primary">
+      <i class="fas fa-save"></i> Save
+    </button>
+  </footer>
+</form>
