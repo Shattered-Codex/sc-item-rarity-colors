@@ -1,0 +1,62 @@
+<div class="mini-item-sheet"
+     style="
+       --primary-color: {{backgroundColor}};
+       --secondary-color: {{secondaryColor}};
+       --use-gradient: {{#if gradient}}1{{else}}0{{/if}};
+       --use-glow: {{#if glow}}1{{else}}0{{/if}};
+     ">
+  <div class="application sheet dnd5e2 standard-form item tab-description editable" autocomplete="off">
+    <header class="window-header">
+      <i class="window-icon fa-fw hidden"></i>
+      <h1 class="window-title">Weapon: Mace</h1>
+      <h2 class="window-subtitle"></h2>
+      <div class="header-elements"></div>
+    </header>
+
+    <section class="sheet-header" data-application-part="header">
+      <div class="left">
+        <img class="item-image" src="icons/weapons/maces/mace-spiked-skull.webp" alt="Mace" data-action="editImage">
+      </div>
+
+      <div class="middle identity-info">
+        <input type="text" id="item-name" name="name" value="Mace" class="document-name uninput">
+        <ul class="subtitles unlist">
+          <li class="item-rarity">
+            <select name="system.rarity">
+              <option value="" selected>Rarity</option>
+            </select>
+          </li>
+        </ul>
+      </div>
+
+      <div class="right common-fields physical">
+        <div class="quantity">
+          <span class="separator">×</span>
+          <input type="number" name="system.quantity" value="1" min="0" step="1">
+        </div>
+        <div class="weight">
+          <input type="number" name="system.weight.value" value="4" min="0" step="any">
+          <select name="system.weight.units">
+            <option value="lb" selected>lb</option>
+          </select>
+        </div>
+        <div class="price">
+          <input type="number" name="system.price.value" value="5" min="0" step="any">
+          <select name="system.price.denomination">
+            <option value="gp" selected>gp</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <div data-application-part="tabs">
+      <nav class="sheet-tabs tabs" aria-roledescription="Form Tab Navigation">
+        <button type="button">Description</button>
+        <button type="button">Details</button>
+        <button type="button">Activities</button>
+        <button type="button">Effects</button>
+      </nav>
+      <hr class="ampersand">
+    </div>
+  </div>
+</div>

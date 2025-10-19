@@ -1,0 +1,62 @@
+/* Glow effect styles */
+.glow {
+  border: 3px solid transparent;
+  border-radius: 8px;
+  animation: glowAnimation 3s infinite alternate;
+  box-shadow: 0 0 15px var(--glow-primary, #ffffff);
+  background: linear-gradient(to left, var(--glow-primary, #ffffff), var(--glow-secondary, #ffffff));
+  background-size: 200% 100%;
+}
+
+/* Glow animation keyframes */
+@keyframes glowAnimation {
+  0% {
+    border-color: var(--glow-primary, #ffffff);
+    box-shadow: 0 0 15px var(--glow-primary, #ffffff);
+    background-position: 0% 50%;
+  }
+  100% {
+    border-color: var(--glow-secondary, var(--glow-primary, #ffffff));
+    box-shadow: 0 0 15px var(--glow-secondary, var(--glow-primary, #ffffff));
+    background-position: 100% 50%;
+  }
+}
+
+/* Mini item sheet styles */
+.sc-item-rarity-colors .mini-item-sheet {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  height: 100px;
+  justify-content: center;
+  margin-bottom: 50px;
+  margin-top: 20px;
+  width: 100%;
+}
+
+/* Form styles */
+.sc-item-rarity-colors__form > h2{
+  margin-bottom: 30px;
+}
+
+.sc-item-rarity-colors__form > .sc-item-rarity-colors__form-group {
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.sc-item-rarity-colors__form > .sc-item-rarity-colors__form-group > label {
+  flex: none;
+  margin-right: 20px;
+  width:150px;
+}
+
+.sc-item-rarity-colors__form > .sc-item-rarity-colors__form-group > input {
+  flex: none;
+  margin: 0;
+  width:150px;
+}
+
+.sc-item-rarity-colors__form > .sc-item-rarity-colors__form-footer {
+  justify-content: flex-end;
+  margin-top: 30px;
+}
