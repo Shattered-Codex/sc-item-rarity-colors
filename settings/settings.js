@@ -50,6 +50,6 @@ export function registerModuleSettings(MODULE_ID) {
   registerBooleanSetting(MODULE_ID, "artifact-gradient-option", "Artifact Gradient Option", false);
   registerBooleanSetting(MODULE_ID, "artifact-glow-option", "Artifact Glow Option", false);
 
-  registerSingleSetting(MODULE_ID, "enableActorInventoryGradientEffects", "Enable Actor Inventory Gradient Effects", true);
-  registerSingleSetting(MODULE_ID, "enableActorInventoryBorders", "Enable Actor Inventory Borders", true);
+  registerSingleSetting(MODULE_ID, "enableActorInventoryGradientEffects", "Enable Inventory Items Gradient Effects", true);
+  registerSingleSetting(MODULE_ID, "enableActorInventoryBorders", "Enable Inventory Items Coloured Borders", true);
 }
