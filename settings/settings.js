@@ -38,4 +38,7 @@ export function registerModuleSettings(MODULE_ID) {
   registerColorSetting(MODULE_ID, "artifact-secondary-item-color", "Artifact Secondary Item Color", "#000000");
   registerBooleanSetting(MODULE_ID, "artifact-gradient-option", "Artifact Gradient Option", false);
   registerBooleanSetting(MODULE_ID, "artifact-glow-option", "Artifact Glow Option", false);
+
+  registerSingleSetting(MODULE_ID, "enableActorInventoryGradientEffects", "Enable Inventory Items Gradient Effects", true);
+  registerSingleSetting(MODULE_ID, "enableActorInventoryBorders", "Enable Inventory Items Coloured Borders", true);
 }
