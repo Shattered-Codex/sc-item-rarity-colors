@@ -74,12 +74,17 @@ Found under **Configure Settings → Module Settings → SC - Item Rarity Colors
 
 | View | Screenshot |
 |:------|:------------|
-| Configuration Menu | ![Configuration Menu](./.screenshots/configuration-menu.png) |
-| Rarity Tier Config Form | ![Rarity Tier Form](./.screenshots/item-rarity-tier-config-form.png) |
+| Configuration Menu | <img src="./.screenshots/configuration-menu.png" alt="Configuration Menu" width="200"/> |
+| Rarity Tier Config Form | <img src="./.screenshots/item-rarity-tier-config-form.png" alt="Rarity Tier Form" width="200"/> |
+| Item Sheet | <img src="./.screenshots/item-sheet.png" alt="Item Sheet" width="200"/> |
+| Player Sheet | <img src="./.screenshots/player-sheet.png" alt="Player Sheet" width="200"/> |
 
 ### 🌈 Glow & Gradient Live Preview
-
-![Glow and Gradient Animation](./.screenshots/gradient&glow.gif)
+<div style="display:flex; gap:10px;">
+  <img src="./.screenshots/gradient&glow.gif" alt="Glow and Gradient Animation" width="200" />
+  <img src="./.screenshots/itemsheetglow.gif" alt="Item Sheet Glow Animation" width="200" />
+  <img src="./.screenshots/playersheetglow.gif" alt="Player Sheet Glow and Gradient Animation" width="200" />
+</div>
 
 ---
 
