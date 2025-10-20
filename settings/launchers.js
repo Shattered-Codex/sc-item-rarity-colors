@@ -18,6 +18,6 @@ export class BaseItemSettingsLauncher extends FormApplication {
 export class CommonItemSettingsLauncher extends BaseItemSettingsLauncher { constructor() { super("common"); } }
 export class UncommonItemSettingsLauncher extends BaseItemSettingsLauncher { constructor() { super("uncommon"); } }
 export class RareItemSettingsLauncher extends BaseItemSettingsLauncher { constructor() { super("rare"); } }
-export class VeryRareItemSettingsLauncher extends BaseItemSettingsLauncher { constructor() { super("very-rare"); } }
+export class VeryRareItemSettingsLauncher extends BaseItemSettingsLauncher { constructor() { super("veryrare"); } }
 export class LegendaryItemSettingsLauncher extends BaseItemSettingsLauncher { constructor() { super("legendary"); } }
 export class ArtifactItemSettingsLauncher extends BaseItemSettingsLauncher { constructor() { super("artifact"); } }

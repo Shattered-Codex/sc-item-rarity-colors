@@ -23,6 +23,11 @@
 }
 
 /* Mini item sheet styles */
+.sc-item-rarity-colors {
+  width: 700px;
+  height: 700px;
+}
+
 .sc-item-rarity-colors .mini-item-sheet {
   display: flex;
   flex-direction: row;
