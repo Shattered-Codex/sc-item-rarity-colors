@@ -2,7 +2,7 @@
     "id": "sc-item-rarity-colors",
     "title": "SC - Item Rarity Colors",
     "description": "Automatically color item sheets based on rarity, with optional gradients and glowing outlines for Legendary and Artifact items.",
-    "version": "1.1.9",
+    "version": "1.1.10",
     "authors": [
         {
             "name": "The Shattered Codex",
@@ -20,7 +20,7 @@
         "styles/styles.css"
     ],
     "manifest": "https://github.com/Shattered-Codex/sc-item-rarity-colors/releases/latest/download/module.json",
-    "download": "https://github.com/Shattered-Codex/sc-item-rarity-colors/releases/download/v1.1.9/sc-item-rarity-colors.zip",
+    "download": "https://github.com/Shattered-Codex/sc-item-rarity-colors/releases/download/v1.1.10/sc-item-rarity-colors.zip",
     "packs": [],
     "relationships": {
         "recommends": [
