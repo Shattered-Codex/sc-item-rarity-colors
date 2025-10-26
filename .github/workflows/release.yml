@@ -103,9 +103,10 @@ jobs:
       # --- STEP 6: Create ZIP archive ---
       - name: Create ZIP archive
         run: |
-          zip -r ./${{ env.MODULE_ID }}.zip \
-            module.json README.md LICENSE CHANGELOG.md \
-            css/ img/ lang/ packs/ scripts/ templates/ assets/ || true
+          echo "Reading ignore patterns from .zipignore..."
+          EXCLUDES=$(sed 's/^/-x /' .zipignore | tr '\n' ' ')
+          echo "Excluding: $EXCLUDES"
+          zip -r ./${{ env.MODULE_ID }}.zip . -x $EXCLUDES || true
 
       # --- STEP 7: Ensure CHANGELOG.md exists ---
       - name: Ensure CHANGELOG.md exists
