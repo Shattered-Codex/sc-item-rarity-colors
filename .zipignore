@@ -1,7 +1,6 @@
-.github
-.screenshots
+.github/*
+.screenshots/*
 .gitattributes
 .gitignore
 LICENSE
 README.md
-
