@@ -3,5 +3,6 @@
 .screenshots/*
 .gitattributes
 .gitignore
+.zipignore
 LICENSE
 README.md
