@@ -104,10 +104,9 @@ jobs:
       - name: Create ZIP archive
         run: |
           echo "Reading ignore patterns from .zipignore..."
-          # Adiciona ./ no início de cada linha para zip interpretar corretamente
-          EXCLUDES=$(sed 's|^|./|' .zipignore | sed 's|$|/*|' | tr '\n' ' ')
+          EXCLUDES=$(awk '{print $0}' .zipignore | tr '\n' ' ')
           echo "Excluding: $EXCLUDES"
-          zip -r ./${{ env.MODULE_ID }}.zip . -x $EXCLUDES || true
+          zip -r "${{ env.MODULE_ID }}.zip" . -x $EXCLUDES
 
       # --- STEP 7: Ensure CHANGELOG.md exists ---
       - name: Ensure CHANGELOG.md exists
