@@ -104,7 +104,8 @@ jobs:
       - name: Create ZIP archive
         run: |
           echo "Reading ignore patterns from .zipignore..."
-          EXCLUDES=$(sed 's/^/-x /' .zipignore | tr '\n' ' ')
+          # Adiciona ./ no início de cada linha para zip interpretar corretamente
+          EXCLUDES=$(sed 's|^|./|' .zipignore | sed 's|$|/*|' | tr '\n' ' ')
           echo "Excluding: $EXCLUDES"
           zip -r ./${{ env.MODULE_ID }}.zip . -x $EXCLUDES || true
 
