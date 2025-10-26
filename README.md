@@ -4,7 +4,6 @@
 ![System: dnd5e](https://img.shields.io/badge/System-dnd5e-blue)
 [![libWrapper Recommended](https://img.shields.io/badge/libWrapper-Recommended-8A2BE2)](https://github.com/ruipin/fvtt-lib-wrapper)
 [![Support on Patreon](https://img.shields.io/badge/Patreon-Shattered%20Codex-FF424D?logo=patreon&logoColor=white)](https://www.patreon.com/c/shatteredcodex)
-![Forks][forks-shield]
 ![Downloads](https://img.shields.io/github/downloads/Shattered-Codex/sc-simple-sockets/total)
 
 Enhance your D&D 5e item sheets with **SC - Item Rarity Colors** 🎨  
