@@ -19,6 +19,7 @@ export function applyItemRarityEffects(MODULE_ID) {
 
     // Normalize rarity value (handles both new and legacy system fields)
     const rarity = normalizeRarity(item.system?.rarity?.value || item.system?.rarity);
+    if (!rarity) return;
 
     // Retrieve rarity-specific settings (colors, gradients, etc.)
     const settings = getItemRaritySettings(rarity, MODULE_ID);
@@ -50,12 +51,13 @@ export function applyItemRarityEffects(MODULE_ID) {
   // Add hooks for different systems as needed.
   Hooks.on("renderItemSheet", applyStylesToSheet);
   Hooks.on("renderItemSheet5e", applyStylesToSheet);
+  Hooks.on("renderItemSheetV2", applyStylesToSheet);
 
   // Reapply styles when settings related to this module are updated.
   Hooks.on("setSetting", (module, key) => {
     if (module === MODULE_ID) refreshAllItemSheets();
   });
 
-  // Also ensure styles are re-applied if applications are re-rendered globally.
-  Hooks.on("renderApplication", refreshAllItemSheets);
+  // Ensure styles reapply when the new dnd5e v2 sheet refreshes.
+  Hooks.on("renderItemSheet5e2", applyStylesToSheet);
 }
