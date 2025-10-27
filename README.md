@@ -75,10 +75,10 @@ Found under **Configure Settings → Module Settings → SC - Item Rarity Colors
 
 | View | Screenshot |
 |:------|:------------|
-| Configuration Menu | <img src="https://imgur.com/qnBEbkm" alt="Configuration Menu" width="200"/> |
-| Rarity Tier Config Form | <img src="https://imgur.com/churx3y" alt="Rarity Tier Form" width="200"/> |
-| Item Sheet | <img src="https://imgur.com/INGDQBR" alt="Item Sheet" width="200"/> |
-| Player Sheet | <img src="https://imgur.com/qSYksbY" alt="Player Sheet" width="200"/> |
+| Configuration Menu | <img src="https://imgur.com/qnBEbkm.png" alt="Configuration Menu" width="200"/> |
+| Rarity Tier Config Form | <img src="https://imgur.com/churx3y.png" alt="Rarity Tier Form" width="200"/> |
+| Item Sheet | <img src="https://imgur.com/INGDQBR.png" alt="Item Sheet" width="200"/> |
+| Player Sheet | <img src="https://imgur.com/qSYksbY.png" alt="Player Sheet" width="200"/> |
 
 ### Glow & Gradient Live Preview
 <div style="display:flex; gap:10px;">
