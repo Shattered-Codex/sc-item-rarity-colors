@@ -29,6 +29,9 @@ export function applyActorInventoryEffects(MODULE_ID) {
     const items = actor.items;
     if (!items?.size) return;
 
+    const enabledGradient = game.settings.get(MODULE_ID, "enableActorInventoryGradientEffects");
+    const enabledBorder = game.settings.get(MODULE_ID, "enableActorInventoryBorders");
+
     // Iterate through all displayed items in the sheet
     $(html)
       .find(".item")
@@ -49,8 +52,6 @@ export function applyActorInventoryEffects(MODULE_ID) {
         if (!settings) return;
 
         // Check if applying gradient effects is enabled.
-        const enabledGradient = game.settings.get(MODULE_ID, "enableActorInventoryGradientEffects");
-
         if (!enabledGradient) {
           // Clear any existing gradient/background styles.
           clearActorSheetItemRarityGradient($li);
@@ -59,7 +60,6 @@ export function applyActorInventoryEffects(MODULE_ID) {
           applyActorSheetItemRarityGradient($li, settings);
         }
 
-        const enabledBorder = game.settings.get(MODULE_ID, "enableActorInventoryBorders");
         const border = $li.find(".item-image.gold-icon");
 
         if (!enabledBorder) {
@@ -90,7 +90,9 @@ export function applyActorInventoryEffects(MODULE_ID) {
 
   // Apply rarity effects whenever an Actor sheet is rendered.
   // Add hooks for different systems as needed.
+  Hooks.on("renderActorSheet", applyStylesToActorInventory);
   Hooks.on("renderActorSheetV2", applyStylesToActorInventory);
+  Hooks.on("renderActorSheet5e", applyStylesToActorInventory);
 
   // Reapply effects when module settings change.
   Hooks.on("setSetting", (module) => {

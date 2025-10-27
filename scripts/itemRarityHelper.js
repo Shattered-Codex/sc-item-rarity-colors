@@ -175,25 +175,31 @@ export function applyActorSheetItemBorder(element, settings, intensity = 6) {
 }
 
 /**
- * Remove qualquer gradiente aplicado a um item do inventário,
- * mas mantém a cor base e outras propriedades.
+ * Remove any gradient applied to an inventory item
+ * and restores inline styles to their defaults.
  *
- * @param {HTMLElement|JQuery} $element - Target element or jQuery wrapper.
+ * @param {HTMLElement|JQuery} element - Target element or jQuery wrapper.
  */
-export function clearActorSheetItemRarityGradient($element) {
+export function clearActorSheetItemRarityGradient(element) {
+  const $element = element instanceof jQuery ? element : $(element);
+
   $element.css({
+    "background": "",
     "background-image": "",
-    "box-shadow": "" // remove apenas o box-shadow do gradiente
+    "box-shadow": "",
+    "color": ""
   }).removeClass("glow");
 }
 
 /**
- * Remove any previously applied glow/border from an element.
+ * Remove any previously applied glow/border from one or more elements.
  *
- * @param {HTMLElement|JQuery} element - Target element or jQuery wrapper.
+ * @param {HTMLElement|JQuery} element - Target element(s) or jQuery wrapper.
  */
-export function clearActorSheetItemBorder($element) {
-  $element.find(".item-image.gold-icon").each((_, icon) => {
+export function clearActorSheetItemBorder(element) {
+  const $targets = element instanceof jQuery ? element : $(element);
+
+  $targets.each((_, icon) => {
     $(icon).css({
       border: "",
       "border-image": "",
@@ -203,4 +209,3 @@ export function clearActorSheetItemBorder($element) {
     $(icon).removeClass((_, c) => (c.match(/(^|\s)glow-fade-border-\S+/g) || []).join(" "));
   });
 }
-
