@@ -88,7 +88,7 @@ export class DynamicApp extends FormApplication {
 
     html.find("form").on("submit", this._onSubmit.bind(this));
 
-    const miniSheet = html.find(".mini-item-sheet .application.sheet.item");
+    const miniSheet = $(".mini-item-sheet .application.sheet.item");
     if (!miniSheet.length) {
       console.warn("Mini item sheet not found for preview.");
       return;
