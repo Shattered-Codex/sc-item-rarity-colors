@@ -75,16 +75,16 @@ Found under **Configure Settings → Module Settings → SC - Item Rarity Colors
 
 | View | Screenshot |
 |:------|:------------|
-| Configuration Menu | <img src="./.screenshots/config-menu.png" alt="Configuration Menu" width="200"/> |
-| Rarity Tier Config Form | <img src="./.screenshots/config-form.png" alt="Rarity Tier Form" width="200"/> |
-| Item Sheet | <img src="./.screenshots/item-sheets.png" alt="Item Sheet" width="200"/> |
-| Player Sheet | <img src="./.screenshots/player-sheets.png" alt="Player Sheet" width="200"/> |
+| Configuration Menu | <img src="./screenshots/config-menu.png" alt="Configuration Menu" width="200"/> |
+| Rarity Tier Config Form | <img src="./screenshots/config-form.png" alt="Rarity Tier Form" width="200"/> |
+| Item Sheet | <img src="./screenshots/item-sheets.png" alt="Item Sheet" width="200"/> |
+| Player Sheet | <img src="./screenshots/player-sheets.png" alt="Player Sheet" width="200"/> |
 
 ### Glow & Gradient Live Preview
 <div style="display:flex; gap:10px;">
-  <img src="./.screenshots/grad-and-glow.gif" alt="Glow and Gradient Animation" width="200" />
-  <img src="./.screenshots/item-sheets-glow.gif" alt="Item Sheet Glow Animation" width="200" />
-  <img src="./.screenshots/player-sheets-glow.gif" alt="Player Sheet Glow and Gradient Animation" width="200" />
+  <img src="./screenshots/grad-and-glow.gif" alt="Glow and Gradient Animation" width="200" />
+  <img src="./screenshots/item-sheets-glow.gif" alt="Item Sheet Glow Animation" width="200" />
+  <img src="./screenshots/player-sheets-glow.gif" alt="Player Sheet Glow and Gradient Animation" width="200" />
 </div>
 
 ---
