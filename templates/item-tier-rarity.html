@@ -1,50 +1,49 @@
-{{!-- Preview partial item. --}}
-{{> item-template 
-    backgroundColor=this.backgroundColor
-    gradient=this.gradient
-    glow=this.glow
-}}
+<div class="sc-item-rarity-colors__form flexcol" style="gap: 1rem; padding: 1rem;">
+  {{!-- Preview partial item. --}}
+  <div class="sc-item-rarity-colors__preview">
+    {{> item-template 
+        backgroundColor=backgroundColor
+        secondaryColor=secondaryColor
+        gradient=gradient
+        glow=glow
+    }}
+  </div>
 
-<form class="sc-item-rarity-colors__form flexcol">
-  <h2>{{title}}</h2>
+  <div class="sc-item-rarity-colors__settings">
+    <h2>{{title}}</h2>
 
-  {{#each fields}}
-    <div class="sc-item-rarity-colors__form-group form-group">
-      <label for="{{this.name}}">{{this.label}}</label>
+    {{#each fields}}
+      <div class="sc-item-rarity-colors__form-group form-group">
+        <label for="{{this.name}}">{{this.label}}</label>
 
-      {{!-- Color field. --}}
-      {{#if (eq this.type "color")}}
-        <input 
-          type="color" 
-          id="{{this.name}}" 
-          name="{{this.name}}" 
-          value="{{this.value}}" 
-        />
+        {{!-- Color field. --}}
+        {{#if (eq this.type "color")}}
+          <input 
+            type="color" 
+            id="{{this.name}}" 
+            name="{{this.name}}" 
+            value="{{this.value}}" 
+          />
 
-      {{!-- Checkbox --}}
-      {{else if (eq this.type "checkbox")}}
-        <input 
-          type="checkbox" 
-          id="{{this.name}}" 
-          name="{{this.name}}" 
-          {{#if this.value}}checked{{/if}} 
-        />
+        {{!-- Checkbox --}}
+        {{else if (eq this.type "checkbox")}}
+          <input 
+            type="checkbox" 
+            id="{{this.name}}" 
+            name="{{this.name}}" 
+            {{#if this.value}}checked{{/if}} 
+          />
 
-      {{!-- Other input types. --}}
-      {{else}}
-        <input 
-          type="{{this.type}}" 
-          id="{{this.name}}" 
-          name="{{this.name}}" 
-          value="{{this.value}}" 
-        />
-      {{/if}}
-    </div>
-  {{/each}}
-
-  <footer class="sc-item-rarity-colors__form-footer form-footer flexrow">
-    <button type="submit" class="btn btn-primary">
-      <i class="fas fa-save"></i> Save
-    </button>
-  </footer>
-</form>
+        {{!-- Other input types. --}}
+        {{else}}
+          <input 
+            type="{{this.type}}" 
+            id="{{this.name}}" 
+            name="{{this.name}}" 
+            value="{{this.value}}" 
+          />
+        {{/if}}
+      </div>
+    {{/each}}
+  </div>
+</div>

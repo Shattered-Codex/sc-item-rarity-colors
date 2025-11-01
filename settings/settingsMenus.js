@@ -5,7 +5,7 @@ import {
   VeryRareItemSettingsLauncher,
   LegendaryItemSettingsLauncher,
   ArtifactItemSettingsLauncher
-} from "./launchers.js";
+} from "./settingsLaunchers.js";
 
 // Define menu configurations for each item rarity tier.
 const MENU_CONFIGS = [
@@ -30,3 +30,4 @@ export function registerMenus(MODULE_ID) {
     });
   });
 }
+
