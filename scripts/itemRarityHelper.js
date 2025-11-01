@@ -67,8 +67,81 @@ export function applyRarityStyles(element, settings) {
   }
 
   // ---- Text Color ----
+  // Apply text color only to specific elements with these classes and their children
+  // Excluding select elements and resource-bar-config cards which have their own styling
   if (settings.textColor) {
-    $element.css("color", settings.textColor);
+    const textColorClasses = [
+      ".middle.identity-info",
+      ".right.common-fields.physical",
+      ".sheet-tabs",
+      ".info-block",
+      ".pills",
+      ".header-control",
+      ".source-book"
+    ];
+    
+    textColorClasses.forEach(selector => {
+      const $target = $element.find(selector);
+      if ($target.length) {
+        // Apply color to the element itself
+        $target.css("color", settings.textColor);
+        
+        // Apply color to children, excluding selects, options, and resource-bar-config cards
+        // Use a function to check each element
+        $target.find("*").each(function() {
+          const $el = $(this);
+          // Skip if it's a select, option, or inside a select/resource-bar-config
+          if ($el.is("select, option") || 
+              $el.closest("select, .card.resource-bar-config").length) {
+            return;
+          }
+          $el.css("color", settings.textColor);
+        });
+      }
+    });
+    
+    // For .details.tab, be more selective - only apply to specific child elements, not the container itself
+    const $detailsTab = $element.find(".details.tab");
+    if ($detailsTab.length && settings.textColor) {
+      // Apply color only to specific elements within details.tab, excluding selects, inputs and resource-bar-config
+      $detailsTab.find("label, .form-group:not(:has(select)):not(:has(input)), .hint, legend, fieldset > legend, .form-fields p").each(function() {
+        const $el = $(this);
+        // Skip if inside a select, input, or resource-bar-config
+        if ($el.closest("select, input, .card.resource-bar-config").length) {
+          return;
+        }
+        $el.css("color", settings.textColor);
+      });
+      
+      // For fieldsets that contain a div with class "empty", apply black color
+      $detailsTab.find("fieldset").each(function() {
+        const $fieldset = $(this);
+        // Check if this fieldset contains a div with class "empty"
+        const $emptyDiv = $fieldset.find("div.empty");
+        if ($emptyDiv.length) {
+          // Apply black color to the empty div itself and its children
+          $emptyDiv.css("color", "#000000");
+          $emptyDiv.find("*").each(function() {
+            const $el = $(this);
+            // Skip if inside a select, input, or resource-bar-config
+            if ($el.closest("select, input, .card.resource-bar-config").length) {
+              return;
+            }
+            $el.css("color", "#000000");
+          });
+          
+          // Also apply black color to specific elements within this fieldset
+          $fieldset.find("label, legend, .hint").each(function() {
+            const $el = $(this);
+            // Skip if inside a select, input, or resource-bar-config
+            if ($el.closest("select, input, .card.resource-bar-config").length) {
+              return;
+            }
+            $el.css("color", "#000000");
+          });
+        }
+      });
+    }
   }
 
   // ---- Glow ----
@@ -92,12 +165,81 @@ export function removeRarityStyles(element) {
 
   const $element = element instanceof jQuery ? element : $(element);
 
-  // Remove all rarity-related styles
+  // Remove all rarity-related styles from the main element
   $element.css({
     "background-color": "",
     "background-image": "",
-    "color": "",
   });
+
+  // Remove text color from specific elements and their children
+  // Excluding select elements and resource-bar-config cards which have their own styling
+  const textColorClasses = [
+    ".middle.identity-info",
+    ".right.common-fields.physical",
+    ".sheet-tabs",
+    ".info-block",
+    ".pills",
+    ".header-control",
+    ".source-book"
+  ];
+  
+  textColorClasses.forEach(selector => {
+    const $target = $element.find(selector);
+    if ($target.length) {
+      // Remove color from the element itself
+      $target.css("color", "");
+      
+      // Remove color from children, excluding selects, options, and resource-bar-config cards
+      // Use a function to check each element
+      $target.find("*").each(function() {
+        const $el = $(this);
+        // Skip if it's a select, option, or inside a select/resource-bar-config
+        if ($el.is("select, option") || 
+            $el.closest("select, .card.resource-bar-config").length) {
+          return;
+        }
+        $el.css("color", "");
+      });
+    }
+  });
+  
+  // For .details.tab, remove color from the same specific child elements we applied it to
+  const $detailsTab = $element.find(".details.tab");
+  if ($detailsTab.length) {
+    $detailsTab.find("label, .form-group:not(:has(select)):not(:has(input)), .hint, legend, fieldset > legend, .form-fields p").each(function() {
+      const $el = $(this);
+      if ($el.closest("select, input, .card.resource-bar-config").length) {
+        return;
+      }
+      $el.css("color", "");
+    });
+    
+    // Also remove black color from fieldsets with empty divs
+    $detailsTab.find("fieldset").each(function() {
+      const $fieldset = $(this);
+      const $emptyDiv = $fieldset.find("div.empty");
+      if ($emptyDiv.length) {
+        // Remove color from the empty div itself and its children
+        $emptyDiv.css("color", "");
+        $emptyDiv.find("*").each(function() {
+          const $el = $(this);
+          if ($el.closest("select, input, .card.resource-bar-config").length) {
+            return;
+          }
+          $el.css("color", "");
+        });
+        
+        // Remove color from other elements in the fieldset
+        $fieldset.find("label, legend, .hint").each(function() {
+          const $el = $(this);
+          if ($el.closest("select, input, .card.resource-bar-config").length) {
+            return;
+          }
+          $el.css("color", "");
+        });
+      }
+    });
+  }
 
   // Remove glow class and related CSS variables
   $element.removeClass("glow");
