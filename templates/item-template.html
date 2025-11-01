@@ -1,6 +1,7 @@
 <div class="mini-item-sheet"
      style="
        --primary-color: {{backgroundColor}};
+       --text-color: {{textColor}};
        --secondary-color: {{secondaryColor}};
        --use-gradient: {{#if gradient}}1{{else}}0{{/if}};
        --use-glow: {{#if glow}}1{{else}}0{{/if}};
@@ -51,12 +52,95 @@
 
     <div data-application-part="tabs">
       <nav class="sheet-tabs tabs" aria-roledescription="Form Tab Navigation">
-        <button type="button">Description</button>
-        <button type="button">Details</button>
-        <button type="button">Activities</button>
-        <button type="button">Effects</button>
+        <a data-action="tab" data-group="primary" data-tab="description" class="active">
+          <span>Description</span>
+        </a>
+        <a data-action="tab" data-group="primary" data-tab="details">
+          <span>Details</span>
+        </a>
+        <a data-action="tab" data-group="primary" data-tab="activities">
+          <span>Activities</span>
+        </a>
+        <a data-action="tab" data-group="primary" data-tab="effects">
+          <span>Effects</span>
+        </a>
       </nav>
       <hr class="ampersand">
     </div>
+  </div>
+</div>
+
+<div class="inventory-preview-item" 
+     style="
+       --gradient-color: {{#if gradientEnabled}}{{backgroundColor}}{{else}}transparent{{/if}};
+       --gradient-color-2: {{#if gradientEnabled}}{{gradientColor}}{{else}}transparent{{/if}};
+       --title-color: {{#if enableTitleColor}}{{titleColor}}{{else}}inherit{{/if}};
+       --details-color: {{#if enableDetailsColor}}{{detailsColor}}{{else}}inherit{{/if}};
+     ">
+  <div class="items-section card" data-group-type="weapon" data-column-min-width="250">
+    <div class="items-header header">
+      <h3 class="item-name">Weapons</h3>
+      <div class="item-header item-price hidden-width" data-column-id="price" data-column-width="80" data-column-priority="300">Price</div>
+      <div class="item-header item-weight hidden-width" data-column-id="weight" data-column-width="60" data-column-priority="400">Weight</div>
+      <div class="item-header item-quantity hidden-width" data-column-id="quantity" data-column-width="70" data-column-priority="500">Quantity</div>
+      <div class="item-header item-roll" data-column-id="roll" data-column-width="40" data-column-priority="800">Roll</div>
+      <div class="item-header item-formula" data-column-id="formula" data-column-width="80" data-column-priority="700">Formula</div>
+      <div class="item-header item-charges" data-column-id="charges" data-column-width="70" data-column-priority="600">Charges</div>
+      <div class="item-header item-controls" data-column-id="controls" data-column-width="70" data-column-priority="1000"></div>
+    </div>
+    <ol class="item-list unlist">
+      <li class="item collapsible collapsed" data-item-name="Mace">
+        <div class="item-row">
+          <div class="item-name">
+            <img class="item-image gold-icon" src="icons/weapons/maces/mace-spiked-skull.webp" alt="Mace" draggable="false">
+            <div class="name name-stacked">
+              <span class="title">Mace</span>
+              <span class="subtitle">Simple Melee • Action</span>
+            </div>
+            <div class="tags"></div>
+          </div>
+          <div class="item-detail item-price hidden-width" data-column-id="price">
+            5
+            <i class="currency gp" aria-label="Gold"></i>
+          </div>
+          <div class="item-detail item-weight hidden-width" data-column-id="weight">
+            <i class="fa-solid fa-weight-hanging" inert=""></i> 4
+          </div>
+          <div class="item-detail item-quantity hidden-width" data-column-id="quantity">
+            <span class="adjustment-button">
+              <i class="fa-solid fa-minus" inert=""></i>
+            </span>
+            <input type="text" value="1" placeholder="0" readonly>
+            <span class="adjustment-button">
+              <i class="fa-solid fa-plus" inert=""></i>
+            </span>
+          </div>
+          <div class="item-detail item-roll" data-column-id="roll">
+            <span class="value"><span class="sign">+</span>5</span>
+          </div>
+          <div class="item-detail item-formula" data-column-id="formula">
+            <div class="row">
+              <span class="formula">1d6 + 3</span>
+            </div>
+          </div>
+          <div class="item-detail item-uses" data-column-id="charges">
+            <input type="text" value="10" placeholder="0" readonly>
+            <span class="separator">/</span>
+            <span class="max">10</span>
+          </div>
+          <div class="item-detail item-controls always-visible" data-column-id="controls">
+            <span class="unbutton config-button item-control item-action active">
+              <i class="fa-solid fa-shield-halved" inert=""></i>
+            </span>
+            <span class="unbutton config-button item-control item-action">
+              <i class="fa-solid fa-expand" inert=""></i>
+            </span>
+            <span class="unbutton config-button item-control">
+              <i class="fa-solid fa-ellipsis-vertical" inert=""></i>
+            </span>
+          </div>
+        </div>
+      </li>
+    </ol>
   </div>
 </div>
