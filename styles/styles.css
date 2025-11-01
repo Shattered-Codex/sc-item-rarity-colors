@@ -22,46 +22,124 @@
   }
 }
 
-/* Mini item sheet styles */
-.sc-item-rarity-colors {
-  width: 700px;
-  height: 700px;
+/* Application window styles */
+.sc-item-rarity-colors.application {
+  display: flex;
+  flex-direction: column;
 }
 
+.sc-item-rarity-colors .window-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+
+.sc-item-rarity-colors form {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* Mini item sheet styles */
 .sc-item-rarity-colors .mini-item-sheet {
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
   height: 100px;
   justify-content: center;
-  margin-bottom: 50px;
-  margin-top: 20px;
   width: 100%;
+  flex-shrink: 0;
 }
 
 /* Form styles */
-.sc-item-rarity-colors__form > h2{
-  margin-bottom: 30px;
+.sc-item-rarity-colors__form {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
 }
 
-.sc-item-rarity-colors__form > .sc-item-rarity-colors__form-group {
-  justify-content: center;
-  margin-bottom: 20px;
+.sc-item-rarity-colors__preview {
+  flex: 0 0 auto;
+  order: 1;
+  height: 250px;
 }
 
-.sc-item-rarity-colors__form > .sc-item-rarity-colors__form-group > label {
-  flex: none;
-  margin-right: 20px;
-  width:150px;
+.sc-item-rarity-colors__settings {
+  flex: 0 0 auto;
+  order: 2;
+  margin-top: 1rem;
 }
 
-.sc-item-rarity-colors__form > .sc-item-rarity-colors__form-group > input {
-  flex: none;
-  margin: 0;
-  width:150px;
+.sc-item-rarity-colors__settings > h2 {
+  margin-bottom: 1rem;
+  margin-top: 0;
 }
 
-.sc-item-rarity-colors__form > .sc-item-rarity-colors__form-footer {
+.sc-item-rarity-colors__form-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.sc-item-rarity-colors__form-group label {
+  flex: 0 0 auto;
+  min-width: 120px;
+}
+
+.sc-item-rarity-colors__form-group input[type="color"] {
+  width: 60px;
+  height: 30px;
+  cursor: pointer;
+}
+
+.sc-item-rarity-colors__form-group input[type="checkbox"] {
+  width: auto;
+}
+
+/* Footer styles */
+.sc-item-rarity-colors footer.form-footer {
+  display: flex;
+  flex-direction: row;
   justify-content: flex-end;
-  margin-top: 30px;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.2);
+  flex-shrink: 0;
+  margin-top: auto;
+}
+
+.sc-item-rarity-colors__save-button,
+.sc-item-rarity-colors__cancel-button {
+  padding: 0.5rem 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  cursor: pointer;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+}
+
+.sc-item-rarity-colors__save-button:hover,
+.sc-item-rarity-colors__cancel-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.sc-item-rarity-colors__save-button {
+  background: rgba(74, 144, 226, 0.8);
+}
+
+.sc-item-rarity-colors__save-button:hover {
+  background: rgba(74, 144, 226, 1);
 }

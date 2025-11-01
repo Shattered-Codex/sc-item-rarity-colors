@@ -1,4 +1,4 @@
-import { normalizeRarity, getItemRaritySettings, applyRarityStyles } from "./itemRarityHelper.js";
+import { normalizeRarity, getItemRaritySettings, applyRarityStyles, removeRarityStyles } from "./itemRarityHelper.js";
 
 /**
  * Applies rarity-based visual effects to item sheets.
@@ -19,15 +19,20 @@ export function applyItemRarityEffects(MODULE_ID) {
 
     // Normalize rarity value (handles both new and legacy system fields)
     const rarity = normalizeRarity(item.system?.rarity?.value || item.system?.rarity);
-    if (!rarity) return;
-
-    // Retrieve rarity-specific settings (colors, gradients, etc.)
-    const settings = getItemRaritySettings(rarity, MODULE_ID);
-    if (!settings) return;
 
     // Find the sheet root element
     const sheetEl = html[0]?.closest?.(".application.sheet.item") || html[0];
     if (!sheetEl) return;
+
+    // If no rarity, remove all rarity styles and restore default
+    if (!rarity) {
+      removeRarityStyles(sheetEl);
+      return;
+    }
+
+    // Retrieve rarity-specific settings (colors, gradients, etc.)
+    const settings = getItemRaritySettings(rarity, MODULE_ID);
+    if (!settings) return;
 
     // Apply visual styles (border, glow, etc.)
     applyRarityStyles(sheetEl, settings);

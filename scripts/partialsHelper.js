@@ -19,3 +19,4 @@ export async function registerModulePartials(moduleId, templateNames) {
     Handlebars.registerPartial(partialName, templateHtml);
   }
 }
+
