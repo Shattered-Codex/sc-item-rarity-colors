@@ -14,7 +14,7 @@ export function normalizeRarity(rawRarity) {
  *
  * @param {string} rarity - The rarity key (e.g., "common", "rare").
  * @param {string} moduleId - The module's unique identifier.
- * @returns {object} - Settings for background, gradient, and glow.
+ * @returns {object} - Settings for background, gradient, glow, and text color.
  */
 export function getItemRaritySettings(rarity, moduleId) {
   const settingExists = (key) => game.settings.settings.has(`${moduleId}.${key}`);
@@ -23,6 +23,10 @@ export function getItemRaritySettings(rarity, moduleId) {
     backgroundColor: settingExists(`${rarity}-item-color`)
       ? game.settings.get(moduleId, `${rarity}-item-color`)
       : "",
+
+    textColor: settingExists(`${rarity}-text-color`)
+      ? game.settings.get(moduleId, `${rarity}-text-color`)
+      : "#000000",
 
     gradientEnabled: settingExists(`${rarity}-gradient-option`)
       ? game.settings.get(moduleId, `${rarity}-gradient-option`)
@@ -39,7 +43,7 @@ export function getItemRaritySettings(rarity, moduleId) {
 }
 
 /**
- * Apply rarity styles (background, gradient, and glow) to an HTML element.
+ * Apply rarity styles (background, gradient, glow, and text color) to an HTML element.
  *
  * @param {HTMLElement|JQuery} element - Target element or jQuery wrapper.
  * @param {object} settings - Rarity visual configuration.
@@ -60,6 +64,11 @@ export function applyRarityStyles(element, settings) {
       "background-image": "",
       "background-color": settings.backgroundColor,
     });
+  }
+
+  // ---- Text Color ----
+  if (settings.textColor) {
+    $element.css("color", settings.textColor);
   }
 
   // ---- Glow ----

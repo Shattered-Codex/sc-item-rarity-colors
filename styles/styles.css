@@ -54,6 +54,14 @@
   flex-shrink: 0;
 }
 
+.sc-item-rarity-colors .mini-item-sheet .application.sheet.item {
+  color: var(--text-color, #000000);
+}
+
+.sc-item-rarity-colors .mini-item-sheet .application.sheet.item * {
+  color: inherit;
+}
+
 /* Form styles */
 .sc-item-rarity-colors__form {
   display: flex;

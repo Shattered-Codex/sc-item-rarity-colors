@@ -22,7 +22,7 @@ export class BaseItemSettingsLauncher extends foundry.applications.api.Handlebar
       height: 1,
       left: -9999, // Position off-screen
       top: -9999,
-      classes: ["hidden-launcher"], // Add class for additional CSS hiding if needed
+      classes: ["hidden-launcher"],
     });
   }
 

@@ -56,20 +56,30 @@ export class ItemRaritySettingsApp extends HandlebarsApplicationMixin(Applicatio
     const SETTINGS_MAP = {
       common: {
         title: "Common Item Settings",
-        fields: [{ name: "common-item-color", label: "Item Color", type: "color" }],
+        fields: [
+          { name: "common-item-color", label: "Item Color", type: "color" },
+          { name: "common-text-color", label: "Text Color", type: "color" },
+        ],
       },
       uncommon: {
         title: "Uncommon Item Settings",
-        fields: [{ name: "uncommon-item-color", label: "Item Color", type: "color" }],
+        fields: [
+          { name: "uncommon-item-color", label: "Item Color", type: "color" },
+          { name: "uncommon-text-color", label: "Text Color", type: "color" },
+        ],
       },
       rare: {
         title: "Rare Item Settings",
-        fields: [{ name: "rare-item-color", label: "Item Color", type: "color" }],
+        fields: [
+          { name: "rare-item-color", label: "Item Color", type: "color" },
+          { name: "rare-text-color", label: "Text Color", type: "color" },
+        ],
       },
       veryrare: {
         title: "Very Rare Item Settings",
         fields: [
           { name: "veryrare-item-color", label: "Primary Color", type: "color" },
+          { name: "veryrare-text-color", label: "Text Color", type: "color" },
           { name: "veryrare-secondary-item-color", label: "Secondary Color", type: "color" },
           { name: "veryrare-gradient-option", label: "Enable Gradient", type: "checkbox" },
         ],
@@ -78,6 +88,7 @@ export class ItemRaritySettingsApp extends HandlebarsApplicationMixin(Applicatio
         title: "Legendary Item Settings",
         fields: [
           { name: "legendary-item-color", label: "Primary Color", type: "color" },
+          { name: "legendary-text-color", label: "Text Color", type: "color" },
           { name: "legendary-secondary-item-color", label: "Secondary Color", type: "color" },
           { name: "legendary-gradient-option", label: "Enable Gradient", type: "checkbox" },
         ],
@@ -86,6 +97,7 @@ export class ItemRaritySettingsApp extends HandlebarsApplicationMixin(Applicatio
         title: "Artifact Item Settings",
         fields: [
           { name: "artifact-item-color", label: "Primary Color", type: "color" },
+          { name: "artifact-text-color", label: "Text Color", type: "color" },
           { name: "artifact-secondary-item-color", label: "Secondary Color", type: "color" },
           { name: "artifact-gradient-option", label: "Enable Gradient", type: "checkbox" },
           { name: "artifact-glow-option", label: "Enable Glow Effect", type: "checkbox" },
@@ -102,12 +114,14 @@ export class ItemRaritySettingsApp extends HandlebarsApplicationMixin(Applicatio
     }));
 
     // Get preview values for the item-template partial
-    const primaryColorField = fields.find((f) => f.name.endsWith("-item-color") && !f.name.includes("secondary"));
+    const primaryColorField = fields.find((f) => f.name.endsWith("-item-color") && !f.name.includes("secondary") && !f.name.includes("text"));
+    const textColorField = fields.find((f) => f.name.includes("-text-color"));
     const secondaryColorField = fields.find((f) => f.name.includes("-secondary-item-color"));
     const gradientField = fields.find((f) => f.name.includes("-gradient-option"));
     const glowField = fields.find((f) => f.name.includes("-glow-option"));
 
     const backgroundColor = primaryColorField?.value || "#ffffff";
+    const textColor = textColorField?.value || "#000000";
     const secondaryColor = secondaryColorField?.value || "#ffffff";
     const gradient = gradientField?.value || false;
     const glow = glowField?.value || false;
@@ -116,6 +130,7 @@ export class ItemRaritySettingsApp extends HandlebarsApplicationMixin(Applicatio
       title: config.title,
       fields,
       backgroundColor,
+      textColor,
       secondaryColor,
       gradient,
       glow,
@@ -143,16 +158,18 @@ export class ItemRaritySettingsApp extends HandlebarsApplicationMixin(Applicatio
     /** Update mini preview whenever form inputs change */
     const updateMiniSheet = () => {
       const primaryInput = this.form.querySelector('input[name$="-item-color"]');
+      const textColorInput = this.form.querySelector('input[name$="-text-color"]');
       const secondaryInput = this.form.querySelector('input[name$="-secondary-item-color"]');
       const gradientCheckbox = this.form.querySelector('input[name$="-gradient-option"]');
       const glowCheckbox = this.form.querySelector('input[name$="-glow-option"]');
 
       const primary = primaryInput?.value || "#ffffff";
+      const textColor = textColorInput?.value || "#000000";
       const secondary = secondaryInput?.value || "#ffffff";
       const gradientEnabled = gradientCheckbox?.checked || false;
       const glowEnabled = glowCheckbox?.checked || false;
 
-      const settings = { backgroundColor: primary, gradientColor: secondary, gradientEnabled, glowEnabled };
+      const settings = { backgroundColor: primary, textColor, gradientColor: secondary, gradientEnabled, glowEnabled };
       applyRarityStyles(miniSheet, settings);
 
       // Toggle visibility of secondary color input based on gradient option

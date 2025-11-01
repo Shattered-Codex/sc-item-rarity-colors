@@ -3,6 +3,7 @@
   <div class="sc-item-rarity-colors__preview">
     {{> item-template 
         backgroundColor=backgroundColor
+        textColor=textColor
         secondaryColor=secondaryColor
         gradient=gradient
         glow=glow
@@ -32,15 +33,6 @@
             id="{{this.name}}" 
             name="{{this.name}}" 
             {{#if this.value}}checked{{/if}} 
-          />
-
-        {{!-- Other input types. --}}
-        {{else}}
-          <input 
-            type="{{this.type}}" 
-            id="{{this.name}}" 
-            name="{{this.name}}" 
-            value="{{this.value}}" 
           />
         {{/if}}
       </div>
