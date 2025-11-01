@@ -1,101 +1,92 @@
-import {
-  normalizeRarity,
-  getItemRaritySettings,
-  applyActorSheetItemRarityGradient,
-  clearActorSheetItemRarityGradient,
-  applyActorSheetItemBorder,
-  clearActorSheetItemBorder
-} from "./itemRarityHelper.js";
+/**
+ * Actor Inventory Effects Application
+ * Applies rarity-based visual effects to items within actor inventory sheets
+ */
+
+import { normalizeRarity } from "./itemRarityHelper.js";
+import { getSheetType } from "./sheetDetectionHelper.js";
+import { getSheetStrategy } from "../sheets/sheetStrategies.js";
+import { isGradientEffectsEnabled, isBordersEnabled } from "../core/settingsManager.js";
 
 /**
- * Applies rarity-based visual effects to all items
- * within an actor's inventory sheet.
- *
- * @param {string} MODULE_ID - The module's unique identifier.
+ * Apply rarity effects to all items in an actor sheet
+ * 
+ * @param {Application} actorApp - The rendered actor sheet instance
+ * @param {jQuery|HTMLElement} html - The rendered HTML content of the sheet
+ * @param {string} moduleId - Module identifier
  */
-export function applyActorInventoryEffects(MODULE_ID) {
+function applyStylesToActorInventory(actorApp, html, moduleId) {
+  const actor = actorApp.document;
 
-  /**
-   * Apply rarity effects to a single actor's inventory sheet.
-   *
-   * @param {Application} actorApp - The rendered actor sheet instance.
-   * @param {jQuery|HTMLElement} html - The rendered HTML content of the sheet.
-   */
-  function applyStylesToActorInventory(actorApp, html) {
-    const actor = actorApp.document;
+  if (!actor || actor.documentName !== "Actor") return;
 
-    if (!actor || actor.documentName !== "Actor") return;
+  const items = actor.items;
+  if (!items?.size) return;
 
-    const items = actor.items;
-    if (!items?.size) return;
+  // Detect sheet type and get appropriate strategy
+  const sheetType = getSheetType(actorApp) || getSheetType(html);
+  const strategy = getSheetStrategy(sheetType);
 
-    const enabledGradient = game.settings.get(MODULE_ID, "enableActorInventoryGradientEffects");
-    const enabledBorder = game.settings.get(MODULE_ID, "enableActorInventoryBorders");
+  // Get main menu settings
+  const mainMenuSettings = {
+    enabledGradient: isGradientEffectsEnabled(),
+    enabledBorder: isBordersEnabled(),
+  };
 
-    // Iterate through all displayed items in the sheet
-    $(html)
-      .find(".item")
-      .each((_, li) => {
-        const $li = $(li);
+  // Get item selector for this sheet type
+  const itemSelector = strategy.getItemSelector();
 
-        // Try to get the item ID from dataset attributes
-        const itemId = $li.data("documentId") || $li.data("item-id");
-        const item = items.get(itemId);
-        if (!item) return;
+  // Iterate through all displayed items
+  $(html)
+    .find(itemSelector)
+    .each((_, itemElement) => {
+      const $itemElement = $(itemElement);
+      const itemId = strategy.extractItemId($itemElement);
+      const item = items.get(itemId);
+      
+      if (!item) return;
 
-        // Determine and normalize item rarity
-        const rarity = normalizeRarity(item.system?.rarity?.value || item.system?.rarity);
-        if (!rarity) return;
+      // Apply styles using the strategy
+      strategy.applyItemStyles($itemElement, item, mainMenuSettings, moduleId);
+    });
+}
 
-        // Fetch rarity-based settings (colors, glow intensity, etc.)
-        const settings = getItemRaritySettings(rarity, MODULE_ID);
-        if (!settings) return;
-
-        // Check if applying gradient effects is enabled.
-        if (!enabledGradient) {
-          // Clear any existing gradient/background styles.
-          clearActorSheetItemRarityGradient($li);
-        } else {
-          // Apply the gradient background.
-          applyActorSheetItemRarityGradient($li, settings);
-        }
-
-        const border = $li.find(".item-image.gold-icon");
-
-        if (!enabledBorder) {
-          // Clear any existing glowing borders.
-          clearActorSheetItemBorder(border);
-        } else {
-          // Apply a glowing border around rarity icons
-          border.each((_, icon) => {
-            applyActorSheetItemBorder(icon, settings, 8);
-          });
-        }
-      });
-  }
-
-  /**
-   * Reapplies rarity effects to all open actor sheets.
-   * Triggered when settings are changed.
-   */
-  function refreshAllActorSheets() {
-    for (const app of Object.values(ui.windows)) {
-      if (app.document?.documentName === "Actor") {
-        applyStylesToActorInventory(app, app.element);
-      }
+/**
+ * Reapply rarity effects to all open actor sheets
+ * Triggered when settings are changed
+ */
+function refreshAllActorSheets(moduleId) {
+  for (const app of Object.values(ui.windows)) {
+    if (app.document?.documentName === "Actor") {
+      applyStylesToActorInventory(app, app.element, moduleId);
     }
   }
+}
 
-  // ---- Hook registrations ----
+/**
+ * Initialize actor inventory effects for a module
+ * 
+ * @param {string} moduleId - Module identifier
+ */
+export function applyActorInventoryEffects(moduleId) {
+  /**
+   * Handle actor sheet render
+   * @param {Application} actorApp - The rendered actor sheet instance
+   * @param {jQuery|HTMLElement} html - The rendered HTML content
+   */
+  function handleActorSheetRender(actorApp, html) {
+    applyStylesToActorInventory(actorApp, html, moduleId);
+  }
 
-  // Apply rarity effects whenever an Actor sheet is rendered.
-  // Add hooks for different systems as needed.
-  Hooks.on("renderActorSheet", applyStylesToActorInventory);
-  Hooks.on("renderActorSheetV2", applyStylesToActorInventory);
-  Hooks.on("renderActorSheet5e", applyStylesToActorInventory);
+  // Apply rarity effects whenever an Actor sheet is rendered
+  Hooks.on("renderActorSheet", handleActorSheetRender);
+  Hooks.on("renderActorSheetV2", handleActorSheetRender);
+  Hooks.on("renderActorSheet5e", handleActorSheetRender);
 
-  // Reapply effects when module settings change.
+  // Reapply effects when module settings change
   Hooks.on("setSetting", (module) => {
-    if (module === MODULE_ID) refreshAllActorSheets();
+    if (module === moduleId) {
+      refreshAllActorSheets(moduleId);
+    }
   });
 }

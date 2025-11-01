@@ -1,4 +1,6 @@
-import { normalizeRarity, getItemRaritySettings, applyRarityStyles, removeRarityStyles } from "./itemRarityHelper.js";
+import { normalizeRarity, applyRarityStyles, removeRarityStyles } from "./itemRarityHelper.js";
+import { buildRaritySettings } from "../core/settingsManager.js";
+import { MODULE_ID } from "../core/constants.js";
 
 /**
  * Applies rarity-based visual effects to item sheets.
@@ -31,7 +33,7 @@ export function applyItemRarityEffects(MODULE_ID) {
     }
 
     // Retrieve rarity-specific settings (colors, gradients, etc.)
-    const settings = getItemRaritySettings(rarity, MODULE_ID);
+    const settings = buildRaritySettings(rarity);
     if (!settings) return;
 
     // Apply visual styles (border, glow, etc.)
@@ -50,19 +52,13 @@ export function applyItemRarityEffects(MODULE_ID) {
     }
   }
 
-  // ---- Hook registrations ----
-
-  // Apply rarity effects whenever an Item sheet is rendered.
-  // Add hooks for different systems as needed.
+  // Hook registrations
   Hooks.on("renderItemSheet", applyStylesToSheet);
   Hooks.on("renderItemSheet5e", applyStylesToSheet);
   Hooks.on("renderItemSheetV2", applyStylesToSheet);
+  Hooks.on("renderItemSheet5e2", applyStylesToSheet);
 
-  // Reapply styles when settings related to this module are updated.
-  Hooks.on("setSetting", (module, key) => {
+  Hooks.on("setSetting", (module) => {
     if (module === MODULE_ID) refreshAllItemSheets();
   });
-
-  // Ensure styles reapply when the new dnd5e v2 sheet refreshes.
-  Hooks.on("renderItemSheet5e2", applyStylesToSheet);
 }
