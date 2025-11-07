@@ -73,6 +73,35 @@ export function applyRarityStyles(element, settings) {
 }
 
 /**
+ * Remove all rarity styles and restore default appearance.
+ * Called when an item has no rarity or rarity is unset.
+ *
+ * @param {HTMLElement|JQuery} element - Target element or jQuery wrapper.
+ */
+export function removeRarityStyles(element) {
+  if (!element) return;
+
+  const $element = element instanceof jQuery ? element : $(element);
+
+  // Remove all rarity-related styles
+  $element.css({
+    "background-color": "",
+    "background-image": "",
+    "color": "",
+  });
+
+  // Remove glow class and related CSS variables
+  $element.removeClass("glow");
+  $element.css("--glow-primary", "");
+  $element.css("--glow-secondary", "");
+
+  // Remove any glow animation classes
+  $element.removeClass((_, className) => {
+    return (className.match(/(^|\s)glow-fade-border-\S+/g) || []).join(" ");
+  });
+}
+
+/**
  * Apply rarity gradient styles for actor inventory items.
  * Creates a smooth 3-stop gradient background without glow.
  *

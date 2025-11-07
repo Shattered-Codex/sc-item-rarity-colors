@@ -1,21 +1,17 @@
-import { registerModuleSettings } from "../settings/settings.js";
-import { registerMenus } from "../settings/menus.js";
+import { registerModuleSettings } from "../settings/settingsRegistration.js";
+import { registerMenus } from "../settings/settingsMenus.js";
 import { applyItemRarityEffects } from "./applyItemRarityEffects.js";
 import { applyActorInventoryEffects } from "./applyActorInventoryEffects.js";
-import { registerModulePartials } from "./moduleHelper.js";
+import { registerModulePartials } from "./partialsHelper.js";
 
 // Define the unique ID of this module for consistent referencing.
 const MODULE_ID = "sc-item-rarity-colors";
-const MODULE_TITLE = "SC Item Rarity Colors";
 
 /**
  * - Registers module settings and menus.
  * - Registers partial templates for use in item sheets.
  */
 Hooks.once("init", async () => {
-  console.log(`${MODULE_TITLE}: Initializing settings and templates...`);
-  console.log(`${MODULE_TITLE}: Version ${game.modules.get(MODULE_ID).version}`);
-
   registerModuleSettings(MODULE_ID);
   registerMenus(MODULE_ID);
 

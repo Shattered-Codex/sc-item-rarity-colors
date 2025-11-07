@@ -53,3 +53,4 @@ export function registerModuleSettings(MODULE_ID) {
   registerSingleSetting(MODULE_ID, "enableActorInventoryGradientEffects", "Enable Inventory Items Gradient Effects", true);
   registerSingleSetting(MODULE_ID, "enableActorInventoryBorders", "Enable Inventory Items Coloured Borders", true);
 }
+
