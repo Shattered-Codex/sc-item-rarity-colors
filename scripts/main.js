@@ -3,15 +3,28 @@ import { registerMenus } from "../settings/settingsMenus.js";
 import { applyItemRarityEffects } from "./applyItemRarityEffects.js";
 import { applyActorInventoryEffects } from "./applyActorInventoryEffects.js";
 import { registerModulePartials } from "./partialsHelper.js";
-
-// Define the unique ID of this module for consistent referencing.
-const MODULE_ID = "sc-item-rarity-colors";
+import { MODULE_ID } from "../core/constants.js";
 
 /**
  * - Registers module settings and menus.
  * - Registers partial templates for use in item sheets.
  */
 Hooks.once("init", async () => {
+  // Register Handlebars helper for equality comparison
+  Handlebars.registerHelper('eq', function(a, b) {
+    return a === b;
+  });
+
+  // Register Handlebars helper for greater than comparison
+  Handlebars.registerHelper('gt', function(a, b) {
+    return a > b;
+  });
+
+  // Register Handlebars helper for array length
+  Handlebars.registerHelper('length', function(array) {
+    return array ? array.length : 0;
+  });
+
   registerModuleSettings(MODULE_ID);
   registerMenus(MODULE_ID);
 

@@ -3,6 +3,7 @@
   <div class="sc-item-rarity-colors__preview">
     {{> item-template 
         backgroundColor=backgroundColor
+        textColor=textColor
         secondaryColor=secondaryColor
         gradient=gradient
         glow=glow
@@ -10,40 +11,73 @@
   </div>
 
   <div class="sc-item-rarity-colors__settings">
-    <h2>{{title}}</h2>
+    {{!-- Item Sheet Settings --}}
+    {{#if groupedFields.itemSheet}}
+      {{#if (gt (length groupedFields.itemSheet) 0)}}
+        <h2>{{title}}</h2>
+        {{#each groupedFields.itemSheet}}
+          <div class="sc-item-rarity-colors__form-group form-group" data-field-type="{{this.type}}" data-field-name="{{this.name}}">
+            <label for="{{this.name}}">{{this.label}}</label>
 
-    {{#each fields}}
-      <div class="sc-item-rarity-colors__form-group form-group">
-        <label for="{{this.name}}">{{this.label}}</label>
+            {{!-- Checkbox --}}
+            {{#if (eq this.type "checkbox")}}
+              <input 
+                type="checkbox" 
+                id="{{this.name}}" 
+                name="{{this.name}}" 
+                class="sc-item-rarity-colors__checkbox"
+                {{#if this.value}}checked{{/if}} 
+              />
+            {{/if}}
 
-        {{!-- Color field. --}}
-        {{#if (eq this.type "color")}}
-          <input 
-            type="color" 
-            id="{{this.name}}" 
-            name="{{this.name}}" 
-            value="{{this.value}}" 
-          />
+            {{!-- Color field --}}
+            {{#if (eq this.type "color")}}
+              <input 
+                type="color" 
+                id="{{this.name}}" 
+                name="{{this.name}}" 
+                class="sc-item-rarity-colors__color-picker"
+                value="{{this.value}}" 
+              />
+            {{/if}}
+          </div>
+        {{/each}}
+      {{/if}}
+    {{/if}}
 
-        {{!-- Checkbox --}}
-        {{else if (eq this.type "checkbox")}}
-          <input 
-            type="checkbox" 
-            id="{{this.name}}" 
-            name="{{this.name}}" 
-            {{#if this.value}}checked{{/if}} 
-          />
+    {{!-- Actor Inventory Settings --}}
+    {{#if groupedFields.actorSheet}}
+      {{#if (gt (length groupedFields.actorSheet) 0)}}
+          <br/><br/>
+        <h2>Player Inventory Item Text Settings</h2>
+        {{#each groupedFields.actorSheet}}
+          <div class="sc-item-rarity-colors__form-group form-group" data-field-type="{{this.type}}" data-field-name="{{this.name}}">
+            <label for="{{this.name}}">{{this.label}}</label>
 
-        {{!-- Other input types. --}}
-        {{else}}
-          <input 
-            type="{{this.type}}" 
-            id="{{this.name}}" 
-            name="{{this.name}}" 
-            value="{{this.value}}" 
-          />
-        {{/if}}
-      </div>
-    {{/each}}
+            {{!-- Checkbox --}}
+            {{#if (eq this.type "checkbox")}}
+              <input 
+                type="checkbox" 
+                id="{{this.name}}" 
+                name="{{this.name}}" 
+                class="sc-item-rarity-colors__checkbox"
+                {{#if this.value}}checked{{/if}} 
+              />
+            {{/if}}
+
+            {{!-- Color field --}}
+            {{#if (eq this.type "color")}}
+              <input 
+                type="color" 
+                id="{{this.name}}" 
+                name="{{this.name}}" 
+                class="sc-item-rarity-colors__color-picker"
+                value="{{this.value}}" 
+              />
+            {{/if}}
+          </div>
+        {{/each}}
+      {{/if}}
+    {{/if}}
   </div>
 </div>

@@ -6,6 +6,7 @@ import {
   LegendaryItemSettingsLauncher,
   ArtifactItemSettingsLauncher
 } from "./settingsLaunchers.js";
+import { ItemRaritySettingsApp } from "../apps/ItemRaritySettingsApp.js";
 
 // Define menu configurations for each item rarity tier.
 const MENU_CONFIGS = [
@@ -19,8 +20,13 @@ const MENU_CONFIGS = [
 
 // Main function to register all module menus.
 export function registerMenus(MODULE_ID) {
+  // Set MODULE_ID for ItemRaritySettingsApp first
+  ItemRaritySettingsApp.MODULE_ID = MODULE_ID;
+  
    MENU_CONFIGS.forEach(menu => {
-    menu.launcher.MODULE_ID = MODULE_ID;
+    if (menu.launcher.MODULE_ID !== undefined) {
+      menu.launcher.MODULE_ID = MODULE_ID;
+    }
     game.settings.registerMenu(MODULE_ID, menu.key, {
       name: menu.label,
       label: menu.label,

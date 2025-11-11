@@ -22,7 +22,7 @@ export class BaseItemSettingsLauncher extends foundry.applications.api.Handlebar
       height: 1,
       left: -9999, // Position off-screen
       top: -9999,
-      classes: ["hidden-launcher"], // Add class for additional CSS hiding if needed
+      classes: ["hidden-launcher"],
     });
   }
 
@@ -33,7 +33,8 @@ export class BaseItemSettingsLauncher extends foundry.applications.api.Handlebar
 
   render(force = false, options = {}) {
     // Don't render the launcher itself - just open ItemRaritySettingsApp directly
-    const app = new ItemRaritySettingsApp(this.context, {}, this.constructor.MODULE_ID);
+    const moduleId = this.constructor.MODULE_ID || ItemRaritySettingsApp.MODULE_ID;
+    const app = new ItemRaritySettingsApp(this.context, {}, moduleId);
     app.render(force, options);
     // Return this to satisfy the render contract, but don't actually render
     return this;
@@ -68,7 +69,8 @@ export class BaseItemSettingsLauncher extends foundry.applications.api.Handlebar
   // Override lifecycle hooks to prevent window from showing
   async _preFirstRender() {
     // Open ItemRaritySettingsApp before any rendering happens
-    const app = new ItemRaritySettingsApp(this.context, {}, this.constructor.MODULE_ID);
+    const moduleId = this.constructor.MODULE_ID || ItemRaritySettingsApp.MODULE_ID;
+    const app = new ItemRaritySettingsApp(this.context, {}, moduleId);
     await app.render(true);
     // Don't call super - prevent any rendering
   }

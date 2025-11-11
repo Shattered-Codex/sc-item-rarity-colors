@@ -48,10 +48,64 @@
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
-  height: 100px;
+  height: auto;
+  min-height: 80px;
+  max-height: 90px;
   justify-content: center;
   width: 100%;
   flex-shrink: 0;
+  margin-bottom: 0;
+  margin-top: 25px;
+  transform: scale(0.85);
+  transform-origin: top center;
+}
+
+.sc-item-rarity-colors .mini-item-sheet .application.sheet.item {
+  color: var(--text-color, #000000);
+  transform: scale(0.9);
+  transform-origin: top center;
+}
+
+.sc-item-rarity-colors .mini-item-sheet .application.sheet.item * {
+  color: inherit;
+}
+
+/* Override tab button styles in preview to make them look like links */
+.sc-item-rarity-colors .mini-item-sheet .sheet-tabs.tabs > a {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0.5rem 1rem;
+  text-decoration: none;
+  cursor: default;
+  pointer-events: none;
+}
+
+.sc-item-rarity-colors .mini-item-sheet .sheet-tabs.tabs > a:hover {
+  background: transparent !important;
+}
+
+.sc-item-rarity-colors .mini-item-sheet .application.sheet.item {
+  color: var(--text-color, #000000);
+}
+
+.sc-item-rarity-colors .mini-item-sheet .application.sheet.item * {
+  color: inherit;
+}
+
+/* Override tab button styles in preview to make them look like links */
+.sc-item-rarity-colors .mini-item-sheet .sheet-tabs.tabs > a {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0.5rem 1rem;
+  text-decoration: none;
+  cursor: default;
+  pointer-events: none;
+}
+
+.sc-item-rarity-colors .mini-item-sheet .sheet-tabs.tabs > a:hover {
+  background: transparent !important;
 }
 
 /* Form styles */
@@ -59,20 +113,50 @@
   display: flex;
   flex-direction: column;
   flex: 1;
-  overflow-y: auto;
+  overflow: hidden;
   min-height: 0;
 }
 
 .sc-item-rarity-colors__preview {
   flex: 0 0 auto;
   order: 1;
-  height: 250px;
+  height: auto;
+  min-height: 200px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: transparent;
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 .sc-item-rarity-colors__settings {
-  flex: 0 0 auto;
+  flex: 1 1 auto;
   order: 2;
-  margin-top: 1rem;
+  margin-top: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+  position: relative;
+  padding-top: 0.5rem;
+}
+
+/* Fade effect at the top of settings area */
+.sc-item-rarity-colors__settings::before {
+  content: '';
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 20px;
+  background: linear-gradient(to bottom, var(--color-bg, #1a1a1a), transparent);
+  pointer-events: none;
+  z-index: 5;
+  margin-bottom: -20px;
 }
 
 .sc-item-rarity-colors__settings > h2 {
@@ -99,7 +183,16 @@
 }
 
 .sc-item-rarity-colors__form-group input[type="checkbox"] {
-  width: auto;
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  min-height: 20px;
+  margin: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 /* Footer styles */
@@ -142,4 +235,168 @@
 
 .sc-item-rarity-colors__save-button:hover {
   background: rgba(74, 144, 226, 1);
+}
+
+.item-detail.empty::after {
+  color: inherit;
+}
+
+/* Inventory Preview Styles - Disable all interactions */
+.sc-item-rarity-colors__preview .inventory-preview-item {
+  width: 100%;
+  transform: scale(0.90);
+  transform-origin: top center;
+  margin-top: 100px;
+  margin-bottom: 0;
+  margin-left: auto;
+  margin-right: auto;
+  position: relative;
+  overflow: visible;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+.sc-item-rarity-colors__preview .inventory-preview-item * {
+  pointer-events: none;
+  cursor: default;
+  user-select: none;
+}
+
+.sc-item-rarity-colors__preview .inventory-preview-item input {
+  pointer-events: none;
+  cursor: default;
+}
+
+.sc-item-rarity-colors__preview .inventory-preview-item .items-section {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+.sc-item-rarity-colors__preview .inventory-preview-item .items-header {
+  display: none;
+}
+
+.sc-item-rarity-colors__preview .inventory-preview-item .item-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.sc-item-rarity-colors__preview .inventory-preview-item .item {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.sc-item-rarity-colors__preview .inventory-preview-item .item-row {
+  background: linear-gradient(-135deg, var(--gradient-color, #252830) 10%, var(--gradient-color-2, #252830) 30%, #252830 50%);
+  border-radius: 4px;
+  padding: 0.35rem 0.5rem;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  min-height: 36px;
+  background-color: #252830;
+}
+
+.sc-item-rarity-colors__preview .inventory-preview-item .item-image {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  object-fit: contain;
+}
+
+.sc-item-rarity-colors__preview .inventory-preview-item .item-name {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sc-item-rarity-colors__preview .inventory-preview-item .item-name .name-stacked {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.sc-item-rarity-colors__preview .inventory-preview-item .item-name .title {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--title-color, inherit);
+  line-height: 1.2;
+}
+
+.sc-item-rarity-colors__preview .inventory-preview-item .item-name .subtitle {
+  font-size: 0.65rem;
+  color: var(--title-color, inherit);
+  opacity: 0.8;
+  line-height: 1.2;
+}
+
+.sc-item-rarity-colors__preview .inventory-preview-item .item-detail {
+  font-size: 0.65rem;
+  color: var(--details-color, inherit);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  white-space: nowrap;
+}
+
+.sc-item-rarity-colors__preview .inventory-preview-item .item-detail .value,
+.sc-item-rarity-colors__preview .inventory-preview-item .item-detail .formula,
+.sc-item-rarity-colors__preview .inventory-preview-item .item-detail .sign,
+.sc-item-rarity-colors__preview .inventory-preview-item .item-detail .currency {
+  color: var(--details-color, inherit);
+}
+
+.sc-item-rarity-colors__preview .inventory-preview-item .item-detail input {
+  color: var(--details-color, inherit);
+  font-size: 0.65rem;
+  padding: 0.1rem 0.2rem;
+  width: 2rem;
+  height: 1.5rem;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  outline: none;
+}
+
+.sc-item-rarity-colors__preview .inventory-preview-item .item-detail .separator,
+.sc-item-rarity-colors__preview .inventory-preview-item .item-detail .max {
+  color: var(--details-color, inherit);
+  font-size: 0.65rem;
+}
+
+.sc-item-rarity-colors__preview .inventory-preview-item .item-detail .adjustment-button {
+  width: 1.2rem;
+  height: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6rem;
+}
+
+.sc-item-rarity-colors__preview .inventory-preview-item .item-detail .item-controls {
+  display: flex;
+  gap: 0.2rem;
+}
+
+.sc-item-rarity-colors__preview .inventory-preview-item .item-detail .item-controls button {
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+}
+
+.sc-item-rarity-colors__preview .inventory-preview-item .item-detail .item-controls i {
+  font-size: 0.7rem;
 }
