@@ -17,6 +17,7 @@ export class RarityListManagerApp extends HandlebarsApplicationMixin(Application
     this.moduleId = moduleId || RarityListManagerApp.MODULE_ID;
     this._draftEntries = null;
     this._draftEnabled = true;
+    this._dragSourceIndex = null;
   }
 
   static DEFAULT_OPTIONS = {
@@ -121,6 +122,124 @@ export class RarityListManagerApp extends HandlebarsApplicationMixin(Application
     };
   }
 
+  _moveDraftEntry(sourceIndex, targetIndex, placeAfter = false) {
+    if (!Array.isArray(this._draftEntries)) return;
+    if (!Number.isInteger(sourceIndex) || !Number.isInteger(targetIndex)) return;
+    if (sourceIndex < 0 || targetIndex < 0) return;
+    if (sourceIndex >= this._draftEntries.length || targetIndex >= this._draftEntries.length) return;
+    if (sourceIndex === targetIndex && !placeAfter) return;
+
+    const [moved] = this._draftEntries.splice(sourceIndex, 1);
+    if (!moved) return;
+
+    let insertIndex = targetIndex;
+    if (placeAfter) {
+      insertIndex = sourceIndex < targetIndex ? targetIndex : targetIndex + 1;
+    } else if (sourceIndex < targetIndex) {
+      insertIndex = targetIndex - 1;
+    }
+
+    insertIndex = Math.max(0, Math.min(insertIndex, this._draftEntries.length));
+    this._draftEntries.splice(insertIndex, 0, moved);
+  }
+
+  _clearDropIndicators(formElement = this.form) {
+    if (!formElement) return;
+    formElement
+      .querySelectorAll(".is-drop-before, .is-drop-after")
+      .forEach((el) => el.classList.remove("is-drop-before", "is-drop-after"));
+  }
+
+  _clearDragState(formElement = this.form) {
+    if (!formElement) return;
+    formElement
+      .querySelectorAll(".is-dragging")
+      .forEach((el) => el.classList.remove("is-dragging"));
+  }
+
+  _bindReorderHandlers(formElement = this.form) {
+    if (!formElement) return;
+
+    const rows = formElement.querySelectorAll("[data-rarity-row]");
+    rows.forEach((row) => {
+      const grip = row.querySelector(".sc-item-rarity-colors__rarity-row-grip");
+      if (grip) {
+        grip.addEventListener("dragstart", (event) => {
+          const sourceIndex = Number(row.dataset.index);
+          if (Number.isNaN(sourceIndex)) return;
+
+          this._dragSourceIndex = sourceIndex;
+          this._clearDropIndicators(formElement);
+          row.classList.add("is-dragging");
+          if (event.dataTransfer) {
+            event.dataTransfer.effectAllowed = "move";
+            event.dataTransfer.setData("text/plain", String(sourceIndex));
+          }
+        });
+
+        grip.addEventListener("dragend", () => {
+          this._dragSourceIndex = null;
+          this._clearDropIndicators(formElement);
+          this._clearDragState(formElement);
+        });
+      }
+
+      row.addEventListener("dragover", (event) => {
+        event.preventDefault();
+        const sourceRaw = event.dataTransfer?.getData("text/plain");
+        const parsedSource = Number(sourceRaw);
+        const sourceIndex = Number.isInteger(parsedSource) ? parsedSource : this._dragSourceIndex;
+        const targetIndex = Number(row.dataset.index);
+        if (!Number.isInteger(sourceIndex) || !Number.isInteger(targetIndex) || sourceIndex === targetIndex) {
+          return;
+        }
+
+        if (event.dataTransfer) {
+          event.dataTransfer.dropEffect = "move";
+        }
+
+        const rect = row.getBoundingClientRect();
+        const placeAfter = event.clientY > (rect.top + rect.height / 2);
+        this._clearDropIndicators(formElement);
+        row.classList.add(placeAfter ? "is-drop-after" : "is-drop-before");
+      });
+
+      row.addEventListener("dragleave", (event) => {
+        const related = event.relatedTarget;
+        if (related && row.contains(related)) return;
+        row.classList.remove("is-drop-before", "is-drop-after");
+      });
+
+      row.addEventListener("drop", async (event) => {
+        event.preventDefault();
+
+        const sourceRaw = event.dataTransfer?.getData("text/plain");
+        const parsedSource = Number(sourceRaw);
+        const sourceIndex = Number.isInteger(parsedSource) ? parsedSource : this._dragSourceIndex;
+        const targetIndex = Number(row.dataset.index);
+        if (!Number.isInteger(sourceIndex) || !Number.isInteger(targetIndex) || sourceIndex === targetIndex) {
+          this._clearDropIndicators(formElement);
+          return;
+        }
+
+        this._captureDraftFromForm(formElement);
+        const rect = row.getBoundingClientRect();
+        const placeAfter = event.clientY > (rect.top + rect.height / 2);
+        this._moveDraftEntry(sourceIndex, targetIndex, placeAfter);
+        this._dragSourceIndex = null;
+        this._clearDropIndicators(formElement);
+        this._clearDragState(formElement);
+        await this.render(true);
+      });
+
+      row.addEventListener("dragend", () => {
+        this._dragSourceIndex = null;
+        this._clearDropIndicators(formElement);
+        this._clearDragState(formElement);
+      });
+    });
+  }
+
   _prepareContext() {
     this._loadDraft();
     return {
@@ -171,6 +290,8 @@ export class RarityListManagerApp extends HandlebarsApplicationMixin(Application
         await this.render(true);
       });
     });
+
+    this._bindReorderHandlers(this.form);
   }
 
   static async onSubmit(event, form, formData) {
