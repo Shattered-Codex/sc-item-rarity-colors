@@ -1,12 +1,12 @@
 // settings/settingsLaunchers.js
 import { ItemRaritySettingsApp } from "../apps/ItemRaritySettingsApp.js";
+import { RarityListManagerApp } from "../apps/RarityListManagerApp.js";
 
 // Base launcher class for item rarity settings.
 // Uses ApplicationV2 with HandlebarsApplicationMixin for compatibility with FoundryVTT v13+
-export class BaseItemSettingsLauncher extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.api.ApplicationV2) {
-  constructor(context) {
+export class ItemRaritySettingsLauncher extends foundry.applications.api.HandlebarsApplicationMixin(foundry.applications.api.ApplicationV2) {
+  constructor() {
     super();
-    this.context = context;
     // Prevent this window from being registered in ui.windows
     this._rendered = false;
   }
@@ -31,11 +31,15 @@ export class BaseItemSettingsLauncher extends foundry.applications.api.Handlebar
     return {};
   }
 
+  _openTargetApp(force = false, options = {}) {
+    const moduleId = this.constructor.MODULE_ID || ItemRaritySettingsApp.MODULE_ID;
+    const app = new ItemRaritySettingsApp("general", {}, moduleId);
+    app.render(force, options);
+  }
+
   render(force = false, options = {}) {
     // Don't render the launcher itself - just open ItemRaritySettingsApp directly
-    const moduleId = this.constructor.MODULE_ID || ItemRaritySettingsApp.MODULE_ID;
-    const app = new ItemRaritySettingsApp(this.context, {}, moduleId);
-    app.render(force, options);
+    this._openTargetApp(force, options);
     // Return this to satisfy the render contract, but don't actually render
     return this;
   }
@@ -69,9 +73,7 @@ export class BaseItemSettingsLauncher extends foundry.applications.api.Handlebar
   // Override lifecycle hooks to prevent window from showing
   async _preFirstRender() {
     // Open ItemRaritySettingsApp before any rendering happens
-    const moduleId = this.constructor.MODULE_ID || ItemRaritySettingsApp.MODULE_ID;
-    const app = new ItemRaritySettingsApp(this.context, {}, moduleId);
-    await app.render(true);
+    await this._openTargetApp(true);
     // Don't call super - prevent any rendering
   }
 
@@ -93,11 +95,10 @@ export class BaseItemSettingsLauncher extends foundry.applications.api.Handlebar
   }
 }
 
-// Specific launchers for each item rarity tier.
-export class CommonItemSettingsLauncher extends BaseItemSettingsLauncher { constructor() { super("common"); } }
-export class UncommonItemSettingsLauncher extends BaseItemSettingsLauncher { constructor() { super("uncommon"); } }
-export class RareItemSettingsLauncher extends BaseItemSettingsLauncher { constructor() { super("rare"); } }
-export class VeryRareItemSettingsLauncher extends BaseItemSettingsLauncher { constructor() { super("veryrare"); } }
-export class LegendaryItemSettingsLauncher extends BaseItemSettingsLauncher { constructor() { super("legendary"); } }
-export class ArtifactItemSettingsLauncher extends BaseItemSettingsLauncher { constructor() { super("artifact"); } }
-
+export class ItemRaritySourceSettingsLauncher extends ItemRaritySettingsLauncher {
+  _openTargetApp(force = false, options = {}) {
+    const moduleId = this.constructor.MODULE_ID || RarityListManagerApp.MODULE_ID;
+    const app = new RarityListManagerApp({}, moduleId);
+    app.render(force, options);
+  }
+}

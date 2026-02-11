@@ -117,6 +117,15 @@
   min-height: 0;
 }
 
+.sc-item-rarity-colors__rarity-selector {
+  flex: 0 0 auto;
+  margin-bottom: 0.25rem;
+}
+
+.sc-item-rarity-colors__rarity-select {
+  min-width: 220px;
+}
+
 .sc-item-rarity-colors__preview {
   flex: 0 0 auto;
   order: 1;
@@ -202,39 +211,87 @@
   justify-content: flex-end;
   gap: 0.5rem;
   padding: 0.75rem 1rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(0, 0, 0, 0.2);
   flex-shrink: 0;
   margin-top: auto;
 }
 
-.sc-item-rarity-colors__save-button,
-.sc-item-rarity-colors__cancel-button {
-  padding: 0.5rem 1.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 3px;
-  background: rgba(255, 255, 255, 0.1);
-  color: white;
-  cursor: pointer;
-  font-size: 0.875rem;
+.sc-item-rarity-colors--rarity-manager .window-content {
+  overflow: hidden;
+}
+
+.sc-item-rarity-colors__rarity-manager {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 0.5rem;
+}
+
+.sc-item-rarity-colors__rarity-manager-header {
+  margin: 0;
+}
+
+.sc-item-rarity-colors__rarity-manager-scrollable {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+.sc-item-rarity-colors__rarity-manager-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.sc-item-rarity-colors__rarity-row {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  transition: all 0.2s;
+  padding: 0.45rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.03);
 }
 
-.sc-item-rarity-colors__save-button:hover,
-.sc-item-rarity-colors__cancel-button:hover {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.3);
+.sc-item-rarity-colors__rarity-row-grip {
+  color: rgba(255, 255, 255, 0.5);
+  cursor: default;
 }
 
-.sc-item-rarity-colors__save-button {
-  background: rgba(74, 144, 226, 0.8);
+.sc-item-rarity-colors__rarity-visible {
+  width: 18px;
+  height: 18px;
 }
 
-.sc-item-rarity-colors__save-button:hover {
-  background: rgba(74, 144, 226, 1);
+.sc-item-rarity-colors__rarity-fields {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.sc-item-rarity-colors__rarity-fields .form-group {
+  margin: 0;
+}
+
+.sc-item-rarity-colors__rarity-fields .form-group label {
+  min-width: 40px;
+}
+
+.sc-item-rarity-colors__rarity-delete {
+  width: 30px;
+  height: 30px;
+}
+
+.sc-item-rarity-colors__rarity-delete:disabled {
+  opacity: 0.45;
+}
+
+.sc-item-rarity-colors__rarity-manager .form-footer {
+  margin-top: 0.4rem;
 }
 
 .item-detail.empty::after {

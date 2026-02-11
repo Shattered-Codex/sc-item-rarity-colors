@@ -1,4 +1,13 @@
 <div class="sc-item-rarity-colors__form flexcol" style="gap: 1rem; padding: 1rem;">
+  <div class="sc-item-rarity-colors__rarity-selector form-group">
+    <label for="selected-rarity">Rarity</label>
+    <select id="selected-rarity" name="selected-rarity" class="sc-item-rarity-colors__rarity-select">
+      {{#each rarityOptions}}
+        <option value="{{this.key}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+      {{/each}}
+    </select>
+  </div>
+
   {{!-- Preview partial item. --}}
   <div class="sc-item-rarity-colors__preview">
     {{> item-template 

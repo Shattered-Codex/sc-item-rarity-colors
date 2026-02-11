@@ -6,9 +6,13 @@
 [![Support on Patreon](https://img.shields.io/badge/Patreon-Shattered%20Codex-FF424D?logo=patreon&logoColor=white)](https://www.patreon.com/c/shatteredcodex)
 ![Downloads](https://img.shields.io/github/downloads/Shattered-Codex/sc-item-rarity-colors/total)
 
-Enhance your D&D 5e item sheets with **SC - Item Rarity Colors**  
-Each item rarity can have its own color, optional gradient for higher rarities, and glowing effect for Legendary and Artifact gear.  
-Make magical items *visually stand out* in your players' inventories.
+Color-code item rarity in D&D 5e with per-rarity customization for item sheets and inventory rows.
+
+This module lets you:
+- Configure all rarity visual settings from a single window.
+- Enable per-rarity gradient and glow effects.
+- Manage your own rarity list (add, edit, remove, reorder).
+- Stay compatible with Custom DND5E rarity data when both modules are active.
 
 [Request features or report issues](https://github.com/Shattered-Codex/sc-item-rarity-colors/issues)
 
@@ -16,76 +20,66 @@ Make magical items *visually stand out* in your players' inventories.
 
 ## Installation
 
-1. In Foundry’s **Add-on Modules → Install Module**, paste:
+1. In Foundry VTT, go to **Add-on Modules → Install Module**.
+2. Paste this manifest URL:
    `https://github.com/Shattered-Codex/sc-item-rarity-colors/releases/latest/download/module.json`
-2. Install and enable **SC - Item Rarity Colors** in your world’s module list.
+3. Install and enable **SC - Item Rarity Colors** in your world.
 
-> Compatible with **Foundry VTT v13+** and **dnd5e** system.
-
----
-
-## Quick Start
-
-1. Open any **item sheet** (weapon, armor, magic item).  
-2. Set the **Rarity** field (Common, Uncommon, Rare, Very Rare, Legendary, Artifact).  
-3. The sheet background updates automatically:
-- **Common, Uncommon, Rare** → single color  
-- **Very Rare, Legendary, Artifact** → optional gradient  
-- **Legendary, Artifact** → optional glowing effect  
-4. Open the respective rarity tier config form in **Module Settings** to see a live preview.
+Compatible with **Foundry VTT v13+** and **dnd5e**.
 
 ---
 
-## Features
+## Module Settings Overview
 
-- **Per-Rarity Colors** – each rarity has its own color picker  
-- **Optional Gradients** – blend two colors for higher tiers  
-- **Glowing Effects** – highlight Legendary and Artifact items  
-- **Fully Configurable** – tweak colors, gradients, and glow  
-- **Live Preview** – instant visual feedback while adjusting  
-- **Auto Update** – changes apply instantly to open item sheets  
+Open:
+**Configure Settings → Module Settings → SC - Item Rarity Colors**
 
----
-
-## Module Settings
-
-Found under **Configure Settings → Module Settings → SC - Item Rarity Colors**:
-
-| Rarity | Options |
-|:--------|:---------|
-| Common | Base Color |
-| Uncommon | Base Color |
-| Rare | Base Color |
-| Very Rare | Base Color, optional **Enable Gradient** → Secondary Color |
-| Legendary | Base Color, optional **Enable Gradient** → Secondary Color, optional **Glow** |
-| Artifact | Base Color, optional **Enable Gradient** → Secondary Color, optional **Glow** |
+You will find:
+- **Patreon support** button.
+- **Configure Rarities** (single settings window with rarity selector at the top).
+- **Configure Rarity List** (manage custom rarities).
+- Additional toggles for inventory gradient and border behavior.
 
 ---
 
-## Usage Notes
+## Rarity Visual Settings
 
-- Gradients are **optional** and available for Very Rare, Legendary, and Artifact tiers  
-- Glow is **optional** and only available for Legendary and Artifact tiers  
-- The configuration form provides **real-time preview** of your settings  
-- All changes are **applied instantly** to open sheets and previews  
+Use **Configure Rarities** to switch between rarities and edit:
+- Item sheet background color.
+- Item sheet text color.
+- Inventory title/subtitle color.
+- Inventory details text color.
+- Inventory border color.
+- Optional gradient (with secondary color).
+- Optional glow effects.
+
+### Example: Gradient + Glow
+
+![Gradient and glow example](https://i.imgur.com/9BZJQiJ.gif)
+
+### Example: Rarity visual configuration window
+
+![Rarity visual settings](https://i.imgur.com/CjqPTD6.png)
 
 ---
 
-## Example Look
+## Rarity List Manager
 
-| View | Screenshot |
-|:------|:------------|
-| Configuration Menu | <img src="https://imgur.com/qnBEbkm.png" alt="Configuration Menu" width="200"/> |
-| Rarity Tier Config Form | <img src="https://imgur.com/churx3y.png" alt="Rarity Tier Form" width="200"/> |
-| Item Sheet | <img src="https://imgur.com/INGDQBR.png" alt="Item Sheet" width="200"/> |
-| Player Sheet | <img src="https://imgur.com/qSYksbY.png" alt="Player Sheet" width="200"/> |
+Use **Configure Rarity List** to:
+- Add new rarities.
+- Remove custom rarities.
+- Edit keys and labels.
+- Enable/disable entries.
+- Reorder the list.
 
-### Glow & Gradient Live Preview
-<div style="display:flex; gap:10px;">
-  <img src="https://i.imgur.com/cD7Lwgv.gif" alt="Glow and Gradient Animation" width="200" />
-  <img src="https://i.imgur.com/Su2pGXO.gif" alt="Item Sheet Glow Animation" width="200" />
-  <img src="https://i.imgur.com/iu7EZTV.gif" alt="Player Sheet Glow and Gradient Animation" width="200" />
-</div>
+This is compatible with **Custom DND5E** rarity settings:
+- It is **not required**.
+- If both are active, they can coexist without conflict.
+
+### Example: Rarity list configuration (Custom DND5E compatible)
+
+![Rarity list manager](https://i.imgur.com/thHkoPd.png)
+
 
 ---
 
@@ -94,4 +88,3 @@ Found under **Configure Settings → Module Settings → SC - Item Rarity Colors
 Created with 💛 by **Shattered Codex**  
 Inspired by the desire to make loot feel *just as magical as it is powerful*.
 
----

@@ -1,0 +1,81 @@
+<div class="sc-item-rarity-colors__rarity-manager standard-form">
+  <div class="sc-item-rarity-colors__rarity-manager-header form-group">
+    <label for="sc-rarity-list-enabled" class="flex1">Enable Configuration</label>
+    <div class="form-fields">
+      <input id="sc-rarity-list-enabled" name="enabled" type="checkbox" {{#if enabled}}checked{{/if}}>
+    </div>
+  </div>
+
+  <hr>
+
+  <div class="sc-item-rarity-colors__rarity-manager-scrollable">
+    <ul class="sc-item-rarity-colors__rarity-manager-list">
+      {{#each items}}
+        <li class="sc-item-rarity-colors__rarity-row" data-rarity-row data-index="{{@index}}">
+          <i class="sc-item-rarity-colors__rarity-row-grip fas fa-grip-lines"></i>
+
+          <input
+            class="sc-item-rarity-colors__rarity-visible"
+            type="checkbox"
+            name="items.{{@index}}.visible"
+            title="Visible"
+            {{#if this.visible}}checked{{/if}}
+          >
+
+          <div class="sc-item-rarity-colors__rarity-fields">
+            <div class="form-group">
+              <label>Key</label>
+              <div class="form-fields">
+                <input
+                  type="text"
+                  name="items.{{@index}}.key"
+                  value="{{this.key}}"
+                  {{#if this.system}}disabled{{/if}}
+                >
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Label</label>
+              <div class="form-fields">
+                <input
+                  type="text"
+                  name="items.{{@index}}.label"
+                  value="{{this.label}}"
+                >
+              </div>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            class="sc-item-rarity-colors__rarity-delete"
+            data-action="delete"
+            data-index="{{@index}}"
+            title="Delete"
+            {{#if this.system}}disabled{{/if}}
+          >
+            <i class="fas fa-xmark"></i>
+          </button>
+
+          <input type="hidden" name="items.{{@index}}.system" value="{{#if this.system}}true{{else}}false{{/if}}">
+        </li>
+      {{/each}}
+    </ul>
+  </div>
+
+  <footer class="form-footer" data-application-part="footer">
+    <button type="button" data-action="new" class="new-button bright">
+      <i class="fas fa-plus"></i>Create New
+    </button>
+    <button type="button" data-action="reset" class="reset-button">
+      <i class="fas fa-arrow-rotate-left"></i>Reset to Default
+    </button>
+    <button type="submit" class="save-button">
+      <i class="fas fa-floppy-disk"></i>Save and Close
+    </button>
+    <button type="button" data-action="close" class="cancel-button">
+      <i class="fas fa-xmark"></i>Cancel
+    </button>
+  </footer>
+</div>
