@@ -18,7 +18,6 @@ import {
   applyDetailsColor,
   clearDetailsColor
 } from "../core/styleAppliers.js";
-import { buildRaritySettings } from "../core/settingsManager.js";
 import { raritySupportsBorderGradient, raritySupportsBorderGlow } from "../core/rarityConfig.js";
 import { DEFAULT_COLORS, DEFAULT_GLOW_INTENSITY } from "../core/constants.js";
 import { isGradientEffectsEnabled, isBordersEnabled } from "../core/settingsManager.js";
@@ -93,7 +92,6 @@ function updateInventoryPreview(formElement, rarity, itemSheetSettings) {
 
   const mainMenuGradientEnabled = isGradientEffectsEnabled();
   const mainMenuBorderEnabled = isBordersEnabled();
-  const raritySettings = buildRaritySettings(rarity);
   const raritySupportsGradientForBorder = raritySupportsBorderGradient(rarity);
   const raritySupportsGlowForBorder = raritySupportsBorderGlow(rarity);
   const $inventoryRow = $inventoryPreview.find(".item-row");
@@ -191,4 +189,3 @@ function updateInventoryPreview(formElement, rarity, itemSheetSettings) {
     });
   }
 }
-

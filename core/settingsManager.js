@@ -82,7 +82,7 @@ export function buildRaritySettings(rarity) {
     enableTextColor: getRaritySetting(MODULE_ID, rarity, "enable-text-color", false),
     itemSheetTextColor: getRaritySetting(MODULE_ID, rarity, "text-color", "#000000"),
     
-    // Gradient (only for supported rarities)
+    // Gradient
     gradientEnabled: raritySupportsGradient(rarity)
       ? getRaritySetting(MODULE_ID, rarity, "gradient-option", false)
       : false,
@@ -90,7 +90,7 @@ export function buildRaritySettings(rarity) {
       ? getRaritySetting(MODULE_ID, rarity, "secondary-item-color", "#ffffff")
       : "#ffffff",
     
-    // Glow (available for rarities that support glow)
+    // Glow
     glowEnabled: raritySupportsGlow(rarity)
       ? getRaritySetting(MODULE_ID, rarity, "glow-option", false)
       : false,
@@ -108,7 +108,7 @@ export function buildRaritySettings(rarity) {
     inventoryBorderColor: getRaritySetting(MODULE_ID, rarity, "inventory-border-color", "#ffffff"),
   };
 
-  // Border Secondary Color (only for rarities that support border gradient)
+  // Border Secondary Color
   if (raritySupportsBorderGradient(rarity)) {
     settings.inventoryBorderSecondaryColor = getRaritySetting(
       MODULE_ID,
@@ -120,7 +120,7 @@ export function buildRaritySettings(rarity) {
     settings.inventoryBorderSecondaryColor = undefined;
   }
 
-  // Border Glow (only for artifact)
+  // Border Glow
   if (raritySupportsBorderGlow(rarity)) {
     settings.enableInventoryBorderGlow = getRaritySetting(
       MODULE_ID,
@@ -134,4 +134,3 @@ export function buildRaritySettings(rarity) {
 
   return settings;
 }
-

@@ -23,6 +23,13 @@
     "download": "https://github.com/Shattered-Codex/sc-item-rarity-colors/releases/download/v3.0.0/sc-item-rarity-colors.zip",
     "packs": [],
     "relationships": {
+        "requires": [
+            {
+                "id": "dnd5e",
+                "type": "system",
+                "compatibility": {}
+            }
+        ],
         "recommends": [
             {
                 "id": "lib-wrapper",

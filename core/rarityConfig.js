@@ -59,7 +59,7 @@ export const RARITY_CONFIG = {
  * @returns {boolean}
  */
 export function raritySupportsGradient(rarity) {
-  return RARITY_CONFIG[rarity]?.supportsGradient || false;
+  return RARITY_CONFIG[rarity]?.supportsGradient ?? true;
 }
 
 /**
@@ -68,7 +68,7 @@ export function raritySupportsGradient(rarity) {
  * @returns {boolean}
  */
 export function raritySupportsGlow(rarity) {
-  return RARITY_CONFIG[rarity]?.supportsGlow || false;
+  return RARITY_CONFIG[rarity]?.supportsGlow ?? true;
 }
 
 /**
@@ -77,7 +77,7 @@ export function raritySupportsGlow(rarity) {
  * @returns {boolean}
  */
 export function raritySupportsBorderGradient(rarity) {
-  return RARITY_CONFIG[rarity]?.supportsBorderGradient || false;
+  return RARITY_CONFIG[rarity]?.supportsBorderGradient ?? true;
 }
 
 /**
@@ -86,5 +86,5 @@ export function raritySupportsBorderGradient(rarity) {
  * @returns {boolean}
  */
 export function raritySupportsBorderGlow(rarity) {
-  return RARITY_CONFIG[rarity]?.supportsBorderGlow || false;
+  return RARITY_CONFIG[rarity]?.supportsBorderGlow ?? true;
 }
