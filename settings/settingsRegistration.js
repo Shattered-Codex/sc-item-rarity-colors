@@ -1,4 +1,5 @@
 import {
+  getFallbackRarityEntries,
   RARITY_LIST_ENABLED_SETTING_KEY,
   RARITY_LIST_SETTING_KEY,
   buildRaritySettingObject,
@@ -98,8 +99,6 @@ export function ensureRaritySettingsRegistered(moduleId, rarityKey, rarityLabel 
 
 // Main function to register all module settings.
 export function registerModuleSettings(MODULE_ID) {
-  const mergedRarities = getMergedRarityEntries(MODULE_ID, { includeHidden: true });
-
   registerBooleanSetting(
     MODULE_ID,
     RARITY_LIST_ENABLED_SETTING_KEY,
@@ -111,8 +110,18 @@ export function registerModuleSettings(MODULE_ID) {
     MODULE_ID,
     RARITY_LIST_SETTING_KEY,
     "SC Item Rarity List Configuration",
-    buildRaritySettingObject(mergedRarities)
+    buildRaritySettingObject(getFallbackRarityEntries())
   );
+
+  // Compute merged rarities after base list settings are registered,
+  // so persisted custom entries are available on reload.
+  let mergedRarities = [];
+  try {
+    mergedRarities = getMergedRarityEntries(MODULE_ID, { includeHidden: true });
+  } catch (error) {
+    console.error(`${MODULE_ID} | Failed to load merged rarity entries during init. Falling back to defaults.`, error);
+    mergedRarities = getFallbackRarityEntries();
+  }
 
   for (const entry of mergedRarities) {
     registerRaritySettings(MODULE_ID, entry.key, entry.label);
