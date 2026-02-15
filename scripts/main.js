@@ -1,5 +1,10 @@
 import { registerModuleSettings } from "../settings/settingsRegistration.js";
 import { registerMenus } from "../settings/settingsMenus.js";
+import {
+  applyMergedRarityConfigToDnd5e,
+  RARITY_LIST_ENABLED_SETTING_KEY,
+  RARITY_LIST_SETTING_KEY,
+} from "../core/rarityListConfig.js";
 import { applyItemRarityEffects } from "./applyItemRarityEffects.js";
 import { applyActorInventoryEffects } from "./applyActorInventoryEffects.js";
 import { registerModulePartials } from "./partialsHelper.js";
@@ -40,9 +45,24 @@ Hooks.once("init", async () => {
  * - Extends inventory display and logic.
  */
 Hooks.once("ready", () => {
+  applyMergedRarityConfigToDnd5e(MODULE_ID);
   applyItemRarityEffects(MODULE_ID);
   applyActorInventoryEffects(MODULE_ID);
   void maybeShowSupportCard();
+});
+
+Hooks.on("setSetting", (moduleOrSetting, maybeKey) => {
+  const isModuleHookPayload = moduleOrSetting === MODULE_ID
+    && (maybeKey === RARITY_LIST_SETTING_KEY || maybeKey === RARITY_LIST_ENABLED_SETTING_KEY);
+
+  const fullSettingKey = typeof moduleOrSetting === "string"
+    ? moduleOrSetting
+    : moduleOrSetting?.key;
+  const isCoreHookPayload = fullSettingKey === `${MODULE_ID}.${RARITY_LIST_SETTING_KEY}`
+    || fullSettingKey === `${MODULE_ID}.${RARITY_LIST_ENABLED_SETTING_KEY}`;
+
+  if (!isModuleHookPayload && !isCoreHookPayload) return;
+  applyMergedRarityConfigToDnd5e(MODULE_ID);
 });
 
 async function maybeShowSupportCard() {
