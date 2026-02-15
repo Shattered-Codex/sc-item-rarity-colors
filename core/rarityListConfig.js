@@ -162,6 +162,33 @@ export function buildRaritySettingObject(entries = []) {
   return settingData;
 }
 
+export function buildDnd5eRarityConfig(entries = []) {
+  const config = {};
+
+  for (const entry of entries) {
+    const key = normalizeRarityKey(entry?.key);
+    if (!key) continue;
+    if (entry?.visible === false) continue;
+
+    config[key] = localizeMaybe(entry?.label || key) || humanizeRarityLabel(key);
+  }
+
+  return config;
+}
+
+export function applyMergedRarityConfigToDnd5e(moduleId = MODULE_ID) {
+  if (!CONFIG?.DND5E) return {};
+
+  const mergedEntries = getMergedRarityEntries(moduleId, { includeHidden: false });
+  const nextConfig = buildDnd5eRarityConfig(mergedEntries);
+
+  if (Object.keys(nextConfig).length) {
+    CONFIG.DND5E.itemRarity = nextConfig;
+  }
+
+  return nextConfig;
+}
+
 export async function saveModuleRarityEntries(moduleId = MODULE_ID, entries = [], enabled = true) {
   if (game.settings.settings.has(`${moduleId}.${RARITY_LIST_ENABLED_SETTING_KEY}`)) {
     await game.settings.set(moduleId, RARITY_LIST_ENABLED_SETTING_KEY, Boolean(enabled));

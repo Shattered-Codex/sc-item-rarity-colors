@@ -1,4 +1,5 @@
 import {
+  applyMergedRarityConfigToDnd5e,
   RARITY_LIST_ENABLED_SETTING_KEY,
   getFallbackRarityEntries,
   getMergedRarityEntries,
@@ -307,6 +308,7 @@ export class RarityListManagerApp extends HandlebarsApplicationMixin(Application
 
     await saveModuleRarityEntries(moduleId, entries, this._draftEnabled !== false);
     await syncEntriesToCustomDnd5e(entries);
+    applyMergedRarityConfigToDnd5e(moduleId);
 
     ui.notifications.info("Saved rarity list configuration.");
   }
