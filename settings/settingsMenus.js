@@ -19,7 +19,8 @@ export function registerMenus(MODULE_ID) {
   ItemRaritySettingsLauncher.MODULE_ID = MODULE_ID;
   game.settings.registerMenu(MODULE_ID, "raritySettingsConfig", {
     name: "Item Rarity Configuration",
-    label: "Configure Rarities",
+    label: "Configure Rarity Colors",
+    icon: "fas fa-palette",
     type: ItemRaritySettingsLauncher,
     restricted: false,
     hint: "Open a single configuration window and switch rarities from the selector at the top.",
@@ -29,6 +30,7 @@ export function registerMenus(MODULE_ID) {
   game.settings.registerMenu(MODULE_ID, "raritySourceConfig", {
     name: "Rarity Source Configuration",
     label: "Configure Rarity List",
+    icon: "fas fa-list",
     type: ItemRaritySourceSettingsLauncher,
     restricted: true,
     hint: "Manage rarity keys and labels in SC Item Rarity Colors. Changes are synced with Custom DND5E when available.",
