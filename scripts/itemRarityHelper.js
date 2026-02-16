@@ -1,3 +1,5 @@
+import { normalizeRarityKey } from "../core/rarityListConfig.js";
+
 /**
  * Normalize a rarity string to match module settings.
  *
@@ -5,8 +7,7 @@
  * @returns {string|null} - Normalized rarity or null if invalid.
  */
 export function normalizeRarity(rawRarity) {
-  if (!rawRarity) return null;
-  return rawRarity.trim().toLowerCase();
+  return normalizeRarityKey(rawRarity);
 }
 
 /**

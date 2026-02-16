@@ -5,6 +5,7 @@
 
 import { MODULE_ID } from "./constants.js";
 import { raritySupportsGradient, raritySupportsGlow, raritySupportsBorderGradient, raritySupportsBorderGlow } from "./rarityConfig.js";
+import { normalizeRarityKey } from "./rarityListConfig.js";
 
 /**
  * Check if a setting exists in the game settings
@@ -39,7 +40,41 @@ export function getSetting(moduleId, key, defaultValue = null) {
  * @returns {*}
  */
 export function getRaritySetting(moduleId, rarity, settingKey, defaultValue = null) {
-  return getSetting(moduleId, `${rarity}-${settingKey}`, defaultValue);
+  const candidates = new Set();
+  const addCandidate = (value) => {
+    if (typeof value !== "string") return;
+    const trimmed = value.trim();
+    if (!trimmed) return;
+    candidates.add(trimmed);
+  };
+
+  const normalized = normalizeRarityKey(rarity);
+  addCandidate(normalized);
+
+  if (rarity !== undefined && rarity !== null) {
+    const raw = String(rarity).trim();
+    addCandidate(raw);
+    addCandidate(raw.toLowerCase());
+    addCandidate(raw.replace(/([a-z])([A-Z])/g, "$1$2").toLowerCase());
+    addCandidate(raw.replace(/[\s_-]+/g, ""));
+    addCandidate(raw.replace(/[\s_-]+/g, "").toLowerCase());
+  }
+
+  if (normalized) {
+    addCandidate(normalized.toLowerCase());
+    addCandidate(normalized.replace(/([a-z])([A-Z])/g, "$1$2").toLowerCase());
+    addCandidate(normalized.replace(/[\s_-]+/g, ""));
+    addCandidate(normalized.replace(/[\s_-]+/g, "").toLowerCase());
+  }
+
+  for (const candidate of candidates) {
+    const key = `${candidate}-${settingKey}`;
+    if (settingExists(moduleId, key)) {
+      return game.settings.get(moduleId, key);
+    }
+  }
+
+  return defaultValue;
 }
 
 /**
