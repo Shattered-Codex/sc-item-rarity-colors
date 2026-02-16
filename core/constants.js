@@ -18,7 +18,7 @@ export const RARITY_TIERS = {
   COMMON: "common",
   UNCOMMON: "uncommon",
   RARE: "rare",
-  VERY_RARE: "veryrare",
+  VERY_RARE: "veryRare",
   LEGENDARY: "legendary",
   ARTIFACT: "artifact",
 };
@@ -41,4 +41,3 @@ export const SELECTORS = {
   ITEM_SUBTITLE: ".subtitle",
   ITEM_DETAIL: ".item-detail",
 };
-

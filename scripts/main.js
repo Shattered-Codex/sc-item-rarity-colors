@@ -32,12 +32,17 @@ Hooks.once("init", async () => {
 
   registerModuleSettings(MODULE_ID);
   registerMenus(MODULE_ID);
+  applyMergedRarityConfigToDnd5e(MODULE_ID);
 
   // Register all partial templates for this module.
   await registerModulePartials(MODULE_ID, [
     "item-template.html",
     // Add more templates here later if needed.
   ]);
+});
+
+Hooks.once("setup", () => {
+  applyMergedRarityConfigToDnd5e(MODULE_ID);
 });
 
 /**
@@ -62,6 +67,10 @@ Hooks.on("setSetting", (moduleOrSetting, maybeKey) => {
     || fullSettingKey === `${MODULE_ID}.${RARITY_LIST_ENABLED_SETTING_KEY}`;
 
   if (!isModuleHookPayload && !isCoreHookPayload) return;
+  applyMergedRarityConfigToDnd5e(MODULE_ID);
+});
+
+Hooks.on("customDnd5e.setItemRarityConfig", () => {
   applyMergedRarityConfigToDnd5e(MODULE_ID);
 });
 

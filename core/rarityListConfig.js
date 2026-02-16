@@ -4,10 +4,67 @@ import { RARITY_CONFIG } from "./rarityConfig.js";
 export const RARITY_LIST_SETTING_KEY = "rarity-list-config";
 export const RARITY_LIST_ENABLED_SETTING_KEY = "rarity-list-enabled";
 
+const BUILTIN_RARITY_ALIASES = Object.freeze({
+  common: RARITY_TIERS.COMMON,
+  uncommon: RARITY_TIERS.UNCOMMON,
+  rare: RARITY_TIERS.RARE,
+  veryrare: RARITY_TIERS.VERY_RARE,
+  legendary: RARITY_TIERS.LEGENDARY,
+  artifact: RARITY_TIERS.ARTIFACT,
+});
+
+function toRarityLookupKey(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[\s_-]+/g, "");
+}
+
+function getKnownRarityKeys() {
+  const keys = [];
+
+  const systemRarity = CONFIG?.DND5E?.itemRarity ?? game?.dnd5e?.config?.itemRarity;
+  if (systemRarity && typeof systemRarity === "object") {
+    keys.push(...Object.keys(systemRarity));
+  }
+
+  const customModule = game?.modules?.get?.("custom-dnd5e");
+  const hasCustomSetting = game?.settings?.settings?.has?.("custom-dnd5e.item-rarity");
+  if (customModule?.active && hasCustomSetting) {
+    const customSetting = game.settings.get("custom-dnd5e", "item-rarity");
+    if (customSetting && typeof customSetting === "object") {
+      for (const [rawKey, rawValue] of Object.entries(customSetting)) {
+        keys.push(rawKey);
+        if (rawValue && typeof rawValue === "object" && typeof rawValue.key === "string") {
+          keys.push(rawValue.key);
+        }
+      }
+    }
+  }
+
+  return keys;
+}
+
 export function normalizeRarityKey(rawKey) {
   if (rawKey === undefined || rawKey === null) return null;
-  const normalized = String(rawKey).trim().toLowerCase();
-  return normalized || null;
+
+  const trimmed = String(rawKey).trim();
+  if (!trimmed) return null;
+
+  const lookupKey = toRarityLookupKey(trimmed);
+  if (!lookupKey) return null;
+
+  const builtin = BUILTIN_RARITY_ALIASES[lookupKey];
+  if (builtin) return builtin;
+
+  const knownKeys = getKnownRarityKeys();
+  for (const knownKey of knownKeys) {
+    if (toRarityLookupKey(knownKey) === lookupKey) {
+      return String(knownKey).trim();
+    }
+  }
+
+  return trimmed;
 }
 
 export function humanizeRarityLabel(key) {

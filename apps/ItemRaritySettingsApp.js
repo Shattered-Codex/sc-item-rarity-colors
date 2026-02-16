@@ -2,7 +2,8 @@ import { updateColorPickerVisibility } from "../ui/visibilityManager.js";
 import { updateMiniSheetPreview } from "../ui/previewUpdater.js";
 import { DEFAULT_COLORS, MODULE_ID as DEFAULT_MODULE_ID, RARITY_TIERS } from "../core/constants.js";
 import { RARITY_CONFIG } from "../core/rarityConfig.js";
-import { getMergedRarityEntries } from "../core/rarityListConfig.js";
+import { getMergedRarityEntries, normalizeRarityKey } from "../core/rarityListConfig.js";
+import { getRaritySetting } from "../core/settingsManager.js";
 import { ensureRaritySettingsRegistered } from "../settings/settingsRegistration.js";
 
 const FIELD_DEFINITIONS = [
@@ -83,9 +84,7 @@ export class ItemRaritySettingsApp extends HandlebarsApplicationMixin(Applicatio
   }
 
   _normalizeRarityKey(rawKey) {
-    if (rawKey === undefined || rawKey === null) return null;
-    const normalized = String(rawKey).trim().toLowerCase();
-    return normalized || null;
+    return normalizeRarityKey(rawKey);
   }
 
   _humanizeRarityLabel(key) {
@@ -217,12 +216,7 @@ export class ItemRaritySettingsApp extends HandlebarsApplicationMixin(Applicatio
     for (const rarity of rarityOptions.map((option) => option.key)) {
       this._draftSettings[rarity] = {};
       for (const field of this._getFieldDefinitionsForRarity(rarity)) {
-        const settingName = `${rarity}-${field.key}`;
-        const settingKey = `${moduleId}.${settingName}`;
-        const storedValue = game.settings.settings.has(settingKey)
-          ? game.settings.get(moduleId, settingName)
-          : field.defaultValue;
-
+        const storedValue = getRaritySetting(moduleId, rarity, field.key, field.defaultValue);
         this._draftSettings[rarity][field.key] = this._normalizeFieldValue(field, storedValue);
       }
     }
