@@ -3,10 +3,8 @@
  * Applies rarity-based visual effects to items within actor inventory sheets
  */
 
-import { normalizeRarity } from "./itemRarityHelper.js";
 import { getSheetType } from "./sheetDetectionHelper.js";
 import { getSheetStrategy } from "../sheets/sheetStrategies.js";
-import { isGradientEffectsEnabled, isBordersEnabled } from "../core/settingsManager.js";
 
 /**
  * Apply rarity effects to all items in an actor sheet
@@ -27,12 +25,6 @@ function applyStylesToActorInventory(actorApp, html, moduleId) {
   const sheetType = getSheetType(actorApp) || getSheetType(html);
   const strategy = getSheetStrategy(sheetType);
 
-  // Get main menu settings
-  const mainMenuSettings = {
-    enabledGradient: isGradientEffectsEnabled(),
-    enabledBorder: isBordersEnabled(),
-  };
-
   // Get item selector for this sheet type
   const itemSelector = strategy.getItemSelector();
 
@@ -47,7 +39,7 @@ function applyStylesToActorInventory(actorApp, html, moduleId) {
       if (!item) return;
 
       // Apply styles using the strategy
-      strategy.applyItemStyles($itemElement, item, mainMenuSettings, moduleId);
+      strategy.applyItemStyles($itemElement, item, moduleId);
     });
 }
 

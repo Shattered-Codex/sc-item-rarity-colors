@@ -44,18 +44,6 @@ function registerObjectSetting(moduleId, key, name, defaultValue) {
   });
 }
 
-// Register single settings for other module options.
-function registerSingleSetting(moduleId, key, name, defaultValue) {
-  if (game.settings.settings.has(`${moduleId}.${key}`)) return;
-  game.settings.register(moduleId, key, {
-    name,
-    scope: "world",
-    config: true,
-    type: Boolean,
-    default: defaultValue,
-  });
-}
-
 function registerSupportCardSetting(moduleId) {
   const key = "supportCardDisabled";
   if (game.settings.settings.has(`${moduleId}.${key}`)) return;
@@ -80,10 +68,15 @@ function registerRaritySettings(moduleId, rarityKey, rarityLabel) {
   registerBooleanSetting(moduleId, `${key}-enable-item-color`, `${title}: Enable Item Sheet Background Color`, false);
   registerColorSetting(moduleId, `${key}-text-color`, `${title} Item Sheet Text Color`, "#000000");
   registerBooleanSetting(moduleId, `${key}-enable-text-color`, `${title}: Enable Item Sheet Text Color`, false);
+  registerBooleanSetting(moduleId, `${key}-enable-inventory-gradient-effects`, `${title}: Enable Inventory Item Gradient Effects`, false);
+  registerBooleanSetting(moduleId, `${key}-enable-inventory-borders`, `${title}: Enable Inventory Coloured Borders`, false);
   registerBooleanSetting(moduleId, `${key}-enable-inventory-title-color`, `${title}: Enable Inventory Title/Subtitle Color`, false);
   registerColorSetting(moduleId, `${key}-inventory-title-color`, `${title}: Inventory Title/Subtitle Color`, "#000000");
   registerBooleanSetting(moduleId, `${key}-enable-inventory-details-color`, `${title}: Enable Inventory Details Text Color`, false);
   registerColorSetting(moduleId, `${key}-inventory-details-color`, `${title}: Inventory Details Text Color`, "#000000");
+  registerBooleanSetting(moduleId, `${key}-enable-foundry-interface-gradient-effects`, `${title}: Enable Foundry Interface Item Gradient Effects`, false);
+  registerBooleanSetting(moduleId, `${key}-enable-foundry-interface-text-color`, `${title}: Enable Foundry Interface Item Text Color`, false);
+  registerColorSetting(moduleId, `${key}-foundry-interface-text-color`, `${title}: Foundry Interface Item Text Color`, "#000000");
   registerBooleanSetting(moduleId, `${key}-enable-inventory-border-color`, `${title}: Enable Inventory Border Color`, false);
   registerColorSetting(moduleId, `${key}-inventory-border-color`, `${title}: Inventory Border Color`, "#ffffff");
   registerColorSetting(moduleId, `${key}-secondary-item-color`, `${title} Secondary Item Color`, "#ffffff");
@@ -127,7 +120,5 @@ export function registerModuleSettings(MODULE_ID) {
     registerRaritySettings(MODULE_ID, entry.key, entry.label);
   }
 
-  registerSingleSetting(MODULE_ID, "enableActorInventoryGradientEffects", "Enable Inventory Items Gradient Effects", false);
-  registerSingleSetting(MODULE_ID, "enableActorInventoryBorders", "Enable Inventory Items Coloured Borders", false);
   registerSupportCardSetting(MODULE_ID);
 }

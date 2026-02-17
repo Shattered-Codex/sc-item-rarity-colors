@@ -5,11 +5,9 @@
 
 import { 
   applyRarityStyles,
-  applyActorSheetItemBorder,
-  clearActorSheetItemBorder,
 } from "../scripts/itemRarityHelper.js";
-import { 
-  applyInventoryGradient, 
+import {
+  applyInventoryGradient,
   clearInventoryGradient,
   applyInventoryBorder,
   clearInventoryBorder,
@@ -20,7 +18,6 @@ import {
 } from "../core/styleAppliers.js";
 import { raritySupportsBorderGradient, raritySupportsBorderGlow } from "../core/rarityConfig.js";
 import { DEFAULT_COLORS, DEFAULT_GLOW_INTENSITY } from "../core/constants.js";
-import { isGradientEffectsEnabled, isBordersEnabled } from "../core/settingsManager.js";
 
 /**
  * Update the mini item sheet preview
@@ -30,7 +27,6 @@ import { isGradientEffectsEnabled, isBordersEnabled } from "../core/settingsMana
 export function updateMiniSheetPreview(formElement, rarity) {
   const $form = $(formElement);
   const $miniSheet = $form.find(".mini-item-sheet");
-  const $inventoryPreview = $form.find(".inventory-preview-item");
 
   if (!$miniSheet.length) return;
 
@@ -58,6 +54,7 @@ export function updateMiniSheetPreview(formElement, rarity) {
   }
 
   updateInventoryPreview($form, rarity, settings);
+  updateFoundryInterfacePreview($form, rarity, settings);
 }
 
 /**
@@ -89,14 +86,14 @@ function updateInventoryPreview(formElement, rarity, itemSheetSettings) {
   
   const enableBorderGlowCheckbox = $form.find(`input[type="checkbox"][name="${rarity}-enable-inventory-border-glow"]`);
   const enableBorderGlow = enableBorderGlowCheckbox.length ? enableBorderGlowCheckbox.is(":checked") : false;
+  const enableInventoryGradientEffects = $form.find(`input[type="checkbox"][name="${rarity}-enable-inventory-gradient-effects"]`).is(":checked");
+  const enableInventoryBorders = $form.find(`input[type="checkbox"][name="${rarity}-enable-inventory-borders"]`).is(":checked");
 
-  const mainMenuGradientEnabled = isGradientEffectsEnabled();
-  const mainMenuBorderEnabled = isBordersEnabled();
   const raritySupportsGradientForBorder = raritySupportsBorderGradient(rarity);
   const raritySupportsGlowForBorder = raritySupportsBorderGlow(rarity);
   const $inventoryRow = $inventoryPreview.find(".item-row");
   
-  if (mainMenuGradientEnabled && itemSheetSettings.enableItemColor) {
+  if (enableInventoryGradientEffects && itemSheetSettings.enableItemColor) {
     const gradientSettings = {
       backgroundColor: itemSheetSettings.backgroundColor,
       gradientEnabled: itemSheetSettings.gradientEnabled,
@@ -110,7 +107,7 @@ function updateInventoryPreview(formElement, rarity, itemSheetSettings) {
 
   const $inventoryImage = $inventoryPreview.find(".item-image");
   
-  if (!mainMenuBorderEnabled) {
+  if (!enableInventoryBorders) {
     clearInventoryBorder($inventoryImage);
   } else if (itemSheetSettings.enableItemColor) {
     const borderSettings = {
@@ -186,6 +183,61 @@ function updateInventoryPreview(formElement, rarity, itemSheetSettings) {
   } else {
     requestAnimationFrame(() => {
       clearDetailsColor($inventoryPreview, detailsSelectors);
+    });
+  }
+}
+
+/**
+ * Update the Foundry Item Directory preview row
+ * @param {jQuery|HTMLElement} formElement - The form element
+ * @param {string} rarity - Rarity tier
+ * @param {object} itemSheetSettings - Settings from item sheet
+ */
+function updateFoundryInterfacePreview(formElement, rarity, itemSheetSettings) {
+  const $form = $(formElement);
+  const $foundryPreview = $form.find(".foundry-interface-preview");
+  if (!$foundryPreview.length) return;
+
+  const enableFoundryGradient = $form.find(`input[type="checkbox"][name="${rarity}-enable-foundry-interface-gradient-effects"]`).is(":checked");
+  const enableFoundryTextColor = $form.find(`input[type="checkbox"][name="${rarity}-enable-foundry-interface-text-color"]`).is(":checked");
+  const foundryTextColorInput = $form.find(`input[type="color"][name="${rarity}-foundry-interface-text-color"]`);
+  const foundryTextColor = foundryTextColorInput.length ? foundryTextColorInput.val() : DEFAULT_COLORS.TEXT_DEFAULT;
+
+  const $directoryItem = $foundryPreview.find(".directory-item.is-target");
+  if (!$directoryItem.length) return;
+  const $otherDirectoryItems = $foundryPreview.find(".directory-item").not($directoryItem);
+  clearInventoryGradient($otherDirectoryItems);
+  $otherDirectoryItems.css({ "background": DEFAULT_COLORS.BACKGROUND_DEFAULT, "color": "" });
+  clearTitleColor($otherDirectoryItems, [".entry-name", ".entry-name a"]);
+
+  if (enableFoundryGradient && itemSheetSettings.enableItemColor) {
+    const primaryColor = itemSheetSettings.backgroundColor || DEFAULT_COLORS.BACKGROUND_FALLBACK;
+    const secondaryColor = itemSheetSettings.gradientEnabled
+      && itemSheetSettings.gradientColor
+      && itemSheetSettings.gradientColor !== DEFAULT_COLORS.BACKGROUND_FALLBACK
+      ? itemSheetSettings.gradientColor
+      : primaryColor;
+    const fallbackColor = DEFAULT_COLORS.BACKGROUND_DEFAULT;
+
+    $directoryItem.css({
+      "background": `linear-gradient(100deg, ${fallbackColor} 0%, ${fallbackColor} 46%, ${primaryColor} 72%, ${secondaryColor} 100%)`,
+      "box-shadow": "none",
+      "color": "#fff",
+    });
+    $directoryItem.css("color", "");
+  } else {
+    clearInventoryGradient($directoryItem);
+    $directoryItem.css({ "background": DEFAULT_COLORS.BACKGROUND_DEFAULT, "color": "" });
+  }
+
+  const titleSelectors = [".directory-item.is-target .entry-name", ".directory-item.is-target .entry-name a"];
+  if (enableFoundryTextColor && foundryTextColor) {
+    requestAnimationFrame(() => {
+      applyTitleColor($foundryPreview, foundryTextColor, titleSelectors);
+    });
+  } else {
+    requestAnimationFrame(() => {
+      clearTitleColor($foundryPreview, titleSelectors);
     });
   }
 }

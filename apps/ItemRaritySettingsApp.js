@@ -14,14 +14,19 @@ const FIELD_DEFINITIONS = [
   { key: "glow-option", label: "Enable Glow Effect", type: "checkbox", group: "item-sheet", defaultValue: false, requiredFlag: "supportsGlow" },
   { key: "enable-text-color", label: "Change Item Sheet Text Color", type: "checkbox", group: "item-sheet", defaultValue: false },
   { key: "text-color", label: "Item Sheet Text Color", type: "color", group: "item-sheet", defaultValue: "#000000" },
-  { key: "enable-inventory-title-color", label: "Change Item Title/Subtitle Color in Inventory", type: "checkbox", group: "actor-sheet", defaultValue: false },
-  { key: "inventory-title-color", label: "Inventory Item Title/Subtitle Color", type: "color", group: "actor-sheet", defaultValue: "#000000" },
-  { key: "enable-inventory-details-color", label: "Change Item Details Text Color", type: "checkbox", group: "actor-sheet", defaultValue: false },
-  { key: "inventory-details-color", label: "Inventory Item Details Text Color", type: "color", group: "actor-sheet", defaultValue: "#000000" },
+  { key: "enable-inventory-gradient-effects", label: "Enable Inventory Item Gradient Effects", type: "checkbox", group: "actor-sheet", defaultValue: false },
+  { key: "enable-inventory-borders", label: "Enable Inventory Coloured Borders", type: "checkbox", group: "actor-sheet", defaultValue: false },
   { key: "enable-inventory-border-color", label: "Change Item Border Color in Inventory", type: "checkbox", group: "actor-sheet", defaultValue: false },
   { key: "inventory-border-color", label: "Inventory Item Border Color", type: "color", group: "actor-sheet", defaultValue: "#ffffff" },
   { key: "inventory-border-secondary-color", label: "Inventory Item Border Secondary Color", type: "color", group: "actor-sheet", defaultValue: "#ffffff", requiredFlag: "supportsBorderGradient" },
   { key: "enable-inventory-border-glow", label: "Enable Inventory Border Glow", type: "checkbox", group: "actor-sheet", defaultValue: false, requiredFlag: "supportsBorderGlow" },
+  { key: "enable-inventory-title-color", label: "Change Item Title/Subtitle Color in Inventory", type: "checkbox", group: "actor-sheet", defaultValue: false },
+  { key: "inventory-title-color", label: "Inventory Item Title/Subtitle Color", type: "color", group: "actor-sheet", defaultValue: "#000000" },
+  { key: "enable-inventory-details-color", label: "Change Item Details Text Color", type: "checkbox", group: "actor-sheet", defaultValue: false },
+  { key: "inventory-details-color", label: "Inventory Item Details Text Color", type: "color", group: "actor-sheet", defaultValue: "#000000" },
+  { key: "enable-foundry-interface-gradient-effects", label: "Enable Foundry Interface Item Gradient Effects", type: "checkbox", group: "foundry-interface", defaultValue: false },
+  { key: "enable-foundry-interface-text-color", label: "Change Foundry Interface Item Text Color", type: "checkbox", group: "foundry-interface", defaultValue: false },
+  { key: "foundry-interface-text-color", label: "Foundry Interface Item Text Color", type: "color", group: "foundry-interface", defaultValue: "#000000" },
 ];
 
 /**
@@ -37,7 +42,6 @@ export class ItemRaritySettingsApp extends HandlebarsApplicationMixin(Applicatio
     this.moduleId = moduleId || ItemRaritySettingsApp.MODULE_ID;
     this.selectedRarity = this._resolveInitialRarity(context);
     this._draftSettings = null;
-    this._mainMenuChangeHandler = null;
   }
 
   /** Default app configuration */
@@ -51,7 +55,7 @@ export class ItemRaritySettingsApp extends HandlebarsApplicationMixin(Applicatio
       submitOnClose: false,
     },
     position: {
-      width: 760,
+      width: 1080,
       height: 860,
     },
     tag: "form",
@@ -101,6 +105,25 @@ export class ItemRaritySettingsApp extends HandlebarsApplicationMixin(Applicatio
       .split(" ")
       .map((part) => part ? part[0].toUpperCase() + part.slice(1) : part)
       .join(" ");
+  }
+
+  _isCoreRarityKey(key) {
+    const normalized = this._normalizeRarityKey(key);
+    return Object.values(RARITY_TIERS).includes(normalized);
+  }
+
+  _formatRarityLabelForDisplay(key, label) {
+    const fallback = this._humanizeRarityLabel(key);
+    const rawLabel = String(label || "").trim();
+    if (!rawLabel) return fallback;
+
+    if (!this._isCoreRarityKey(key)) return rawLabel;
+
+    const compactLabel = rawLabel.toLowerCase().replace(/[\s_-]+/g, "");
+    const compactKey = String(key || "").trim().toLowerCase().replace(/[\s_-]+/g, "");
+    const isLowercaseRawKeyLabel = rawLabel === rawLabel.toLowerCase() && compactLabel === compactKey;
+
+    return isLowercaseRawKeyLabel ? fallback : rawLabel;
   }
 
   _localizeMaybe(label) {
@@ -169,7 +192,7 @@ export class ItemRaritySettingsApp extends HandlebarsApplicationMixin(Applicatio
     if (entries.length) {
       return entries.map((entry) => ({
         key: entry.key,
-        label: entry.label || this._humanizeRarityLabel(entry.key),
+        label: this._formatRarityLabelForDisplay(entry.key, entry.label),
       }));
     }
 
@@ -206,6 +229,86 @@ export class ItemRaritySettingsApp extends HandlebarsApplicationMixin(Applicatio
     return value;
   }
 
+  _normalizeHexColor(value) {
+    if (typeof value !== "string") return null;
+
+    let normalized = value.trim().toUpperCase();
+    if (!normalized) return null;
+    if (!normalized.startsWith("#")) normalized = `#${normalized}`;
+    if (!/^#([0-9A-F]{3}|[0-9A-F]{6})$/.test(normalized)) return null;
+
+    if (normalized.length === 4) {
+      const shortHex = normalized.slice(1);
+      normalized = `#${shortHex.split("").map((char) => `${char}${char}`).join("")}`;
+    }
+
+    return normalized;
+  }
+
+  _bindColorControlInputs(formElement, onValueChange) {
+    const controls = formElement.querySelectorAll(".sc-item-rarity-colors__color-control");
+
+    controls.forEach((control) => {
+      const colorInput = control.querySelector('input[type="color"]');
+      const hexInput = control.querySelector(".sc-item-rarity-colors__hex-input");
+      if (!colorInput || !hexInput) return;
+
+      const syncHexFromColor = () => {
+        const normalized = this._normalizeHexColor(colorInput.value) || "#000000";
+        hexInput.value = normalized;
+        hexInput.classList.remove("is-invalid");
+      };
+
+      const applyHexToColor = ({ commit = false } = {}) => {
+        const normalized = this._normalizeHexColor(hexInput.value);
+        if (!normalized) {
+          if (commit) {
+            syncHexFromColor();
+            return false;
+          }
+          hexInput.classList.add("is-invalid");
+          return false;
+        }
+
+        hexInput.classList.remove("is-invalid");
+        hexInput.value = normalized;
+        colorInput.value = normalized.toLowerCase();
+        return true;
+      };
+
+      syncHexFromColor();
+
+      colorInput.addEventListener("input", () => {
+        syncHexFromColor();
+        onValueChange();
+      });
+
+      colorInput.addEventListener("change", () => {
+        syncHexFromColor();
+        onValueChange();
+      });
+
+      colorInput.addEventListener("mouseup", () => {
+        requestAnimationFrame(() => {
+          syncHexFromColor();
+          onValueChange();
+        });
+      });
+
+      hexInput.addEventListener("input", () => {
+        if (applyHexToColor()) onValueChange();
+      });
+
+      const commitHexInput = () => {
+        applyHexToColor({ commit: true });
+        onValueChange();
+      };
+
+      hexInput.addEventListener("change", commitHexInput);
+      hexInput.addEventListener("blur", commitHexInput);
+    });
+  }
+
   _ensureDraftSettings() {
     if (this._draftSettings) return;
 
@@ -239,8 +342,6 @@ export class ItemRaritySettingsApp extends HandlebarsApplicationMixin(Applicatio
    * Returns the settings fields and their current stored values.
    */
   _prepareContext() {
-    const moduleId = this._getEffectiveModuleId();
-
     const rarityOptions = this._getRarityOptions();
     if (!rarityOptions.length) {
       return { title: "No Rarities Found", fields: [] };
@@ -268,6 +369,7 @@ export class ItemRaritySettingsApp extends HandlebarsApplicationMixin(Applicatio
     const groupedFields = {
       itemSheet: fields.filter((field) => field.group === "item-sheet"),
       actorSheet: fields.filter((field) => field.group === "actor-sheet"),
+      foundryInterface: fields.filter((field) => field.group === "foundry-interface"),
     };
 
     const fieldsByKey = new Map(fields.map((field) => [field.key, field]));
@@ -280,6 +382,9 @@ export class ItemRaritySettingsApp extends HandlebarsApplicationMixin(Applicatio
     const titleColor = fieldsByKey.get("inventory-title-color")?.value || DEFAULT_COLORS.TEXT_DEFAULT;
     const enableDetailsColor = fieldsByKey.get("enable-inventory-details-color")?.value || false;
     const detailsColor = fieldsByKey.get("inventory-details-color")?.value || DEFAULT_COLORS.TEXT_DEFAULT;
+    const enableFoundryInterfaceGradientEffects = fieldsByKey.get("enable-foundry-interface-gradient-effects")?.value || false;
+    const enableFoundryInterfaceTextColor = fieldsByKey.get("enable-foundry-interface-text-color")?.value || false;
+    const foundryInterfaceTextColor = fieldsByKey.get("foundry-interface-text-color")?.value || DEFAULT_COLORS.TEXT_DEFAULT;
     const selectedRarityLabel =
       rarityOptions.find((option) => option.key === this.selectedRarity)?.label
       || RARITY_CONFIG[this.selectedRarity]?.label
@@ -305,6 +410,9 @@ export class ItemRaritySettingsApp extends HandlebarsApplicationMixin(Applicatio
       detailsColor,
       gradientEnabled: gradient,
       gradientColor: secondaryColor,
+      enableFoundryInterfaceGradientEffects,
+      enableFoundryInterfaceTextColor,
+      foundryInterfaceTextColor,
     };
   }
 
@@ -336,87 +444,22 @@ export class ItemRaritySettingsApp extends HandlebarsApplicationMixin(Applicatio
       return;
     }
 
-    // Ensure checkboxes are always visible
-    const checkboxes = this.form.querySelectorAll('input[type="checkbox"]');
-    checkboxes.forEach((checkbox) => {
-      const group = checkbox.closest(".form-group");
-
-      checkbox.style.setProperty("display", "block", "important");
-      checkbox.style.setProperty("visibility", "visible", "important");
-      checkbox.style.setProperty("opacity", "1", "important");
-      checkbox.style.setProperty("width", "20px", "important");
-      checkbox.style.setProperty("height", "20px", "important");
-      checkbox.style.setProperty("min-width", "20px", "important");
-      checkbox.style.setProperty("min-height", "20px", "important");
-      checkbox.style.setProperty("flex-shrink", "0", "important");
-
-      if (group) {
-        group.style.setProperty("display", "flex", "important");
-        group.style.setProperty("visibility", "visible", "important");
-        group.style.setProperty("align-items", "center", "important");
-        group.style.setProperty("opacity", "1", "important");
-      }
-    });
-
-    const updateColorPickerVisibilityLocal = () => {
+    const refreshUi = () => {
       updateColorPickerVisibility(this.form);
-    };
-
-    const updateMiniSheetLocal = () => {
+      this._captureCurrentRarityDraft(this.form);
       updateMiniSheetPreview(this.form, this.selectedRarity);
     };
 
-    updateColorPickerVisibilityLocal();
-    this._captureCurrentRarityDraft(this.form);
-    updateMiniSheetLocal();
+    refreshUi();
 
-    if (this._mainMenuChangeHandler) {
-      Hooks.off("setSetting", this._mainMenuChangeHandler);
-    }
+    this._bindColorControlInputs(this.form, () => {
+      requestAnimationFrame(() => refreshUi());
+    });
 
-    const moduleId = this.moduleId || ItemRaritySettingsApp.MODULE_ID;
-    this.moduleId = moduleId || DEFAULT_MODULE_ID;
-    this._mainMenuChangeHandler = (module, key) => {
-      if (module === this.moduleId &&
-          (key === "enableActorInventoryGradientEffects" || key === "enableActorInventoryBorders")) {
-        updateMiniSheetLocal();
-      }
-    };
-    Hooks.on("setSetting", this._mainMenuChangeHandler);
-
-    const inputs = this.form.querySelectorAll('input[type="color"], input[type="checkbox"]');
-    inputs.forEach((input) => {
-      input.addEventListener("input", (event) => {
-        const target = event.target;
-
-        if (target.type === "color") {
-          requestAnimationFrame(() => {
-            updateMiniSheetLocal();
-            updateColorPickerVisibilityLocal();
-            this._captureCurrentRarityDraft(this.form);
-          });
-          return;
-        }
-
-        updateMiniSheetLocal();
-        updateColorPickerVisibilityLocal();
-        this._captureCurrentRarityDraft(this.form);
-      });
-
-      input.addEventListener("change", () => {
-        updateMiniSheetLocal();
-        updateColorPickerVisibilityLocal();
-        this._captureCurrentRarityDraft(this.form);
-      });
-
-      if (input.type === "color") {
-        input.addEventListener("mouseup", () => {
-          requestAnimationFrame(() => {
-            updateMiniSheetLocal();
-            this._captureCurrentRarityDraft(this.form);
-          });
-        });
-      }
+    const checkboxInputs = this.form.querySelectorAll('input[type="checkbox"]');
+    checkboxInputs.forEach((input) => {
+      input.addEventListener("input", refreshUi);
+      input.addEventListener("change", refreshUi);
     });
   }
 
@@ -454,10 +497,6 @@ export class ItemRaritySettingsApp extends HandlebarsApplicationMixin(Applicatio
   }
 
   async close(options = {}) {
-    if (this._mainMenuChangeHandler) {
-      Hooks.off("setSetting", this._mainMenuChangeHandler);
-      this._mainMenuChangeHandler = null;
-    }
     return super.close(options);
   }
 

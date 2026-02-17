@@ -87,10 +87,9 @@ export class BaseSheetStrategy {
    * Apply styles to a single item
    * @param {jQuery} $itemElement - Item container element
    * @param {object} item - Item document
-   * @param {object} settings - Main menu settings
    * @param {string} moduleId - Module ID
    */
-  applyItemStyles($itemElement, item, settings, moduleId) {
+  applyItemStyles($itemElement, item, moduleId) {
     const rarity = normalizeRarity(item.system?.rarity?.value || item.system?.rarity);
     if (!rarity) return;
 
@@ -98,7 +97,7 @@ export class BaseSheetStrategy {
 
     // Apply gradient
     const $gradientElement = this.getGradientElement($itemElement);
-    if (!settings.enabledGradient || !raritySettings.enableItemColor) {
+    if (!raritySettings.enableInventoryGradientEffects || !raritySettings.enableItemColor) {
       clearInventoryGradient($gradientElement);
     } else {
       applyInventoryGradient($gradientElement, raritySettings);
@@ -108,7 +107,7 @@ export class BaseSheetStrategy {
     const $borderElement = this.getBorderElement($itemElement);
     this.prepareBorderElement($borderElement);
 
-    if (!settings.enabledBorder) {
+    if (!raritySettings.enableInventoryBorders) {
       clearInventoryBorder($borderElement);
     } else if (raritySettings.enableItemColor) {
       // Use background color for border
@@ -299,4 +298,3 @@ export function getSheetStrategy(sheetType) {
       return new Dnd5eSheetStrategy();
   }
 }
-

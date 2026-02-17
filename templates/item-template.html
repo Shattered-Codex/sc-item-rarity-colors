@@ -1,3 +1,4 @@
+<div class="sc-item-rarity-colors__preview-label">Item Sheet</div>
 <div class="mini-item-sheet"
      style="
        --primary-color: {{backgroundColor}};
@@ -70,6 +71,7 @@
   </div>
 </div>
 
+<div class="sc-item-rarity-colors__preview-label">Inventory</div>
 <div class="inventory-preview-item" 
      style="
        --gradient-color: {{#if gradientEnabled}}{{backgroundColor}}{{else}}transparent{{/if}};
@@ -140,6 +142,26 @@
             </span>
           </div>
         </div>
+      </li>
+    </ol>
+  </div>
+</div>
+
+<div class="sc-item-rarity-colors__preview-label">Sidebar</div>
+<div class="foundry-interface-preview">
+  <div class="directory-window">
+    <ol class="directory-list">
+      <li class="directory-item entry document item flexrow" data-entry-id="preview-item-a" draggable="true" style="display: flex;">
+        <img class="thumbnail" src="icons/svg/item-bag.svg" alt="Loot">
+        <a class="entry-name ellipsis" data-action="activateEntry">Loot</a>
+      </li>
+      <li class="directory-item entry document item flexrow is-target" data-entry-id="preview-item-b" draggable="true" style="display: flex;">
+        <img class="thumbnail" src="icons/weapons/maces/mace-spiked-skull.webp" alt="Mace">
+        <a class="entry-name ellipsis" data-action="activateEntry">Mace</a>
+      </li>
+      <li class="directory-item entry document item flexrow" data-entry-id="preview-item-c" draggable="true" style="display: flex;">
+        <img class="thumbnail" src="icons/svg/item-bag.svg" alt="Loot">
+        <a class="entry-name ellipsis" data-action="activateEntry">Loot</a>
       </li>
     </ol>
   </div>

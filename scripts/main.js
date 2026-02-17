@@ -7,6 +7,7 @@ import {
 } from "../core/rarityListConfig.js";
 import { applyItemRarityEffects } from "./applyItemRarityEffects.js";
 import { applyActorInventoryEffects } from "./applyActorInventoryEffects.js";
+import { applyItemDirectoryEffects } from "./applyItemDirectoryEffects.js";
 import { registerModulePartials } from "./partialsHelper.js";
 import { MODULE_ID } from "../core/constants.js";
 
@@ -53,6 +54,7 @@ Hooks.once("ready", () => {
   applyMergedRarityConfigToDnd5e(MODULE_ID);
   applyItemRarityEffects(MODULE_ID);
   applyActorInventoryEffects(MODULE_ID);
+  applyItemDirectoryEffects(MODULE_ID);
   void maybeShowSupportCard();
 });
 
