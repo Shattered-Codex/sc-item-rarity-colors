@@ -5,6 +5,7 @@
 
 import { getSheetType } from "./sheetDetectionHelper.js";
 import { getSheetStrategy } from "../sheets/sheetStrategies.js";
+import { isModuleSettingChange } from "../core/settingChangeHelper.js";
 
 /**
  * Apply rarity effects to all items in an actor sheet
@@ -76,9 +77,8 @@ export function applyActorInventoryEffects(moduleId) {
   Hooks.on("renderActorSheet5e", handleActorSheetRender);
 
   // Reapply effects when module settings change
-  Hooks.on("setSetting", (module) => {
-    if (module === moduleId) {
-      refreshAllActorSheets(moduleId);
-    }
+  Hooks.on("setSetting", (moduleOrSetting, maybeKey) => {
+    if (!isModuleSettingChange(moduleOrSetting, maybeKey, moduleId)) return;
+    refreshAllActorSheets(moduleId);
   });
 }

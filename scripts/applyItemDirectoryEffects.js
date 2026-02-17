@@ -3,8 +3,9 @@
  * Applies rarity-based visual effects to item rows in the world Items sidebar tab.
  */
 
-import { normalizeRarity } from "./itemRarityHelper.js";
+import { getItemRarity } from "./itemRarityHelper.js";
 import { buildRaritySettings } from "../core/settingsManager.js";
+import { isModuleSettingChange } from "../core/settingChangeHelper.js";
 
 const DIRECTORY_ROW_SELECTOR = ".directory-item.entry.document.item, .directory-item.document.item, .directory-item.item";
 const RARITY_CLASS_PREFIX = "scirc-rarity-";
@@ -200,11 +201,7 @@ export function applyItemDirectoryEffects(moduleId) {
 
     clearRowVisuals(rowElement);
 
-    const rawRarity = item?.system?.rarity?.value
-      ?? item?.system?.rarity
-      ?? item?.system?.details?.rarity
-      ?? item?.rarity;
-    const rarity = normalizeRarity(rawRarity);
+    const rarity = getItemRarity(item);
     if (!rarity) return;
 
     const settings = getCachedRaritySettings(rarity);
@@ -306,12 +303,7 @@ export function applyItemDirectoryEffects(moduleId) {
   });
 
   Hooks.on("setSetting", (moduleOrSetting, maybeKey) => {
-    const moduleMatch = moduleOrSetting === moduleId;
-    const fullKey = typeof moduleOrSetting === "string"
-      ? (moduleOrSetting.includes(".") ? moduleOrSetting : `${moduleOrSetting}.${maybeKey ?? ""}`)
-      : moduleOrSetting?.key;
-    const keyMatch = typeof fullKey === "string" && fullKey.startsWith(`${moduleId}.`);
-    if (!moduleMatch && !keyMatch) return;
+    if (!isModuleSettingChange(moduleOrSetting, maybeKey, moduleId)) return;
 
     raritySettingsCache.clear();
     requestRefresh();

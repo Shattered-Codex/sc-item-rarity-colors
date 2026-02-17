@@ -229,15 +229,16 @@ export class ItemRaritySettingsApp extends HandlebarsApplicationMixin(Applicatio
     return value;
   }
 
-  _normalizeHexColor(value) {
+  _normalizeHexColor(value, { allowShort = true, expandShort = true } = {}) {
     if (typeof value !== "string") return null;
 
     let normalized = value.trim().toUpperCase();
     if (!normalized) return null;
     if (!normalized.startsWith("#")) normalized = `#${normalized}`;
-    if (!/^#([0-9A-F]{3}|[0-9A-F]{6})$/.test(normalized)) return null;
+    const pattern = allowShort ? /^#([0-9A-F]{3}|[0-9A-F]{6})$/ : /^#[0-9A-F]{6}$/;
+    if (!pattern.test(normalized)) return null;
 
-    if (normalized.length === 4) {
+    if (expandShort && normalized.length === 4) {
       const shortHex = normalized.slice(1);
       normalized = `#${shortHex.split("").map((char) => `${char}${char}`).join("")}`;
     }
@@ -260,7 +261,10 @@ export class ItemRaritySettingsApp extends HandlebarsApplicationMixin(Applicatio
       };
 
       const applyHexToColor = ({ commit = false } = {}) => {
-        const normalized = this._normalizeHexColor(hexInput.value);
+        const normalized = this._normalizeHexColor(hexInput.value, {
+          allowShort: commit,
+          expandShort: commit,
+        });
         if (!normalized) {
           if (commit) {
             syncHexFromColor();

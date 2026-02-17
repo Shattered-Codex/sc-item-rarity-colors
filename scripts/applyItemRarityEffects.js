@@ -1,13 +1,13 @@
-import { normalizeRarity, applyRarityStyles, removeRarityStyles } from "./itemRarityHelper.js";
+import { applyRarityStyles, getItemRarity, removeRarityStyles } from "./itemRarityHelper.js";
 import { buildRaritySettings } from "../core/settingsManager.js";
-import { MODULE_ID } from "../core/constants.js";
+import { isModuleSettingChange } from "../core/settingChangeHelper.js";
 
 /**
  * Applies rarity-based visual effects to item sheets.
  *
- * @param {string} MODULE_ID - The module's unique identifier.
+ * @param {string} moduleId - The module's unique identifier.
  */
-export function applyItemRarityEffects(MODULE_ID) {
+export function applyItemRarityEffects(moduleId) {
 
   /**
    * Apply rarity styles to a given item sheet.
@@ -20,7 +20,7 @@ export function applyItemRarityEffects(MODULE_ID) {
     if (!item || item.documentName !== "Item") return;
 
     // Normalize rarity value (handles both new and legacy system fields)
-    const rarity = normalizeRarity(item.system?.rarity?.value || item.system?.rarity);
+    const rarity = getItemRarity(item);
 
     // Find the sheet root element
     const sheetEl = html[0]?.closest?.(".application.sheet.item") || html[0];
@@ -58,7 +58,8 @@ export function applyItemRarityEffects(MODULE_ID) {
   Hooks.on("renderItemSheetV2", applyStylesToSheet);
   Hooks.on("renderItemSheet5e2", applyStylesToSheet);
 
-  Hooks.on("setSetting", (module) => {
-    if (module === MODULE_ID) refreshAllItemSheets();
+  Hooks.on("setSetting", (moduleOrSetting, maybeKey) => {
+    if (!isModuleSettingChange(moduleOrSetting, maybeKey, moduleId)) return;
+    refreshAllItemSheets();
   });
 }

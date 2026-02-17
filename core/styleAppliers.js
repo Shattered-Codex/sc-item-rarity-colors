@@ -5,6 +5,9 @@
 
 import { DEFAULT_COLORS, DEFAULT_GLOW_INTENSITY } from "./constants.js";
 
+const BORDER_GLOW_CLASS_PREFIX = "scirc-glow-fade-border-";
+const BORDER_GLOW_CLASS_REGEX = /(^|\s)(?:scirc-)?glow-fade-border-\S+/g;
+
 /**
  * Apply gradient background to an actor inventory item
  * @param {jQuery|HTMLElement} element - Target element
@@ -73,14 +76,12 @@ export function applyInventoryBorder(element, settings, intensity = DEFAULT_GLOW
     });
   }
 
-  $element.removeClass((_, className) => {
-    return (className.match(/(^|\s)glow-fade-border-\S+/g) || []).join(" ");
-  });
+  $element.removeClass((_, className) => (className.match(BORDER_GLOW_CLASS_REGEX) || []).join(" "));
   $element.css("box-shadow", "");
 
   if (settings.glowEnabled) {
     $element.css("border", "none");
-    const animationName = `glow-fade-border-${primaryColor.replace("#", "")}-${secondaryColor.replace("#", "")}`;
+    const animationName = `${BORDER_GLOW_CLASS_PREFIX}${primaryColor.replace("#", "")}-${secondaryColor.replace("#", "")}`;
 
     if (!document.getElementById(animationName)) {
       const styleTag = document.createElement("style");
@@ -121,9 +122,7 @@ export function clearInventoryBorder(element) {
   const $element = element instanceof jQuery ? element : $(element);
   
   // Remove glow animation classes
-  $element.removeClass((_, className) => {
-    return (className.match(/(^|\s)glow-fade-border-\S+/g) || []).join(" ");
-  });
+  $element.removeClass((_, className) => (className.match(BORDER_GLOW_CLASS_REGEX) || []).join(" "));
   
   // Clear border styles
   $element.css({
@@ -191,4 +190,3 @@ export function clearDetailsColor(container, selectors) {
     $container.find(selector).css("color", "");
   });
 }
-

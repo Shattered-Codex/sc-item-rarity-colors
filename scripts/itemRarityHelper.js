@@ -1,4 +1,8 @@
 import { normalizeRarityKey } from "../core/rarityListConfig.js";
+import { applyInventoryBorder, clearInventoryBorder } from "../core/styleAppliers.js";
+
+const SHEET_GLOW_CLASS = "scirc-glow";
+const BORDER_GLOW_CLASS_REGEX = /(^|\s)(?:scirc-)?glow-fade-border-\S+/g;
 
 /**
  * Normalize a rarity string to match module settings.
@@ -8,6 +12,30 @@ import { normalizeRarityKey } from "../core/rarityListConfig.js";
  */
 export function normalizeRarity(rawRarity) {
   return normalizeRarityKey(rawRarity);
+}
+
+/**
+ * Extract raw rarity from supported item schema variants.
+ *
+ * @param {object} item - Item document or plain item-like object.
+ * @returns {*}
+ */
+export function extractRawItemRarity(item) {
+  return item?.system?.rarity?.value
+    ?? item?.system?.rarity
+    ?? item?.system?.details?.rarity
+    ?? item?.rarity
+    ?? null;
+}
+
+/**
+ * Get normalized rarity directly from an item object.
+ *
+ * @param {object} item - Item document or plain item-like object.
+ * @returns {string|null}
+ */
+export function getItemRarity(item) {
+  return normalizeRarity(extractRawItemRarity(item));
 }
 
 /**
@@ -41,13 +69,11 @@ export function applyRarityStyles(element, settings) {
       "background-color": "",
     });
     // Also remove glow when background color is disabled
-    $element.removeClass("glow");
+    $element.removeClass(SHEET_GLOW_CLASS);
     $element.css("--glow-primary", "");
     $element.css("--glow-secondary", "");
     // Remove any glow animation classes
-    $element.removeClass((_, className) => {
-      return (className.match(/(^|\s)glow-fade-border-\S+/g) || []).join(" ");
-    });
+    $element.removeClass((_, className) => (className.match(BORDER_GLOW_CLASS_REGEX) || []).join(" "));
   }
 
   // Text Color - Support both itemSheetTextColor (new) and textColor (legacy/preview)
@@ -150,17 +176,15 @@ export function applyRarityStyles(element, settings) {
 
   // Glow
   if (settings.enableItemColor !== false && settings.glowEnabled) {
-    $element.addClass("glow");
+    $element.addClass(SHEET_GLOW_CLASS);
     $element.css("--glow-primary", settings.backgroundColor);
     $element.css("--glow-secondary", settings.gradientEnabled ? settings.gradientColor : "#000000");
   } else {
-    $element.removeClass("glow");
+    $element.removeClass(SHEET_GLOW_CLASS);
     $element.css("--glow-primary", "");
     $element.css("--glow-secondary", "");
     // Remove any glow animation classes
-    $element.removeClass((_, className) => {
-      return (className.match(/(^|\s)glow-fade-border-\S+/g) || []).join(" ");
-    });
+    $element.removeClass((_, className) => (className.match(BORDER_GLOW_CLASS_REGEX) || []).join(" "));
   }
 }
 
@@ -252,14 +276,12 @@ export function removeRarityStyles(element) {
   }
 
   // Remove glow class and related CSS variables
-  $element.removeClass("glow");
+  $element.removeClass(SHEET_GLOW_CLASS);
   $element.css("--glow-primary", "");
   $element.css("--glow-secondary", "");
 
   // Remove any glow animation classes
-  $element.removeClass((_, className) => {
-    return (className.match(/(^|\s)glow-fade-border-\S+/g) || []).join(" ");
-  });
+  $element.removeClass((_, className) => (className.match(BORDER_GLOW_CLASS_REGEX) || []).join(" "));
 }
 
 /**
@@ -270,66 +292,7 @@ export function removeRarityStyles(element) {
  * @param {number} intensity - Glow intensity (default: 6px).
  */
 export function applyActorSheetItemBorder(element, settings, intensity = 6) {
-  if (!element) return;
-
-  const $element = element instanceof jQuery ? element : $(element);
-
-  const primaryColor = settings.backgroundColor || "#ffffff";
-  const secondaryColor = (settings.gradientColor && settings.gradientColor.trim() !== "" && settings.gradientColor !== primaryColor)
-    ? settings.gradientColor
-    : primaryColor;
-
-  if (settings.gradientEnabled) {
-    $element.css({
-      "border": `2px solid transparent`,
-      "border-image": `linear-gradient(135deg, ${primaryColor} 50%, ${secondaryColor} 50%) 1`,
-    });
-  } else {
-    $element.css({
-      "border": `2px solid ${primaryColor}`,
-      "border-image": "none",
-    });
-  }
-
-  // Remove previous glow animations
-  $element.removeClass((_, className) => {
-    return (className.match(/(^|\s)glow-fade-border-\S+/g) || []).join(" ");
-  });
-  $element.css("box-shadow", "");
-
-  // Apply glow animation if enabled
-  if (settings.glowEnabled) {
-    $element.css("border", "none");
-
-    const animationName = `glow-fade-border-${primaryColor.replace("#", "")}-${secondaryColor.replace("#", "")}`;
-
-    if (!document.getElementById(animationName)) {
-      const styleTag = document.createElement("style");
-      styleTag.id = animationName;
-      styleTag.innerHTML = `
-        @keyframes ${animationName} {
-          0% {
-            border-color: ${primaryColor};
-            box-shadow: 0 0 ${intensity}px ${secondaryColor}, 0 0 ${intensity * 1.5}px ${secondaryColor};
-          }
-          50% {
-            border-color: ${secondaryColor};
-            box-shadow: 0 0 ${intensity}px ${primaryColor}, 0 0 ${intensity * 1.5}px ${primaryColor};
-          }
-          100% {
-            border-color: ${primaryColor};
-            box-shadow: 0 0 ${intensity}px ${secondaryColor}, 0 0 ${intensity * 1.5}px ${secondaryColor};
-          }
-        }
-        .${animationName} {
-          animation: ${animationName} 6s infinite ease-in-out;
-        }
-      `;
-      document.head.appendChild(styleTag);
-    }
-
-    $element.addClass(animationName);
-  }
+  applyInventoryBorder(element, settings, intensity);
 }
 
 /**
@@ -338,15 +301,5 @@ export function applyActorSheetItemBorder(element, settings, intensity = 6) {
  * @param {HTMLElement|JQuery} element - Target element(s) or jQuery wrapper.
  */
 export function clearActorSheetItemBorder(element) {
-  const $targets = element instanceof jQuery ? element : $(element);
-
-  $targets.each((_, icon) => {
-    $(icon).css({
-      border: "",
-      "border-image": "",
-      "box-shadow": ""
-    });
-    // Remove glow animation classes
-    $(icon).removeClass((_, c) => (c.match(/(^|\s)glow-fade-border-\S+/g) || []).join(" "));
-  });
+  clearInventoryBorder(element);
 }

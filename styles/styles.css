@@ -1,15 +1,15 @@
 /* Glow effect styles */
-.glow {
+.application.sheet.item.scirc-glow {
   border: 3px solid transparent;
   border-radius: 8px;
-  animation: glowAnimation 3s infinite alternate;
+  animation: scircGlowAnimation 3s infinite alternate;
   box-shadow: 0 0 15px var(--glow-primary, #ffffff);
   background: linear-gradient(to left, var(--glow-primary, #ffffff), var(--glow-secondary, #ffffff));
   background-size: 200% 100%;
 }
 
 /* Glow animation keyframes */
-@keyframes glowAnimation {
+@keyframes scircGlowAnimation {
   0% {
     border-color: var(--glow-primary, #ffffff);
     box-shadow: 0 0 15px var(--glow-primary, #ffffff);
@@ -120,11 +120,15 @@
   color: var(--scirc-text-strong);
 }
 
-section.sc-item-rarity-colors__preview-panel {
+.sc-item-rarity-colors__preview-panel,
+.sc-item-rarity-colors__settings-panel {
   border: 1px solid var(--scirc-border);
   border-radius: 8px;
   background: var(--scirc-bg-panel);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.sc-item-rarity-colors__preview-panel {
   padding: 0.65rem;
   min-height: 0;
   display: flex;
@@ -142,15 +146,6 @@ section.sc-item-rarity-colors__preview-panel {
   overflow: auto;
 }
 
-/* .sc-item-rarity-colors__preview-panel {
-  border: 1px solid var(--scirc-border);
-  border-radius: 8px;
-  background: var(--scirc-bg-panel);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
-  padding: 0.65rem;
-  min-height: 0;
-} */
-
 .sc-item-rarity-colors__preview-panel h4,
 .sc-item-rarity-colors__settings-section h4 {
   margin: 0;
@@ -160,30 +155,13 @@ section.sc-item-rarity-colors__preview-panel {
   font-size: 1.05rem;
 }
 
-.sc-item-rarity-colors__preview-panel>.hint {
+.sc-item-rarity-colors__preview-panel > .hint {
   margin: 0.1rem 0 0.5rem;
   color: var(--scirc-text-dim);
 }
 
-/* .sc-item-rarity-colors__preview-panel {
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  min-height: 0;
-  height: 100%;
-} */
-
 .sc-item-rarity-colors__settings-grid {
-  /* display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  width: 100%;
-  min-height: 0;
-  min-width: 0;
-  max-height: none;
-  overflow: visible; */
   padding-right: 0.25rem;
-  /* scrollbar-gutter: stable both-edges; */
 }
 
 .sc-item-rarity-colors__preview {
@@ -209,19 +187,8 @@ section.sc-item-rarity-colors__preview-panel {
 }
 
 .sc-item-rarity-colors__settings-panel {
-  border: 1px solid var(--scirc-border);
-  border-radius: 8px;
-  background: var(--scirc-bg-panel);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
   padding: 0.5rem;
-  margin-bottom: 10px;
-  /* display: flex;
-  flex-direction: column;
-  width: 100%;
-  min-height: 0;
-  min-width: 0;
-  max-width: 100%;
-  overflow: hidden; */
+  margin-bottom: 0.625rem;
 }
 
 .sc-item-rarity-colors__settings {
@@ -362,6 +329,29 @@ section.sc-item-rarity-colors__preview-panel {
 
 .sc-item-rarity-colors footer.form-footer button i {
   margin-right: 0.35rem;
+}
+
+.sc-item-rarity-colors footer.form-footer .sc-item-rarity-colors__save-button {
+  border-color: color-mix(in srgb, #39f08c 65%, #323749 35%);
+  background: color-mix(in srgb, #39f08c 18%, #1a1c28 82%);
+  color: #f5fff8;
+  box-shadow: 0 0 0 1px color-mix(in srgb, #39f08c 18%, transparent 82%);
+}
+
+.sc-item-rarity-colors footer.form-footer .sc-item-rarity-colors__save-button:hover,
+.sc-item-rarity-colors footer.form-footer .sc-item-rarity-colors__save-button:focus {
+  border-color: color-mix(in srgb, #7bffb8 80%, #323749 20%);
+  box-shadow: 0 0 0 1px color-mix(in srgb, #7bffb8 55%, transparent 45%);
+}
+
+.scirc-support-button i {
+  color: #ff424d;
+}
+
+.scirc-support-button:hover i,
+.scirc-support-button:focus i {
+  color: #ff6a72;
+  text-shadow: 0 0 6px rgba(255, 66, 77, 0.35);
 }
 
 .sc-item-rarity-colors__is-hidden {
@@ -600,7 +590,32 @@ section.sc-item-rarity-colors__preview-panel {
   margin-top: 0.4rem;
 }
 
-.item-detail.empty::after {
+.sc-item-rarity-colors__rarity-manager .form-footer .new-button {
+  border-color: color-mix(in srgb, var(--scirc-accent) 55%, #323749 45%);
+  background: color-mix(in srgb, var(--scirc-accent) 14%, #1a1c28 86%);
+  color: var(--scirc-text-strong);
+}
+
+.sc-item-rarity-colors__rarity-manager .form-footer .save-button {
+  border-color: color-mix(in srgb, #39f08c 65%, #323749 35%);
+  background: color-mix(in srgb, #39f08c 18%, #1a1c28 82%);
+  color: #f5fff8;
+  box-shadow: 0 0 0 1px color-mix(in srgb, #39f08c 18%, transparent 82%);
+}
+
+.sc-item-rarity-colors__rarity-manager .form-footer .new-button:hover,
+.sc-item-rarity-colors__rarity-manager .form-footer .new-button:focus {
+  border-color: color-mix(in srgb, var(--scirc-accent-soft) 75%, #323749 25%);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--scirc-accent-soft) 40%, transparent 60%);
+}
+
+.sc-item-rarity-colors__rarity-manager .form-footer .save-button:hover,
+.sc-item-rarity-colors__rarity-manager .form-footer .save-button:focus {
+  border-color: color-mix(in srgb, #7bffb8 80%, #323749 20%);
+  box-shadow: 0 0 0 1px color-mix(in srgb, #7bffb8 55%, transparent 45%);
+}
+
+.scirc-managed-item-row .item-detail.empty::after {
   color: inherit;
 }
 
@@ -641,12 +656,7 @@ section.sc-item-rarity-colors__preview-panel {
   display: none;
 }
 
-.sc-item-rarity-colors__preview .inventory-preview-item .item-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
+.sc-item-rarity-colors__preview .inventory-preview-item .item-list,
 .sc-item-rarity-colors__preview .inventory-preview-item .item {
   list-style: none;
   margin: 0;
