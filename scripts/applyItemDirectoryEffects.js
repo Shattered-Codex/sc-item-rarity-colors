@@ -5,10 +5,11 @@
 
 import { getItemRarity } from "./itemRarityHelper.js";
 import { buildRaritySettings } from "../core/settingsManager.js";
-import { isModuleSettingChange } from "../core/settingChangeHelper.js";
+import { isModuleSettingChange, registerSettingChangeHooks } from "../core/settingChangeHelper.js";
+import { debugLog, debugWarn } from "../core/debug.js";
+import { applyRarityClass, clearRarityClasses, ensureRuntimeRarityStyles } from "../core/runtimeRarityStyles.js";
 
 const DIRECTORY_ROW_SELECTOR = ".directory-item.entry.document.item, .directory-item.document.item, .directory-item.item";
-const RARITY_CLASS_PREFIX = "scirc-rarity-";
 const DIRECTORY_STATE_CLASSES = ["scirc-dir-gradient-enabled", "scirc-dir-text-enabled"];
 
 function getItemIdFromElement(element) {
@@ -68,22 +69,11 @@ function resolveItemFromRow(app, rowElement) {
   return null;
 }
 
-function toRarityClassKey(rarity) {
-  return String(rarity || "")
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "");
-}
-
 function clearRowVisuals(rowElement) {
   if (!rowElement) return;
 
   DIRECTORY_STATE_CLASSES.forEach((stateClass) => rowElement.classList.remove(stateClass));
-  for (const className of [...rowElement.classList]) {
-    if (className.startsWith(RARITY_CLASS_PREFIX)) {
-      rowElement.classList.remove(className);
-    }
-  }
+  clearRarityClasses(rowElement);
 
   rowElement.style.removeProperty("--scirc-dir-bg-primary");
   rowElement.style.removeProperty("--scirc-dir-bg-secondary");
@@ -186,6 +176,7 @@ function isItemsSidebarContext(app, html) {
 }
 
 export function applyItemDirectoryEffects(moduleId) {
+  ensureRuntimeRarityStyles(moduleId);
   const raritySettingsCache = new Map();
 
   const getCachedRaritySettings = (rarity) => {
@@ -197,58 +188,74 @@ export function applyItemDirectoryEffects(moduleId) {
   };
 
   const applyStylesToDirectoryRow = (item, rowElement) => {
-    if (!rowElement) return;
+    if (!rowElement) return { applied: false, reason: "missing-row" };
 
     clearRowVisuals(rowElement);
 
     const rarity = getItemRarity(item);
-    if (!rarity) return;
+    if (!rarity) return { applied: false, reason: "missing-rarity" };
 
     const settings = getCachedRaritySettings(rarity);
-    if (!settings) return;
+    if (!settings) return { applied: false, reason: "missing-settings", rarity };
 
-    const rarityClassKey = toRarityClassKey(rarity);
-    if (rarityClassKey) {
-      rowElement.classList.add(`${RARITY_CLASS_PREFIX}${rarityClassKey}`);
-    }
-
-    const primaryColor = settings.backgroundColor || "#ffffff";
-    const secondaryColor = settings.gradientEnabled && settings.gradientColor && settings.gradientColor !== "#ffffff"
-      ? settings.gradientColor
-      : "#252830";
-
-    rowElement.style.setProperty("--scirc-dir-bg-primary", primaryColor);
-    rowElement.style.setProperty("--scirc-dir-bg-secondary", secondaryColor);
-    rowElement.style.setProperty("--scirc-dir-bg-fallback", "#252830");
+    applyRarityClass(rowElement, rarity);
 
     if (settings.enableFoundryInterfaceGradientEffects && settings.enableItemColor) {
       rowElement.classList.add("scirc-dir-gradient-enabled");
-      rowElement.style.background = `linear-gradient(100deg, #252830 0%, #252830 46%, ${primaryColor} 72%, ${secondaryColor} 100%)`;
     }
 
     if (settings.enableFoundryInterfaceTextColor && settings.foundryInterfaceTextColor) {
-      rowElement.style.setProperty("--scirc-dir-text-color", settings.foundryInterfaceTextColor);
       rowElement.classList.add("scirc-dir-text-enabled");
-      rowElement
-        .querySelectorAll(".entry-name, .entry-name a, .document-name, .document-name a")
-        .forEach((el) => {
-          el.style.color = settings.foundryInterfaceTextColor;
-          el.style.textShadow = "none";
-        });
     }
+
+    return {
+      applied: true,
+      rarity,
+      gradientApplied: settings.enableFoundryInterfaceGradientEffects && settings.enableItemColor,
+      textColorApplied: settings.enableFoundryInterfaceTextColor && Boolean(settings.foundryInterfaceTextColor),
+    };
   };
 
   const applyStylesToItemDirectoryRoot = (rootElement, app = null) => {
     const rows = getRowsFromRoot(rootElement);
     if (!rows.length) return;
 
+    let appliedCount = 0;
+    let unresolvedCount = 0;
+    let noRarityCount = 0;
+    let noSettingsCount = 0;
+
     for (const rowElement of rows) {
       const item = resolveItemForRow(rowElement, app);
       if (!item) {
         clearRowVisuals(rowElement);
+        unresolvedCount += 1;
         continue;
       }
-      applyStylesToDirectoryRow(item, rowElement);
+      const result = applyStylesToDirectoryRow(item, rowElement);
+      if (result?.applied) {
+        appliedCount += 1;
+        continue;
+      }
+      if (result?.reason === "missing-rarity") noRarityCount += 1;
+      if (result?.reason === "missing-settings") noSettingsCount += 1;
+    }
+
+    debugLog("Item directory styles pass complete", {
+      appId: app?.id ?? null,
+      tabName: app?.tabName ?? null,
+      rowCount: rows.length,
+      appliedCount,
+      unresolvedCount,
+      noRarityCount,
+      noSettingsCount,
+    });
+
+    if (unresolvedCount > 0) {
+      debugWarn("Item directory rows without resolvable Item document", {
+        appId: app?.id ?? null,
+        unresolvedCount,
+      });
     }
   };
 
@@ -256,6 +263,7 @@ export function applyItemDirectoryEffects(moduleId) {
     const roots = getKnownItemDirectoryRoots();
     if (!roots.length) {
       // Fallback for Foundry render timings where sidebar roots are not available yet.
+      debugWarn("No known item directory roots found; using document fallback refresh");
       applyStylesToItemDirectoryRoot(document);
       return;
     }
@@ -266,9 +274,12 @@ export function applyItemDirectoryEffects(moduleId) {
   };
 
   let refreshTimer = null;
-  const requestRefresh = () => {
+  const requestRefresh = (reason = "unspecified") => {
+    const hadPendingRefresh = Boolean(refreshTimer);
     if (refreshTimer) clearTimeout(refreshTimer);
+    debugLog("Item directory refresh requested", { reason, debounced: hadPendingRefresh });
     refreshTimer = setTimeout(() => {
+      debugLog("Item directory refresh executing", { reason });
       refreshAllKnownItemDirectories();
       refreshTimer = null;
     }, 30);
@@ -276,12 +287,17 @@ export function applyItemDirectoryEffects(moduleId) {
 
   const scheduleApply = (htmlOrElement, app) => {
     const root = resolveRootElement(htmlOrElement);
+    debugLog("Item directory render scheduling styles", {
+      appId: app?.id ?? null,
+      tabName: app?.tabName ?? null,
+      hasRoot: Boolean(root),
+    });
     if (root) {
       applyStylesToItemDirectoryRoot(root, app);
       requestAnimationFrame(() => applyStylesToItemDirectoryRoot(root, app));
     }
     // Extra pass to catch delayed DOM injections in sidebar render cycle.
-    setTimeout(() => requestRefresh(), 80);
+    setTimeout(() => requestRefresh("delayed-sidebar-dom-injection"), 80);
   };
 
   Hooks.on("renderItemDirectory", (app, html) => {
@@ -294,24 +310,27 @@ export function applyItemDirectoryEffects(moduleId) {
       return;
     }
     // If context can't be reliably identified, do a debounced global refresh.
-    requestRefresh();
+    requestRefresh("renderSidebarTab-unknown-context");
   });
 
   Hooks.on("renderSidebar", () => {
     if (ui?.sidebar?.activeTab !== "items") return;
-    requestRefresh();
+    requestRefresh("renderSidebar-active-items");
   });
 
-  Hooks.on("setSetting", (moduleOrSetting, maybeKey) => {
+  registerSettingChangeHooks((moduleOrSetting, maybeKey) => {
     if (!isModuleSettingChange(moduleOrSetting, maybeKey, moduleId)) return;
 
     raritySettingsCache.clear();
-    requestRefresh();
+    ensureRuntimeRarityStyles(moduleId);
+    debugLog("setting change matched module for item directory; cache cleared");
+    requestRefresh("setting-change");
   });
 
-  Hooks.on("createItem", requestRefresh);
-  Hooks.on("updateItem", requestRefresh);
-  Hooks.on("deleteItem", requestRefresh);
+  Hooks.on("createItem", () => requestRefresh("createItem"));
+  Hooks.on("updateItem", () => requestRefresh("updateItem"));
+  Hooks.on("deleteItem", () => requestRefresh("deleteItem"));
 
-  requestRefresh();
+  debugLog("Item directory rarity hooks registered");
+  requestRefresh("initialization");
 }

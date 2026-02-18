@@ -31,3 +31,25 @@ export function isModuleSettingChange(moduleOrSetting, maybeKey, moduleId) {
   const fullSettingKey = getSettingKeyFromHookPayload(moduleOrSetting, maybeKey);
   return typeof fullSettingKey === "string" && fullSettingKey.startsWith(`${moduleId}.`);
 }
+
+/**
+ * Register setting-change hooks for both legacy and modern Foundry payloads.
+ * Some environments emit "setSetting", while others emit Setting document hooks.
+ *
+ * @param {(moduleOrSetting: unknown, maybeKey?: unknown) => void} handler
+ */
+export function registerSettingChangeHooks(handler) {
+  if (typeof handler !== "function") return;
+
+  Hooks.on("setSetting", (moduleOrSetting, maybeKey) => {
+    handler(moduleOrSetting, maybeKey);
+  });
+
+  Hooks.on("updateSetting", (setting) => {
+    handler(setting);
+  });
+
+  Hooks.on("createSetting", (setting) => {
+    handler(setting);
+  });
+}

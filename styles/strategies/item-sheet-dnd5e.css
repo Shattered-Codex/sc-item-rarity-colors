@@ -1,0 +1,60 @@
+/* Item sheet text color strategy: dnd5e */
+.scirc-item-sheet-text-dnd5e :is(
+  .middle.identity-info,
+  .right.common-fields.physical,
+  .sheet-tabs,
+  .info-block,
+  .pills,
+  .header-control,
+  .source-book
+) {
+  color: var(--scirc-item-sheet-text-color) !important;
+}
+
+.scirc-item-sheet-text-dnd5e :is(
+  .middle.identity-info,
+  .right.common-fields.physical,
+  .sheet-tabs,
+  .info-block,
+  .pills,
+  .header-control,
+  .source-book
+) :where(
+  span,
+  p,
+  a,
+  strong,
+  em,
+  small,
+  li,
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  i,
+  div
+) {
+  color: var(--scirc-item-sheet-text-color) !important;
+}
+
+.scirc-item-sheet-text-dnd5e .details.tab :is(
+  label,
+  .hint,
+  legend,
+  fieldset > legend,
+  .form-fields p
+) {
+  color: var(--scirc-item-sheet-text-color) !important;
+}
+
+.scirc-item-sheet-text-dnd5e .details.tab fieldset:has(div.empty) :is(
+  div.empty,
+  div.empty *,
+  label,
+  legend,
+  .hint
+) {
+  color: #000000 !important;
+}

@@ -14,10 +14,7 @@ export class Tidy5eSheetStrategy extends BaseSheetStrategy {
   }
 
   getGradientElement($itemElement) {
-    const $row = $itemElement.find(SELECTORS.TIDY5E_ITEM_ROW);
-    // Clear background before applying gradient.
-    $row.css("background", "none");
-    return $row;
+    return $itemElement.find(SELECTORS.TIDY5E_ITEM_ROW);
   }
 
   getBorderElement($itemElement) {
@@ -25,10 +22,7 @@ export class Tidy5eSheetStrategy extends BaseSheetStrategy {
   }
 
   prepareBorderElement($borderElement) {
-    $borderElement.css({
-      margin: 0,
-      height: "auto",
-    });
+    $borderElement.addClass("scirc-inv-border-managed");
   }
 
   getTitleSelectors() {

@@ -498,6 +498,7 @@ export class ItemRaritySettingsApp extends HandlebarsApplicationMixin(Applicatio
     }
 
     ui.notifications.info("Saved item rarity settings.");
+    await this.close();
   }
 
   async close(options = {}) {

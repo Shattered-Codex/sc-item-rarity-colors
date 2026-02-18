@@ -16,6 +16,7 @@ import {
   applyDetailsColor,
   clearDetailsColor
 } from "../core/styleAppliers.js";
+import { applyRarityClass, clearRarityClasses } from "../core/runtimeRarityStyles.js";
 import { raritySupportsBorderGradient, raritySupportsBorderGlow } from "../core/rarityConfig.js";
 import { DEFAULT_COLORS, DEFAULT_GLOW_INTENSITY } from "../core/constants.js";
 
@@ -50,7 +51,7 @@ export function updateMiniSheetPreview(formElement, rarity) {
 
   const $sheetContent = $miniSheet.find(".application.sheet.item");
   if ($sheetContent.length) {
-    applyRarityStyles($sheetContent, settings);
+    applyRarityStyles($sheetContent, settings, { rarity, preview: true });
   }
 
   updateInventoryPreview($form, rarity, settings);
@@ -99,10 +100,9 @@ function updateInventoryPreview(formElement, rarity, itemSheetSettings) {
       gradientEnabled: itemSheetSettings.gradientEnabled,
       gradientColor: itemSheetSettings.gradientColor,
     };
-    applyInventoryGradient($inventoryRow, gradientSettings);
+    applyInventoryGradient($inventoryRow, gradientSettings, { rarity, preview: true });
   } else {
     clearInventoryGradient($inventoryRow);
-    $inventoryRow.css({ "background": DEFAULT_COLORS.BACKGROUND_DEFAULT });
   }
 
   const $inventoryImage = $inventoryPreview.find(".item-image");
@@ -117,8 +117,8 @@ function updateInventoryPreview(formElement, rarity, itemSheetSettings) {
       gradientEnabled: itemSheetSettings.gradientEnabled,
       glowEnabled: itemSheetSettings.glowEnabled,
     };
-    $inventoryImage.each((_, icon) => {
-      applyInventoryBorder(icon, borderSettings, DEFAULT_GLOW_INTENSITY);
+      $inventoryImage.each((_, icon) => {
+      applyInventoryBorder(icon, borderSettings, DEFAULT_GLOW_INTENSITY, { rarity, preview: true });
     });
   } else if (enableBorderColor && borderColor) {
     if (raritySupportsGradientForBorder) {
@@ -132,7 +132,7 @@ function updateInventoryPreview(formElement, rarity, itemSheetSettings) {
         glowEnabled: enableBorderGlow && hasSecondaryColor && raritySupportsGlowForBorder,
       };
       $inventoryImage.each((_, icon) => {
-        applyInventoryBorder(icon, borderSettings, DEFAULT_GLOW_INTENSITY);
+        applyInventoryBorder(icon, borderSettings, DEFAULT_GLOW_INTENSITY, { rarity, preview: true });
       });
     } else {
       const borderSettings = {
@@ -142,7 +142,7 @@ function updateInventoryPreview(formElement, rarity, itemSheetSettings) {
         glowEnabled: false,
       };
       $inventoryImage.each((_, icon) => {
-        applyInventoryBorder(icon, borderSettings, DEFAULT_GLOW_INTENSITY);
+        applyInventoryBorder(icon, borderSettings, DEFAULT_GLOW_INTENSITY, { rarity, preview: true });
       });
     }
   } else {
@@ -157,7 +157,8 @@ function updateInventoryPreview(formElement, rarity, itemSheetSettings) {
   ];
   if (enableTitleColor && titleColor) {
     requestAnimationFrame(() => {
-      applyTitleColor($inventoryPreview, titleColor, titleSelectors);
+      applyTitleColor($inventoryPreview, titleColor, titleSelectors, { preview: true });
+      applyRarityClass($inventoryPreview.find(".item-row"), rarity);
     });
   } else {
     requestAnimationFrame(() => {
@@ -178,7 +179,8 @@ function updateInventoryPreview(formElement, rarity, itemSheetSettings) {
   ];
   if (enableDetailsColor && detailsColor) {
     requestAnimationFrame(() => {
-      applyDetailsColor($inventoryPreview, detailsColor, detailsSelectors);
+      applyDetailsColor($inventoryPreview, detailsColor, detailsSelectors, { preview: true });
+      applyRarityClass($inventoryPreview.find(".item-row"), rarity);
     });
   } else {
     requestAnimationFrame(() => {
@@ -206,9 +208,25 @@ function updateFoundryInterfacePreview(formElement, rarity, itemSheetSettings) {
   const $directoryItem = $foundryPreview.find(".directory-item.is-target");
   if (!$directoryItem.length) return;
   const $otherDirectoryItems = $foundryPreview.find(".directory-item").not($directoryItem);
-  clearInventoryGradient($otherDirectoryItems);
-  $otherDirectoryItems.css({ "background": DEFAULT_COLORS.BACKGROUND_DEFAULT, "color": "" });
-  clearTitleColor($otherDirectoryItems, [".entry-name", ".entry-name a"]);
+
+  const clearDirectoryPreviewRow = ($rows) => {
+    $rows.removeClass("scirc-dir-gradient-enabled scirc-dir-text-enabled");
+    clearRarityClasses($rows);
+    $rows.each((_, row) => {
+      if (!row) return;
+      // Legacy inline cleanup.
+      row.style.removeProperty("--scirc-dir-bg-primary");
+      row.style.removeProperty("--scirc-dir-bg-secondary");
+      row.style.removeProperty("--scirc-dir-bg-fallback");
+      row.style.removeProperty("--scirc-dir-text-color");
+      row.style.removeProperty("background");
+      row.style.removeProperty("color");
+      row.style.removeProperty("text-shadow");
+    });
+  };
+
+  clearDirectoryPreviewRow($otherDirectoryItems);
+  clearDirectoryPreviewRow($directoryItem);
 
   if (enableFoundryGradient && itemSheetSettings.enableItemColor) {
     const primaryColor = itemSheetSettings.backgroundColor || DEFAULT_COLORS.BACKGROUND_FALLBACK;
@@ -216,28 +234,22 @@ function updateFoundryInterfacePreview(formElement, rarity, itemSheetSettings) {
       && itemSheetSettings.gradientColor
       && itemSheetSettings.gradientColor !== DEFAULT_COLORS.BACKGROUND_FALLBACK
       ? itemSheetSettings.gradientColor
-      : primaryColor;
-    const fallbackColor = DEFAULT_COLORS.BACKGROUND_DEFAULT;
-
-    $directoryItem.css({
-      "background": `linear-gradient(100deg, ${fallbackColor} 0%, ${fallbackColor} 46%, ${primaryColor} 72%, ${secondaryColor} 100%)`,
-      "box-shadow": "none",
-      "color": "#fff",
-    });
-    $directoryItem.css("color", "");
+      : "#252830";
+    applyRarityClass($directoryItem, rarity);
+    $directoryItem.addClass("scirc-dir-gradient-enabled");
+    $directoryItem.css("--scirc-dir-bg-primary", primaryColor);
+    $directoryItem.css("--scirc-dir-bg-secondary", secondaryColor);
+    $directoryItem.css("--scirc-dir-bg-fallback", DEFAULT_COLORS.BACKGROUND_DEFAULT);
   } else {
-    clearInventoryGradient($directoryItem);
-    $directoryItem.css({ "background": DEFAULT_COLORS.BACKGROUND_DEFAULT, "color": "" });
+    $directoryItem.removeClass("scirc-dir-gradient-enabled");
   }
 
-  const titleSelectors = [".directory-item.is-target .entry-name", ".directory-item.is-target .entry-name a"];
   if (enableFoundryTextColor && foundryTextColor) {
-    requestAnimationFrame(() => {
-      applyTitleColor($foundryPreview, foundryTextColor, titleSelectors);
-    });
+    applyRarityClass($directoryItem, rarity);
+    $directoryItem.addClass("scirc-dir-text-enabled");
+    $directoryItem.css("--scirc-dir-text-color", foundryTextColor);
   } else {
-    requestAnimationFrame(() => {
-      clearTitleColor($foundryPreview, titleSelectors);
-    });
+    $directoryItem.removeClass("scirc-dir-text-enabled");
+    $directoryItem.css("--scirc-dir-text-color", "");
   }
 }

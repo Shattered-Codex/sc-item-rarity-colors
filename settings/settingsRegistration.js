@@ -7,6 +7,7 @@ import {
   humanizeRarityLabel,
   normalizeRarityKey,
 } from "../core/rarityListConfig.js";
+import { DEBUG_LOGS_SETTING_KEY } from "../core/debug.js";
 
 // Register settings for item rarity colors.
 function registerColorSetting(moduleId, key, name, defaultValue) {
@@ -52,6 +53,20 @@ function registerSupportCardSetting(moduleId) {
     name: "Support Chat Card - disable",
     hint: "If enabled, the support chat card will not show on startup.",
     scope: "world",
+    config: true,
+    type: Boolean,
+    default: false,
+  });
+}
+
+function registerDebugSetting(moduleId) {
+  const key = DEBUG_LOGS_SETTING_KEY;
+  if (game.settings.settings.has(`${moduleId}.${key}`)) return;
+
+  game.settings.register(moduleId, key, {
+    name: "Enable Debug Logs",
+    hint: "Log rarity color flow details in the browser console for troubleshooting.",
+    scope: "client",
     config: true,
     type: Boolean,
     default: false,
@@ -121,4 +136,5 @@ export function registerModuleSettings(MODULE_ID) {
   }
 
   registerSupportCardSetting(MODULE_ID);
+  registerDebugSetting(MODULE_ID);
 }

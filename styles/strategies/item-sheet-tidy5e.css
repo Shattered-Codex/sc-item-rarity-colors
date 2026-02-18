@@ -1,0 +1,88 @@
+/* Item sheet text color strategy: tidy5e */
+.scirc-item-sheet-text-tidy .tidy-tabs.item-tabs .tab-title {
+  color: var(--scirc-item-sheet-text-color) !important;
+}
+
+.scirc-item-sheet-text-tidy :is(
+  .item-subtitle .subtitle,
+  .subtitle,
+  .item-header-summary,
+  .item-header-summary .item-price,
+  .item-header-summary .item-weight,
+  .item-header-summary .item-quantity,
+  .item-name-wrapper :is(div.document-name, span.document-name),
+  .item-header-start-document-name,
+  [data-sc-sockets="socket-descriptions-tidy"],
+  .sc-sockets-tidy-editor .title,
+  .sc-sockets-socket-descriptions,
+  .sc-sockets-socket-description-title,
+  .sc-sockets-socket-description-text
+) {
+  color: var(--scirc-item-sheet-text-color) !important;
+}
+
+.scirc-item-sheet-text-tidy .item-header-summary :where(
+  div,
+  span,
+  p,
+  strong,
+  small,
+  i,
+  a
+) {
+  color: var(--scirc-item-sheet-text-color) !important;
+}
+
+.scirc-item-sheet-text-tidy .window-header :is(
+  .item-name-wrapper :is(div.document-name, span.document-name),
+  .item-header-start-document-name,
+  .configurable-source,
+  .configurable-source .source-text,
+  .configurable-source .configure-source,
+  .header-control,
+  .window-title
+) {
+  color: var(--scirc-item-sheet-text-color) !important;
+}
+
+.scirc-item-sheet-text-tidy :is(
+  .tidy-table-header-row,
+  .item-table-header-row,
+  .items-header
+) :where(
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  div,
+  span,
+  a,
+  i
+) {
+  color: inherit !important;
+}
+
+.scirc-item-sheet-text-tidy [data-tidy-sheet-part="tab-content"] :where(*):not(select):not(option):not(input):not(textarea):not(button):not(.card.resource-bar-config):not(.card.resource-bar-config *):not(.tidy-table-header-row):not(.tidy-table-header-row *):not(.item-table-header-row):not(.item-table-header-row *):not(.tidy-table-header-cell):not(.tidy-table-header-cell *):not(.header-label-cell):not(.header-label-cell *):not(.table-header-count):not(.table-header-count *):not(.item-table-column):not(.item-table-column *):not(.items-header):not(.items-header *):not(.tab-title-count):not(.tab-title-count *):not(.header-item-type-label):not(.header-item-type-label *):not([data-tidy-sheet-part="table-header-row"]):not([data-tidy-sheet-part="table-header-row"] *):not([data-tidy-sheet-part="table-header-cell"]):not([data-tidy-sheet-part="table-header-cell"] *):not(aside.sidebar):not(aside.sidebar *) {
+  color: var(--scirc-item-sheet-text-color) !important;
+}
+
+
+.scirc-item-sheet-text-tidy :is(
+  [data-tidy-sheet-part="table-header-row"],
+  [data-tidy-sheet-part="table-header-cell"]
+) * {
+  color: inherit !important;
+}
+
+
+/* Keep native colors where requested (e.g. counters and left title). */
+.scirc-item-sheet-text-tidy :is(
+  .tab-title-count,
+  .tab-title-count *,
+  .header-item-type-label,
+  .header-item-type-label *
+) {
+  color: revert !important;
+}

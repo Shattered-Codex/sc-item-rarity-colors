@@ -311,6 +311,7 @@ export class RarityListManagerApp extends HandlebarsApplicationMixin(Application
     applyMergedRarityConfigToDnd5e(moduleId);
 
     ui.notifications.info("Saved rarity list configuration.");
+    await this.close();
   }
 
   render(force = false, options = {}) {

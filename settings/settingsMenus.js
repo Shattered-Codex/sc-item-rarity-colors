@@ -1,6 +1,7 @@
 import { ItemRaritySettingsLauncher, ItemRaritySourceSettingsLauncher } from "./settingsLaunchers.js";
 import { ItemRaritySettingsApp } from "../apps/ItemRaritySettingsApp.js";
 import { SupportMenu } from "./SupportMenu.js";
+import { TidyRaritySyncMenu } from "./TidyRaritySyncMenu.js";
 
 // Main function to register all module menus.
 export function registerMenus(MODULE_ID) {
@@ -36,7 +37,17 @@ export function registerMenus(MODULE_ID) {
     hint: "Manage rarity keys and labels in SC Item Rarity Colors. Changes are synced with Custom DND5E when available.",
   });
 
+  game.settings.registerMenu(MODULE_ID, "tidyRaritySync", {
+    name: "Tidy Rarity Sync",
+    label: "Sync Colors to Tidy",
+    icon: "fas fa-arrows-rotate",
+    type: TidyRaritySyncMenu,
+    restricted: true,
+    hint: "Sync primary rarity colors from SC Item Rarity Colors to Tidy 5e rarity colors.",
+  });
+
   Hooks.on("renderSettingsConfig", (_app, html) => {
     SupportMenu.bindSettingsButton(html);
+    TidyRaritySyncMenu.bindSettingsRowVisibility(html);
   });
 }

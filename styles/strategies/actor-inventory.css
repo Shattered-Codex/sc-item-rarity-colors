@@ -1,0 +1,100 @@
+/* Actor inventory runtime effects */
+.scirc-managed-item-row .item-detail.empty::after {
+  color: inherit;
+}
+
+.scirc-inv-gradient-enabled {
+  background: linear-gradient(-135deg,
+      var(--scirc-inv-bg-primary, #ffffff) 10%,
+      var(--scirc-inv-bg-secondary, #252830) 30%,
+      var(--scirc-inv-bg-fallback, #252830) 50%) !important;
+  box-shadow: none !important;
+}
+
+.scirc-inv-border-managed {
+  margin: 0 !important;
+  height: auto !important;
+}
+
+.scirc-inv-border-solid {
+  border: 2px solid var(--scirc-inv-border-primary, #ffffff) !important;
+  border-image: none !important;
+  box-shadow: none !important;
+}
+
+.scirc-inv-border-gradient {
+  border: 2px solid transparent !important;
+  border-image: linear-gradient(135deg,
+      var(--scirc-inv-border-primary, #ffffff) 50%,
+      var(--scirc-inv-border-secondary, var(--scirc-inv-border-primary, #ffffff)) 50%) 1 !important;
+  box-shadow: none !important;
+}
+
+.scirc-inv-border-glow {
+  border: 2px solid var(--scirc-inv-border-primary, #ffffff) !important;
+  border-image: none !important;
+  animation: scircInventoryBorderGlowAnimation 6s infinite ease-in-out;
+  box-shadow: 0 0 var(--scirc-inv-border-glow-intensity, 8px) var(--scirc-inv-border-secondary, #ffffff),
+    0 0 calc(var(--scirc-inv-border-glow-intensity, 8px) * 1.5) var(--scirc-inv-border-secondary, #ffffff) !important;
+}
+
+@keyframes scircInventoryBorderGlowAnimation {
+  0% {
+    border-color: var(--scirc-inv-border-primary, #ffffff);
+    box-shadow: 0 0 var(--scirc-inv-border-glow-intensity, 8px) var(--scirc-inv-border-secondary, #ffffff),
+      0 0 calc(var(--scirc-inv-border-glow-intensity, 8px) * 1.5) var(--scirc-inv-border-secondary, #ffffff);
+  }
+
+  50% {
+    border-color: var(--scirc-inv-border-secondary, #ffffff);
+    box-shadow: 0 0 var(--scirc-inv-border-glow-intensity, 8px) var(--scirc-inv-border-primary, #ffffff),
+      0 0 calc(var(--scirc-inv-border-glow-intensity, 8px) * 1.5) var(--scirc-inv-border-primary, #ffffff);
+  }
+
+  100% {
+    border-color: var(--scirc-inv-border-primary, #ffffff);
+    box-shadow: 0 0 var(--scirc-inv-border-glow-intensity, 8px) var(--scirc-inv-border-secondary, #ffffff),
+      0 0 calc(var(--scirc-inv-border-glow-intensity, 8px) * 1.5) var(--scirc-inv-border-secondary, #ffffff);
+  }
+}
+
+.scirc-inv-title-color-enabled :is(
+  a.item-name,
+  .item-name a,
+  h4.item-name,
+  .item-name,
+  .item-type,
+  .item-subtitle,
+  .subtitle,
+  .item-type-text,
+  .item-name .name-stacked .title,
+  .item-name .name-stacked .subtitle
+) {
+  color: var(--scirc-inv-title-color, inherit) !important;
+}
+
+.scirc-inv-details-color-enabled :is(
+  .item-detail,
+  .item-detail input,
+  .item-detail.empty,
+  .item-detail .value,
+  .item-detail .sign,
+  .item-detail .formula,
+  .item-detail .separator,
+  .separator,
+  .max,
+  .item-detail .max,
+  .item-detail .currency,
+  .item-detail .adjustment-button,
+  .unbutton,
+  .item-weight,
+  .item-weight .fa-weight-hanging,
+  .item-uses,
+  .item-charges,
+  .item-controls,
+  .item-properties,
+  .item-quantity,
+  .item-formula dnd5e-icon
+) {
+  color: var(--scirc-inv-details-color, inherit) !important;
+}

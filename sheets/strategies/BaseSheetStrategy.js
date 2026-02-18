@@ -1,4 +1,6 @@
 import { DEFAULT_GLOW_INTENSITY } from "../../core/constants.js";
+import { debugLog } from "../../core/debug.js";
+import { applyRarityClass, clearRarityClasses } from "../../core/runtimeRarityStyles.js";
 import {
   applyDetailsColor,
   applyInventoryBorder,
@@ -88,24 +90,34 @@ export class BaseSheetStrategy {
     const $borderElement = this.getBorderElement($itemElement);
     const titleSelectors = this.getTitleSelectors();
     const detailsSelectors = this.getDetailsSelectors();
+    const itemId = item?.id ?? item?._id ?? null;
+    const itemName = item?.name ?? null;
 
     const rarity = getItemRarity(item);
     if (!rarity) {
+      clearRarityClasses($itemElement);
       clearInventoryGradient($gradientElement);
       clearInventoryBorder($borderElement);
       clearTitleColor($itemElement, titleSelectors);
       clearDetailsColor($itemElement, detailsSelectors);
       $itemElement.removeClass("scirc-managed-item-row");
+      debugLog("Actor item styles cleared (no rarity)", {
+        strategy: this.constructor.name,
+        itemId,
+        itemName,
+      });
       return;
     }
 
     const raritySettings = buildRaritySettings(rarity);
     $itemElement.addClass("scirc-managed-item-row");
+    applyRarityClass($itemElement, rarity);
+    let borderMode = "none";
 
     if (!raritySettings.enableInventoryGradientEffects || !raritySettings.enableItemColor) {
       clearInventoryGradient($gradientElement);
     } else {
-      applyInventoryGradient($gradientElement, raritySettings);
+      applyInventoryGradient($gradientElement, raritySettings, { rarity });
     }
 
     this.prepareBorderElement($borderElement);
@@ -113,6 +125,7 @@ export class BaseSheetStrategy {
     if (!raritySettings.enableInventoryBorders) {
       clearInventoryBorder($borderElement);
     } else if (raritySettings.enableItemColor) {
+      borderMode = "item-color";
       $borderElement.each((_, icon) => {
         const borderSettings = {
           ...raritySettings,
@@ -121,7 +134,7 @@ export class BaseSheetStrategy {
           gradientEnabled: raritySettings.gradientEnabled,
           glowEnabled: raritySettings.glowEnabled,
         };
-        applyInventoryBorder(icon, borderSettings, DEFAULT_GLOW_INTENSITY);
+        applyInventoryBorder(icon, borderSettings, DEFAULT_GLOW_INTENSITY, { rarity });
       });
     } else if (raritySettings.enableInventoryBorderColor && raritySettings.inventoryBorderColor) {
       const hasBorderGradient = raritySupportsBorderGradient(rarity);
@@ -133,6 +146,9 @@ export class BaseSheetStrategy {
         const secondaryColor = hasSecondaryColor
           ? raritySettings.inventoryBorderSecondaryColor
           : raritySettings.inventoryBorderColor;
+        borderMode = hasSecondaryColor && raritySettings.enableInventoryBorderGlow && hasBorderGlow
+          ? "border-color-glow"
+          : (hasSecondaryColor ? "border-color-gradient" : "border-color-solid");
 
         const borderSettings = {
           ...raritySettings,
@@ -142,9 +158,10 @@ export class BaseSheetStrategy {
           glowEnabled: raritySettings.enableInventoryBorderGlow && hasSecondaryColor && hasBorderGlow,
         };
         $borderElement.each((_, icon) => {
-          applyInventoryBorder(icon, borderSettings, DEFAULT_GLOW_INTENSITY);
+          applyInventoryBorder(icon, borderSettings, DEFAULT_GLOW_INTENSITY, { rarity });
         });
       } else {
+        borderMode = "border-color-solid";
         const borderSettings = {
           ...raritySettings,
           backgroundColor: raritySettings.inventoryBorderColor,
@@ -153,7 +170,7 @@ export class BaseSheetStrategy {
           glowEnabled: false,
         };
         $borderElement.each((_, icon) => {
-          applyInventoryBorder(icon, borderSettings, DEFAULT_GLOW_INTENSITY);
+          applyInventoryBorder(icon, borderSettings, DEFAULT_GLOW_INTENSITY, { rarity });
         });
       }
     } else {
@@ -171,5 +188,16 @@ export class BaseSheetStrategy {
     } else {
       clearDetailsColor($itemElement, detailsSelectors);
     }
+
+    debugLog("Actor item styles applied", {
+      strategy: this.constructor.name,
+      itemId,
+      itemName,
+      rarity,
+      gradientApplied: raritySettings.enableInventoryGradientEffects && raritySettings.enableItemColor,
+      borderMode,
+      titleColorApplied: raritySettings.enableInventoryTitleColor && Boolean(raritySettings.inventoryTitleColor),
+      detailsColorApplied: raritySettings.enableInventoryDetailsColor && Boolean(raritySettings.inventoryDetailsColor),
+    });
   }
 }
