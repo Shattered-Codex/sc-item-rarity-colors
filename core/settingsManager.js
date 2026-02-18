@@ -78,31 +78,6 @@ export function getRaritySetting(moduleId, rarity, settingKey, defaultValue = nu
 }
 
 /**
- * Get main menu setting
- * @param {string} key - Setting key (without module prefix)
- * @returns {*}
- */
-export function getMainMenuSetting(key) {
-  return getSetting(MODULE_ID, key, false);
-}
-
-/**
- * Check if main menu gradient effects are enabled
- * @returns {boolean}
- */
-export function isGradientEffectsEnabled() {
-  return getMainMenuSetting("enableActorInventoryGradientEffects");
-}
-
-/**
- * Check if main menu borders are enabled
- * @returns {boolean}
- */
-export function isBordersEnabled() {
-  return getMainMenuSetting("enableActorInventoryBorders");
-}
-
-/**
  * Build rarity settings object for a given rarity
  * @param {string} rarity - Normalized rarity value
  * @returns {object} Complete settings object
@@ -129,6 +104,15 @@ export function buildRaritySettings(rarity) {
     glowEnabled: raritySupportsGlow(rarity)
       ? getRaritySetting(MODULE_ID, rarity, "glow-option", false)
       : false,
+
+    // Inventory Effects
+    enableInventoryGradientEffects: getRaritySetting(MODULE_ID, rarity, "enable-inventory-gradient-effects", false),
+    enableInventoryBorders: getRaritySetting(MODULE_ID, rarity, "enable-inventory-borders", false),
+
+    // Foundry Interface Item Directory Effects
+    enableFoundryInterfaceGradientEffects: getRaritySetting(MODULE_ID, rarity, "enable-foundry-interface-gradient-effects", false),
+    enableFoundryInterfaceTextColor: getRaritySetting(MODULE_ID, rarity, "enable-foundry-interface-text-color", false),
+    foundryInterfaceTextColor: getRaritySetting(MODULE_ID, rarity, "foundry-interface-text-color", "#000000"),
     
     // Inventory Title Color
     enableInventoryTitleColor: getRaritySetting(MODULE_ID, rarity, "enable-inventory-title-color", false),

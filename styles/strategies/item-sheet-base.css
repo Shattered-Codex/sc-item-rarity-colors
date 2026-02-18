@@ -1,0 +1,34 @@
+/* Item sheet runtime effects (shared across sheet strategies). */
+.application.sheet.item.scirc-glow {
+  border: 3px solid transparent;
+  border-radius: 8px;
+  animation: scircGlowAnimation 3s infinite alternate;
+  box-shadow: 0 0 15px var(--glow-primary, #ffffff);
+  background: linear-gradient(to left, var(--glow-primary, #ffffff), var(--glow-secondary, #ffffff));
+  background-size: 200% 100%;
+}
+
+.scirc-item-sheet-bg-enabled {
+  background-color: var(--scirc-item-sheet-bg-primary, #ffffff) !important;
+  background-image: none !important;
+}
+
+.scirc-item-sheet-bg-enabled.scirc-item-sheet-bg-gradient-enabled {
+  background-image: linear-gradient(to right,
+      var(--scirc-item-sheet-bg-primary, #ffffff),
+      var(--scirc-item-sheet-bg-secondary, var(--scirc-item-sheet-bg-primary, #ffffff))) !important;
+}
+
+@keyframes scircGlowAnimation {
+  0% {
+    border-color: var(--glow-primary, #ffffff);
+    box-shadow: 0 0 15px var(--glow-primary, #ffffff);
+    background-position: 0% 50%;
+  }
+
+  100% {
+    border-color: var(--glow-secondary, var(--glow-primary, #ffffff));
+    box-shadow: 0 0 15px var(--glow-secondary, var(--glow-primary, #ffffff));
+    background-position: 100% 50%;
+  }
+}

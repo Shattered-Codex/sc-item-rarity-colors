@@ -48,6 +48,7 @@ export class SupportMenu extends ApplicationV2 {
         ? candidate
         : candidate.querySelector("button");
       if (!button) continue;
+      button.classList.add("scirc-support-button");
       if (button.dataset.scItemRaritySupportBound === "true") continue;
       button.dataset.scItemRaritySupportBound = "true";
       button.addEventListener("click", (event) => {

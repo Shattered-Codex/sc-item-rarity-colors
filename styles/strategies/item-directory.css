@@ -1,0 +1,27 @@
+/* Foundry Item Directory runtime effects (world Items tab) */
+.directory-item.item.scirc-dir-gradient-enabled,
+.directory-item.document.item.scirc-dir-gradient-enabled,
+.directory-item.entry.document.item.scirc-dir-gradient-enabled {
+  background: linear-gradient(100deg,
+      var(--scirc-dir-bg-fallback, #252830) 0%,
+      var(--scirc-dir-bg-fallback, #252830) 46%,
+      var(--scirc-dir-bg-primary, #252830) 72%,
+      var(--scirc-dir-bg-secondary, #252830) 100%) !important;
+  box-shadow: none !important;
+}
+
+.directory-item.item.scirc-dir-text-enabled .entry-name,
+.directory-item.item.scirc-dir-text-enabled .entry-name a,
+.directory-item.item.scirc-dir-text-enabled .document-name,
+.directory-item.item.scirc-dir-text-enabled .document-name a,
+.directory-item.document.item.scirc-dir-text-enabled .entry-name,
+.directory-item.document.item.scirc-dir-text-enabled .entry-name a,
+.directory-item.document.item.scirc-dir-text-enabled .document-name,
+.directory-item.document.item.scirc-dir-text-enabled .document-name a,
+.directory-item.entry.document.item.scirc-dir-text-enabled .entry-name,
+.directory-item.entry.document.item.scirc-dir-text-enabled .entry-name a,
+.directory-item.entry.document.item.scirc-dir-text-enabled .document-name,
+.directory-item.entry.document.item.scirc-dir-text-enabled .document-name a {
+  color: var(--scirc-dir-text-color, inherit) !important;
+  text-shadow: none !important;
+}

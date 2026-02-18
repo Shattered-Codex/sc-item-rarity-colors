@@ -6,15 +6,19 @@
 [![Support on Patreon](https://img.shields.io/badge/Patreon-Shattered%20Codex-FF424D?logo=patreon&logoColor=white)](https://www.patreon.com/c/shatteredcodex)
 ![Downloads](https://img.shields.io/github/downloads/Shattered-Codex/sc-item-rarity-colors/total)
 
-Color-code item rarity in D&D 5e with per-rarity customization for item sheets and inventory rows.
+Color item rarities in D&D 5e with full per-rarity control for item sheets, actor inventories, and the Foundry item directory.
 
-This module lets you:
-- Configure all rarity visual settings from a single window.
-- Enable per-rarity gradient and glow effects.
-- Manage your own rarity list (add, edit, remove, reorder).
-- Stay compatible with Custom DND5E rarity data when both modules are active.
+## What This Module Does
 
-[Request features or report issues](https://github.com/Shattered-Codex/sc-item-rarity-colors/issues)
+- Lets you configure colors and effects for each rarity in one place.
+- Supports gradient and glow effects where available.
+- Works with both default D&D 5e sheet and Tidy sheet.
+- Applies visuals to:
+  - item sheets
+  - actor inventory rows
+  - Foundry item directory rows
+- Includes a rarity list manager (add, remove, rename, reorder, show/hide).
+- Plays nicely with Custom DND5E rarity data when both modules are active.
 
 ---
 
@@ -29,62 +33,65 @@ Compatible with **Foundry VTT v13+** and **dnd5e**.
 
 ---
 
-## Module Settings Overview
+## Configuration Screens
 
 Open:
 **Configure Settings → Module Settings → SC - Item Rarity Colors**
 
-You will find:
-- **Patreon support** button.
-- **Configure Rarities** (single settings window with rarity selector at the top).
-- **Configure Rarity List** (manage custom rarities).
-- Additional toggles for inventory gradient and border behavior.
+### General Module Settings
+
+![General module settings](https://i.imgur.com/n4cvLjm.png)
+
+### Color Configuration
+
+![Color configuration screen](https://i.imgur.com/8cUooJt.png)
+
+When **Tidy 5e Sheet** is installed and active, an extra button is shown to transfer rarity colors to Tidy:
+
+![Tidy sync button](https://i.imgur.com/XbLseCg.png)
+
+If Tidy is not installed, this button is hidden.
+
+### Rarity List Configuration
+
+![Rarity list configuration screen](https://i.imgur.com/NyAplDP.png)
 
 ---
 
-## Rarity Visual Settings
+## In-Game Results
 
-Use **Configure Rarities** to switch between rarities and edit:
-- Item sheet background color.
-- Item sheet text color.
-- Inventory title/subtitle color.
-- Inventory details text color.
-- Inventory border color.
-- Optional gradient (with secondary color).
-- Optional glow effects.
+### D&D 5e Item Sheet (Default)
 
-### Example: Gradient + Glow
+![Default dnd5e item sheet](https://i.imgur.com/4tuqe0L.png)
 
-![Gradient and glow example](https://i.imgur.com/9BZJQiJ.gif)
+### D&D 5e Item Sheet (Tidy)
 
-### Example: Rarity visual configuration window
+![Tidy item sheet](https://i.imgur.com/yo4NUvk.png)
 
-![Rarity visual settings](https://i.imgur.com/CjqPTD6.png)
+### Foundry Sidebar (Items Directory)
 
----
+![Foundry items directory](https://i.imgur.com/7t52G5F.png)
 
-## Rarity List Manager
+### Actor Sheet Inventory
 
-Use **Configure Rarity List** to:
-- Add new rarities.
-- Remove custom rarities.
-- Edit keys and labels.
-- Enable/disable entries.
-- Reorder the list.
-
-This is compatible with **Custom DND5E** rarity settings:
-- It is **not required**.
-- If both are active, they can coexist without conflict.
-
-### Example: Rarity list configuration (Custom DND5E compatible)
-
-![Rarity list manager](https://i.imgur.com/thHkoPd.png)
-
+![Actor sheet inventory](https://i.imgur.com/tPQl77X.png)
 
 ---
 
-## Credits
+## Notes
 
-Created with 💛 by **Shattered Codex**  
-Inspired by the desire to make loot feel *just as magical as it is powerful*.
+- Rarity visuals are configurable per rarity tier.
+- You can keep your rarity list minimal or fully custom.
+- If Custom DND5E is enabled, rarity data can stay synchronized.
 
+---
+
+## Support and Feedback
+
+Thank you for using **SC - Item Rarity Colors**.
+
+If this module helps your table, please consider supporting **Shattered Codex** on Patreon:  
+https://www.patreon.com/c/shatteredcodex
+
+For bugs, ideas, or suggestions, feel free to open an issue anytime:  
+https://github.com/Shattered-Codex/sc-item-rarity-colors/issues
