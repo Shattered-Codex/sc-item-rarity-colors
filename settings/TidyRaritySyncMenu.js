@@ -1,4 +1,5 @@
 import { MODULE_ID } from "../core/constants.js";
+import { normalizeHexColor } from "../core/colorUtils.js";
 import { getMergedRarityEntries, normalizeRarityKey } from "../core/rarityListConfig.js";
 import { buildRaritySettings } from "../core/settingsManager.js";
 
@@ -19,23 +20,6 @@ const api = foundry?.applications?.api ?? {};
 const { ApplicationV2 } = api;
 if (!ApplicationV2) {
   throw new Error(`${MODULE_ID}: ApplicationV2 is required to run TidyRaritySyncMenu.`);
-}
-
-function normalizeHexColor(value, { allowShort = true, expandShort = true } = {}) {
-  if (typeof value !== "string") return null;
-
-  let normalized = value.trim().toUpperCase();
-  if (!normalized) return null;
-  if (!normalized.startsWith("#")) normalized = `#${normalized}`;
-  const pattern = allowShort ? /^#([0-9A-F]{3}|[0-9A-F]{6})$/ : /^#[0-9A-F]{6}$/;
-  if (!pattern.test(normalized)) return null;
-
-  if (expandShort && normalized.length === 4) {
-    const shortHex = normalized.slice(1);
-    normalized = `#${shortHex.split("").map((char) => `${char}${char}`).join("")}`;
-  }
-
-  return normalized;
 }
 
 export class TidyRaritySyncMenu extends ApplicationV2 {

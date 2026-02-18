@@ -8,6 +8,11 @@ import { getSheetStrategy } from "../sheets/sheetStrategies.js";
 import { isModuleSettingChange, registerSettingChangeHooks } from "../core/settingChangeHelper.js";
 import { debugLog, debugWarn } from "../core/debug.js";
 import { ensureRuntimeRarityStyles } from "../core/runtimeRarityStyles.js";
+import { createDebouncedRefreshRequester, REFRESH_DELAYS_MS } from "../core/refreshScheduler.js";
+import {
+  isSettingsTransactionActive,
+  registerSettingsTransactionCompleteHook,
+} from "../core/settingsTransaction.js";
 
 /**
  * Apply rarity effects to all items in an actor sheet
@@ -100,6 +105,13 @@ function refreshAllActorSheets(moduleId) {
  */
 export function applyActorInventoryEffects(moduleId) {
   ensureRuntimeRarityStyles(moduleId);
+  const actorSheetRefresh = createDebouncedRefreshRequester({
+    execute: () => refreshAllActorSheets(moduleId),
+    label: "Actor sheet refresh",
+    defaultDelayMs: REFRESH_DELAYS_MS.SETTINGS_CHANGE,
+    log: debugLog,
+  });
+
   /**
    * Handle actor sheet render
    * @param {Application} actorApp - The rendered actor sheet instance
@@ -122,9 +134,15 @@ export function applyActorInventoryEffects(moduleId) {
   // Reapply effects when module settings change
   registerSettingChangeHooks((moduleOrSetting, maybeKey) => {
     if (!isModuleSettingChange(moduleOrSetting, maybeKey, moduleId)) return;
+    if (isSettingsTransactionActive(moduleId)) return;
     ensureRuntimeRarityStyles(moduleId);
-    debugLog("setting change matched module for actor inventory; refreshing actor sheets");
-    refreshAllActorSheets(moduleId);
+    debugLog("setting change matched module for actor inventory; queued refresh");
+    actorSheetRefresh.request("setting-change");
+  });
+
+  registerSettingsTransactionCompleteHook(moduleId, () => {
+    ensureRuntimeRarityStyles(moduleId);
+    actorSheetRefresh.request("settings-transaction-complete");
   });
 
   debugLog("Actor inventory rarity hooks registered");

@@ -247,11 +247,23 @@ export function applyMergedRarityConfigToDnd5e(moduleId = MODULE_ID) {
 }
 
 export async function saveModuleRarityEntries(moduleId = MODULE_ID, entries = [], enabled = true) {
+  const deepEqual = foundry?.utils?.deepEqual
+    ?? ((left, right) => JSON.stringify(left) === JSON.stringify(right));
+
   if (game.settings.settings.has(`${moduleId}.${RARITY_LIST_ENABLED_SETTING_KEY}`)) {
-    await game.settings.set(moduleId, RARITY_LIST_ENABLED_SETTING_KEY, Boolean(enabled));
+    const nextEnabled = Boolean(enabled);
+    const currentEnabled = game.settings.get(moduleId, RARITY_LIST_ENABLED_SETTING_KEY);
+    if (currentEnabled !== nextEnabled) {
+      await game.settings.set(moduleId, RARITY_LIST_ENABLED_SETTING_KEY, nextEnabled);
+    }
   }
+
   if (game.settings.settings.has(`${moduleId}.${RARITY_LIST_SETTING_KEY}`)) {
-    await game.settings.set(moduleId, RARITY_LIST_SETTING_KEY, buildRaritySettingObject(entries));
+    const nextEntries = buildRaritySettingObject(entries);
+    const currentEntries = game.settings.get(moduleId, RARITY_LIST_SETTING_KEY);
+    if (!deepEqual(currentEntries, nextEntries)) {
+      await game.settings.set(moduleId, RARITY_LIST_SETTING_KEY, nextEntries);
+    }
   }
 }
 
@@ -289,9 +301,15 @@ export async function syncEntriesToCustomDnd5e(entries = []) {
   if (!customModule?.active) return;
   if (!game.settings.settings.has("custom-dnd5e.item-rarity")) return;
 
+  const deepEqual = foundry?.utils?.deepEqual
+    ?? ((left, right) => JSON.stringify(left) === JSON.stringify(right));
+
   const currentSetting = game.settings.get("custom-dnd5e", "item-rarity");
   const nextSetting = buildCustomRaritySetting(entries, currentSetting);
-  await game.settings.set("custom-dnd5e", "item-rarity", nextSetting);
+  const didSettingChange = !deepEqual(currentSetting, nextSetting);
+  if (didSettingChange) {
+    await game.settings.set("custom-dnd5e", "item-rarity", nextSetting);
+  }
 
   const enabled = game.settings.settings.has("custom-dnd5e.enable-item-rarity")
     ? game.settings.get("custom-dnd5e", "enable-item-rarity")
@@ -300,6 +318,8 @@ export async function syncEntriesToCustomDnd5e(entries = []) {
   if (!enabled) return;
 
   const nextConfig = buildCustomConfigFromSetting(nextSetting);
+  if (!didSettingChange) return;
+
   Hooks.callAll("customDnd5e.setItemRarityConfig", nextConfig);
   if (nextConfig && Object.keys(nextConfig).length) {
     CONFIG.DND5E.itemRarity = nextConfig;

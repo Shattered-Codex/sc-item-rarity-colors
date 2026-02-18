@@ -5,6 +5,11 @@ import { debugLog, debugWarn } from "../core/debug.js";
 import { getSheetType } from "./sheetDetectionHelper.js";
 import { getItemSheetTextStyleStrategy } from "../sheets/itemSheetTextStrategies.js";
 import { ensureRuntimeRarityStyles } from "../core/runtimeRarityStyles.js";
+import { createDebouncedRefreshRequester, REFRESH_DELAYS_MS } from "../core/refreshScheduler.js";
+import {
+  isSettingsTransactionActive,
+  registerSettingsTransactionCompleteHook,
+} from "../core/settingsTransaction.js";
 
 const SC_SIMPLE_SOCKETS_TIDY_DESCRIPTIONS_RENDERED_HOOK = "sc-simple-sockets.tidySocketDescriptionsRendered";
 
@@ -115,6 +120,13 @@ export function applyItemRarityEffects(moduleId) {
     debugLog("Refreshed all open item sheets", { refreshedCount });
   }
 
+  const itemSheetRefresh = createDebouncedRefreshRequester({
+    execute: refreshAllItemSheets,
+    label: "Item sheet refresh",
+    defaultDelayMs: REFRESH_DELAYS_MS.SETTINGS_CHANGE,
+    log: debugLog,
+  });
+
   /**
    * Refresh only open sheets for a specific item document.
    * Falls back to full refresh if document id is unavailable.
@@ -148,9 +160,15 @@ export function applyItemRarityEffects(moduleId) {
 
   registerSettingChangeHooks((moduleOrSetting, maybeKey) => {
     if (!isModuleSettingChange(moduleOrSetting, maybeKey, moduleId)) return;
+    if (isSettingsTransactionActive(moduleId)) return;
     ensureRuntimeRarityStyles(moduleId);
-    debugLog("setting change matched module for item sheets; refreshing all open item sheets");
-    refreshAllItemSheets();
+    debugLog("setting change matched module for item sheets; queued refresh");
+    itemSheetRefresh.request("setting-change");
+  });
+
+  registerSettingsTransactionCompleteHook(moduleId, () => {
+    ensureRuntimeRarityStyles(moduleId);
+    itemSheetRefresh.request("settings-transaction-complete");
   });
 
   Hooks.on("updateItem", (itemDocument) => {

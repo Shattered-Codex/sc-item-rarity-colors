@@ -7,6 +7,7 @@ import {
   RARITY_LIST_SETTING_KEY,
 } from "../core/rarityListConfig.js";
 import { getSettingKeyFromHookPayload, isModuleSettingChange } from "../core/settingChangeHelper.js";
+import { isSettingsTransactionActive } from "../core/settingsTransaction.js";
 import { registerMenus } from "../settings/settingsMenus.js";
 import { registerModuleSettings } from "../settings/settingsRegistration.js";
 import { applyActorInventoryEffects } from "./applyActorInventoryEffects.js";
@@ -60,6 +61,7 @@ export function onReady() {
 
 export function onSettingChange(moduleOrSetting, maybeKey) {
   if (!isModuleSettingChange(moduleOrSetting, maybeKey, MODULE_ID)) return;
+  if (isSettingsTransactionActive(MODULE_ID)) return;
   ensureRuntimeRarityStyles(MODULE_ID);
 
   const fullSettingKey = getSettingKeyFromHookPayload(moduleOrSetting, maybeKey);
@@ -68,6 +70,12 @@ export function onSettingChange(moduleOrSetting, maybeKey) {
 
   debugLog("Lifecycle: setting change detected", { fullSettingKey });
   applyMergedRarityConfigToDnd5e(MODULE_ID);
+}
+
+export function onSettingsTransactionComplete(context = {}) {
+  debugLog("Lifecycle: settings transaction complete", context);
+  applyMergedRarityConfigToDnd5e(MODULE_ID);
+  ensureRuntimeRarityStyles(MODULE_ID);
 }
 
 export function onCustomDnd5eRarityConfig() {

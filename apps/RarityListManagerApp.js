@@ -8,6 +8,7 @@ import {
   saveModuleRarityEntries,
   syncEntriesToCustomDnd5e,
 } from "../core/rarityListConfig.js";
+import { runSettingsTransaction } from "../core/settingsTransaction.js";
 import { ensureRaritySettingsRegistered } from "../settings/settingsRegistration.js";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
@@ -306,7 +307,12 @@ export class RarityListManagerApp extends HandlebarsApplicationMixin(Application
       ensureRaritySettingsRegistered(moduleId, entry.key, entry.label);
     }
 
-    await saveModuleRarityEntries(moduleId, entries, this._draftEnabled !== false);
+    await runSettingsTransaction(moduleId, async () => {
+      await saveModuleRarityEntries(moduleId, entries, this._draftEnabled !== false);
+    }, {
+      source: "rarity-list-manager-app",
+      entryCount: entries.length,
+    });
     await syncEntriesToCustomDnd5e(entries);
     applyMergedRarityConfigToDnd5e(moduleId);
 

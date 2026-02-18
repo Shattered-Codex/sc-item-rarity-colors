@@ -7,7 +7,16 @@ import { getItemRarity } from "./itemRarityHelper.js";
 import { buildRaritySettings } from "../core/settingsManager.js";
 import { isModuleSettingChange, registerSettingChangeHooks } from "../core/settingChangeHelper.js";
 import { debugLog, debugWarn } from "../core/debug.js";
+import {
+  createDebouncedRefreshRequester,
+  REFRESH_DELAYS_MS,
+  runNowAndOnNextAnimationFrame,
+} from "../core/refreshScheduler.js";
 import { applyRarityClass, clearRarityClasses, ensureRuntimeRarityStyles } from "../core/runtimeRarityStyles.js";
+import {
+  isSettingsTransactionActive,
+  registerSettingsTransactionCompleteHook,
+} from "../core/settingsTransaction.js";
 
 const DIRECTORY_ROW_SELECTOR = ".directory-item.entry.document.item, .directory-item.document.item, .directory-item.item";
 const DIRECTORY_STATE_CLASSES = ["scirc-dir-gradient-enabled", "scirc-dir-text-enabled"];
@@ -273,16 +282,15 @@ export function applyItemDirectoryEffects(moduleId) {
     }
   };
 
-  let refreshTimer = null;
-  const requestRefresh = (reason = "unspecified") => {
-    const hadPendingRefresh = Boolean(refreshTimer);
-    if (refreshTimer) clearTimeout(refreshTimer);
-    debugLog("Item directory refresh requested", { reason, debounced: hadPendingRefresh });
-    refreshTimer = setTimeout(() => {
-      debugLog("Item directory refresh executing", { reason });
-      refreshAllKnownItemDirectories();
-      refreshTimer = null;
-    }, 30);
+  const directoryRefresh = createDebouncedRefreshRequester({
+    execute: refreshAllKnownItemDirectories,
+    label: "Item directory refresh",
+    defaultDelayMs: REFRESH_DELAYS_MS.DIRECTORY_EVENT,
+    log: debugLog,
+  });
+
+  const requestRefresh = (reason = "unspecified", delayMs = REFRESH_DELAYS_MS.DIRECTORY_EVENT) => {
+    directoryRefresh.request(reason, delayMs);
   };
 
   const scheduleApply = (htmlOrElement, app) => {
@@ -293,11 +301,13 @@ export function applyItemDirectoryEffects(moduleId) {
       hasRoot: Boolean(root),
     });
     if (root) {
-      applyStylesToItemDirectoryRoot(root, app);
-      requestAnimationFrame(() => applyStylesToItemDirectoryRoot(root, app));
+      runNowAndOnNextAnimationFrame(() => applyStylesToItemDirectoryRoot(root, app));
     }
     // Extra pass to catch delayed DOM injections in sidebar render cycle.
-    setTimeout(() => requestRefresh("delayed-sidebar-dom-injection"), 80);
+    setTimeout(
+      () => requestRefresh("delayed-sidebar-dom-injection"),
+      REFRESH_DELAYS_MS.SIDEBAR_DOM_INJECTION
+    );
   };
 
   Hooks.on("renderItemDirectory", (app, html) => {
@@ -309,8 +319,11 @@ export function applyItemDirectoryEffects(moduleId) {
       scheduleApply(html, app);
       return;
     }
-    // If context can't be reliably identified, do a debounced global refresh.
-    requestRefresh("renderSidebarTab-unknown-context");
+
+    // Limit fallback refreshes to moments where the Items tab is actually active.
+    if (ui?.sidebar?.activeTab === "items") {
+      requestRefresh("renderSidebarTab-active-items-fallback");
+    }
   });
 
   Hooks.on("renderSidebar", () => {
@@ -320,11 +333,18 @@ export function applyItemDirectoryEffects(moduleId) {
 
   registerSettingChangeHooks((moduleOrSetting, maybeKey) => {
     if (!isModuleSettingChange(moduleOrSetting, maybeKey, moduleId)) return;
+    if (isSettingsTransactionActive(moduleId)) return;
 
     raritySettingsCache.clear();
     ensureRuntimeRarityStyles(moduleId);
     debugLog("setting change matched module for item directory; cache cleared");
-    requestRefresh("setting-change");
+    requestRefresh("setting-change", REFRESH_DELAYS_MS.SETTINGS_CHANGE);
+  });
+
+  registerSettingsTransactionCompleteHook(moduleId, () => {
+    raritySettingsCache.clear();
+    ensureRuntimeRarityStyles(moduleId);
+    requestRefresh("settings-transaction-complete", REFRESH_DELAYS_MS.SETTINGS_CHANGE);
   });
 
   Hooks.on("createItem", () => requestRefresh("createItem"));

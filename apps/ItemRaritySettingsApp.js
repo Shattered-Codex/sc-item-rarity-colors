@@ -1,33 +1,14 @@
 import { updateColorPickerVisibility } from "../ui/visibilityManager.js";
 import { updateMiniSheetPreview } from "../ui/previewUpdater.js";
 import { DEFAULT_COLORS, MODULE_ID as DEFAULT_MODULE_ID, RARITY_TIERS } from "../core/constants.js";
+import { normalizeHexColor } from "../core/colorUtils.js";
+import { getRarityFieldDefinitions } from "../core/rarityFieldSchema.js";
 import { RARITY_CONFIG } from "../core/rarityConfig.js";
-import { getMergedRarityEntries, normalizeRarityKey } from "../core/rarityListConfig.js";
+import { getMergedRarityEntries, humanizeRarityLabel, normalizeRarityKey } from "../core/rarityListConfig.js";
+import { createAnimationFrameScheduler, scheduleOnNextAnimationFrame } from "../core/refreshScheduler.js";
 import { getRaritySetting } from "../core/settingsManager.js";
+import { runSettingsTransaction } from "../core/settingsTransaction.js";
 import { ensureRaritySettingsRegistered } from "../settings/settingsRegistration.js";
-
-const FIELD_DEFINITIONS = [
-  { key: "enable-item-color", label: "Change Item Sheet Background Color", type: "checkbox", group: "item-sheet", defaultValue: false },
-  { key: "item-color", label: "Item Sheet Background Color", type: "color", group: "item-sheet", defaultValue: "#000000" },
-  { key: "secondary-item-color", label: "Secondary Color", type: "color", group: "item-sheet", defaultValue: "#ffffff", requiredFlag: "supportsGradient" },
-  { key: "gradient-option", label: "Enable Gradient", type: "checkbox", group: "item-sheet", defaultValue: false, requiredFlag: "supportsGradient" },
-  { key: "glow-option", label: "Enable Glow Effect", type: "checkbox", group: "item-sheet", defaultValue: false, requiredFlag: "supportsGlow" },
-  { key: "enable-text-color", label: "Change Item Sheet Text Color", type: "checkbox", group: "item-sheet", defaultValue: false },
-  { key: "text-color", label: "Item Sheet Text Color", type: "color", group: "item-sheet", defaultValue: "#000000" },
-  { key: "enable-inventory-gradient-effects", label: "Enable Inventory Item Gradient Effects", type: "checkbox", group: "actor-sheet", defaultValue: false },
-  { key: "enable-inventory-borders", label: "Enable Inventory Coloured Borders", type: "checkbox", group: "actor-sheet", defaultValue: false },
-  { key: "enable-inventory-border-color", label: "Change Item Border Color in Inventory", type: "checkbox", group: "actor-sheet", defaultValue: false },
-  { key: "inventory-border-color", label: "Inventory Item Border Color", type: "color", group: "actor-sheet", defaultValue: "#ffffff" },
-  { key: "inventory-border-secondary-color", label: "Inventory Item Border Secondary Color", type: "color", group: "actor-sheet", defaultValue: "#ffffff", requiredFlag: "supportsBorderGradient" },
-  { key: "enable-inventory-border-glow", label: "Enable Inventory Border Glow", type: "checkbox", group: "actor-sheet", defaultValue: false, requiredFlag: "supportsBorderGlow" },
-  { key: "enable-inventory-title-color", label: "Change Item Title/Subtitle Color in Inventory", type: "checkbox", group: "actor-sheet", defaultValue: false },
-  { key: "inventory-title-color", label: "Inventory Item Title/Subtitle Color", type: "color", group: "actor-sheet", defaultValue: "#000000" },
-  { key: "enable-inventory-details-color", label: "Change Item Details Text Color", type: "checkbox", group: "actor-sheet", defaultValue: false },
-  { key: "inventory-details-color", label: "Inventory Item Details Text Color", type: "color", group: "actor-sheet", defaultValue: "#000000" },
-  { key: "enable-foundry-interface-gradient-effects", label: "Enable Foundry Interface Item Gradient Effects", type: "checkbox", group: "foundry-interface", defaultValue: false },
-  { key: "enable-foundry-interface-text-color", label: "Change Foundry Interface Item Text Color", type: "checkbox", group: "foundry-interface", defaultValue: false },
-  { key: "foundry-interface-text-color", label: "Foundry Interface Item Text Color", type: "color", group: "foundry-interface", defaultValue: "#000000" },
-];
 
 /**
  * ItemRaritySettingsApp
@@ -91,29 +72,13 @@ export class ItemRaritySettingsApp extends HandlebarsApplicationMixin(Applicatio
     return normalizeRarityKey(rawKey);
   }
 
-  _humanizeRarityLabel(key) {
-    const value = String(key || "").trim();
-    if (!value) return "Unknown";
-
-    const spaced = value
-      .replace(/[_-]+/g, " ")
-      .replace(/([a-z])([A-Z])/g, "$1 $2")
-      .replace(/\s+/g, " ")
-      .trim();
-
-    return spaced
-      .split(" ")
-      .map((part) => part ? part[0].toUpperCase() + part.slice(1) : part)
-      .join(" ");
-  }
-
   _isCoreRarityKey(key) {
     const normalized = this._normalizeRarityKey(key);
     return Object.values(RARITY_TIERS).includes(normalized);
   }
 
   _formatRarityLabelForDisplay(key, label) {
-    const fallback = this._humanizeRarityLabel(key);
+    const fallback = humanizeRarityLabel(key);
     const rawLabel = String(label || "").trim();
     if (!rawLabel) return fallback;
 
@@ -124,66 +89,6 @@ export class ItemRaritySettingsApp extends HandlebarsApplicationMixin(Applicatio
     const isLowercaseRawKeyLabel = rawLabel === rawLabel.toLowerCase() && compactLabel === compactKey;
 
     return isLowercaseRawKeyLabel ? fallback : rawLabel;
-  }
-
-  _localizeMaybe(label) {
-    if (typeof label !== "string" || !label.trim()) return "";
-    if (game?.i18n?.has?.(label)) {
-      return game.i18n.localize(label);
-    }
-    return label;
-  }
-
-  _getSystemRarityOptions() {
-    const source = CONFIG?.DND5E?.itemRarity ?? game?.dnd5e?.config?.itemRarity;
-    if (!source) return [];
-
-    const entries = Array.isArray(source)
-      ? source.map((key) => [key, key])
-      : Object.entries(source);
-
-    return entries
-      .map(([rawKey, rawValue]) => {
-        const key = this._normalizeRarityKey(rawKey);
-        if (!key) return null;
-
-        const labelValue = typeof rawValue === "string"
-          ? rawValue
-          : (rawValue?.label ?? rawKey);
-        const label = this._localizeMaybe(labelValue) || this._humanizeRarityLabel(rawKey);
-        return { key, label };
-      })
-      .filter(Boolean);
-  }
-
-  _getCustomDnd5eRarityOptions() {
-    const customModule = game.modules.get("custom-dnd5e");
-    if (!customModule?.active) return [];
-    if (!game.settings.settings.has("custom-dnd5e.item-rarity")) return [];
-
-    const isEnabled = game.settings.settings.has("custom-dnd5e.enable-item-rarity")
-      ? game.settings.get("custom-dnd5e", "enable-item-rarity")
-      : true;
-    if (!isEnabled) return [];
-
-    const settingData = game.settings.get("custom-dnd5e", "item-rarity");
-    if (!settingData || typeof settingData !== "object") return [];
-
-    return Object.entries(settingData)
-      .map(([rawKey, rawValue]) => {
-        const keyCandidate = (rawValue && typeof rawValue === "object" && rawValue.key) ? rawValue.key : rawKey;
-        const key = this._normalizeRarityKey(keyCandidate);
-        if (!key) return null;
-
-        if (rawValue && typeof rawValue === "object" && rawValue.visible === false) return null;
-
-        const labelValue = (rawValue && typeof rawValue === "object")
-          ? (rawValue.label ?? keyCandidate)
-          : rawValue;
-        const label = this._localizeMaybe(labelValue) || this._humanizeRarityLabel(keyCandidate);
-        return { key, label };
-      })
-      .filter(Boolean);
   }
 
   _getRarityOptions() {
@@ -207,14 +112,7 @@ export class ItemRaritySettingsApp extends HandlebarsApplicationMixin(Applicatio
   }
 
   _getFieldDefinitionsForRarity(rarity) {
-    const rarityConfig = RARITY_CONFIG[rarity] || {};
-    if (!Object.keys(rarityConfig).length) {
-      return FIELD_DEFINITIONS;
-    }
-    return FIELD_DEFINITIONS.filter((field) => {
-      if (!field.requiredFlag) return true;
-      return Boolean(rarityConfig[field.requiredFlag]);
-    });
+    return getRarityFieldDefinitions(rarity);
   }
 
   _normalizeFieldValue(field, value) {
@@ -229,23 +127,6 @@ export class ItemRaritySettingsApp extends HandlebarsApplicationMixin(Applicatio
     return value;
   }
 
-  _normalizeHexColor(value, { allowShort = true, expandShort = true } = {}) {
-    if (typeof value !== "string") return null;
-
-    let normalized = value.trim().toUpperCase();
-    if (!normalized) return null;
-    if (!normalized.startsWith("#")) normalized = `#${normalized}`;
-    const pattern = allowShort ? /^#([0-9A-F]{3}|[0-9A-F]{6})$/ : /^#[0-9A-F]{6}$/;
-    if (!pattern.test(normalized)) return null;
-
-    if (expandShort && normalized.length === 4) {
-      const shortHex = normalized.slice(1);
-      normalized = `#${shortHex.split("").map((char) => `${char}${char}`).join("")}`;
-    }
-
-    return normalized;
-  }
-
   _bindColorControlInputs(formElement, onValueChange) {
     const controls = formElement.querySelectorAll(".sc-item-rarity-colors__color-control");
 
@@ -255,13 +136,13 @@ export class ItemRaritySettingsApp extends HandlebarsApplicationMixin(Applicatio
       if (!colorInput || !hexInput) return;
 
       const syncHexFromColor = () => {
-        const normalized = this._normalizeHexColor(colorInput.value) || "#000000";
+        const normalized = normalizeHexColor(colorInput.value) || "#000000";
         hexInput.value = normalized;
         hexInput.classList.remove("is-invalid");
       };
 
       const applyHexToColor = ({ commit = false } = {}) => {
-        const normalized = this._normalizeHexColor(hexInput.value, {
+        const normalized = normalizeHexColor(hexInput.value, {
           allowShort: commit,
           expandShort: commit,
         });
@@ -293,7 +174,7 @@ export class ItemRaritySettingsApp extends HandlebarsApplicationMixin(Applicatio
       });
 
       colorInput.addEventListener("mouseup", () => {
-        requestAnimationFrame(() => {
+        scheduleOnNextAnimationFrame(() => {
           syncHexFromColor();
           onValueChange();
         });
@@ -392,7 +273,7 @@ export class ItemRaritySettingsApp extends HandlebarsApplicationMixin(Applicatio
     const selectedRarityLabel =
       rarityOptions.find((option) => option.key === this.selectedRarity)?.label
       || RARITY_CONFIG[this.selectedRarity]?.label
-      || this._humanizeRarityLabel(this.selectedRarity);
+      || humanizeRarityLabel(this.selectedRarity);
 
     return {
       title: `${selectedRarityLabel} Item Settings`,
@@ -453,11 +334,12 @@ export class ItemRaritySettingsApp extends HandlebarsApplicationMixin(Applicatio
       this._captureCurrentRarityDraft(this.form);
       updateMiniSheetPreview(this.form, this.selectedRarity);
     };
+    const frameRefreshUi = createAnimationFrameScheduler(refreshUi);
 
     refreshUi();
 
     this._bindColorControlInputs(this.form, () => {
-      requestAnimationFrame(() => refreshUi());
+      frameRefreshUi.request();
     });
 
     const checkboxInputs = this.form.querySelectorAll('input[type="checkbox"]');
@@ -481,6 +363,7 @@ export class ItemRaritySettingsApp extends HandlebarsApplicationMixin(Applicatio
 
     const rarityOptions = this._getRarityOptions();
     const rarityLabelMap = new Map(rarityOptions.map((option) => [option.key, option.label]));
+    const pendingUpdates = [];
 
     for (const [rarity, raritySettings] of Object.entries(this._draftSettings || {})) {
       ensureRaritySettingsRegistered(moduleId, rarity, rarityLabelMap.get(rarity));
@@ -493,11 +376,30 @@ export class ItemRaritySettingsApp extends HandlebarsApplicationMixin(Applicatio
 
         const rawValue = raritySettings[field.key];
         const settingValue = this._normalizeFieldValue(field, rawValue);
-        await game.settings.set(moduleId, settingName, settingValue);
+        const currentValue = game.settings.get(moduleId, settingName);
+        if (currentValue === settingValue) continue;
+
+        pendingUpdates.push({
+          settingName,
+          settingValue,
+        });
       }
     }
 
-    ui.notifications.info("Saved item rarity settings.");
+    if (pendingUpdates.length > 0) {
+      await runSettingsTransaction(moduleId, async () => {
+        for (const update of pendingUpdates) {
+          await game.settings.set(moduleId, update.settingName, update.settingValue);
+        }
+      }, {
+        source: "item-rarity-settings-app",
+        updateCount: pendingUpdates.length,
+      });
+    }
+
+    ui.notifications.info(pendingUpdates.length > 0
+      ? `Saved item rarity settings (${pendingUpdates.length} change(s)).`
+      : "No item rarity setting changes to save.");
     await this.close();
   }
 

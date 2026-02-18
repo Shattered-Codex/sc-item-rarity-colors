@@ -19,6 +19,7 @@ import {
 import { applyRarityClass, clearRarityClasses } from "../core/runtimeRarityStyles.js";
 import { raritySupportsBorderGradient, raritySupportsBorderGlow } from "../core/rarityConfig.js";
 import { DEFAULT_COLORS, DEFAULT_GLOW_INTENSITY } from "../core/constants.js";
+import { scheduleOnNextAnimationFrame } from "../core/refreshScheduler.js";
 
 /**
  * Update the mini item sheet preview
@@ -156,12 +157,12 @@ function updateInventoryPreview(formElement, rarity, itemSheetSettings) {
     ".item-name a",
   ];
   if (enableTitleColor && titleColor) {
-    requestAnimationFrame(() => {
+    scheduleOnNextAnimationFrame(() => {
       applyTitleColor($inventoryPreview, titleColor, titleSelectors, { preview: true });
       applyRarityClass($inventoryPreview.find(".item-row"), rarity);
     });
   } else {
-    requestAnimationFrame(() => {
+    scheduleOnNextAnimationFrame(() => {
       clearTitleColor($inventoryPreview, titleSelectors);
     });
   }
@@ -178,12 +179,12 @@ function updateInventoryPreview(formElement, rarity, itemSheetSettings) {
     ".item-detail i",
   ];
   if (enableDetailsColor && detailsColor) {
-    requestAnimationFrame(() => {
+    scheduleOnNextAnimationFrame(() => {
       applyDetailsColor($inventoryPreview, detailsColor, detailsSelectors, { preview: true });
       applyRarityClass($inventoryPreview.find(".item-row"), rarity);
     });
   } else {
-    requestAnimationFrame(() => {
+    scheduleOnNextAnimationFrame(() => {
       clearDetailsColor($inventoryPreview, detailsSelectors);
     });
   }
