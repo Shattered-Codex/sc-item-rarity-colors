@@ -3,6 +3,30 @@ import { RARITY_CONFIG } from "./rarityConfig.js";
 
 export const RARITY_LIST_SETTING_KEY = "rarity-list-config";
 export const RARITY_LIST_ENABLED_SETTING_KEY = "rarity-list-enabled";
+let BASE_SYSTEM_RARITY_SOURCE = null;
+
+function deepClone(value) {
+  if (typeof foundry?.utils?.deepClone === "function") {
+    return foundry.utils.deepClone(value);
+  }
+  return JSON.parse(JSON.stringify(value));
+}
+
+function getCurrentSystemRaritySource() {
+  return CONFIG?.DND5E?.itemRarity ?? game?.dnd5e?.config?.itemRarity ?? {};
+}
+
+export function initializeSystemRarityBaseline({ force = false } = {}) {
+  if (BASE_SYSTEM_RARITY_SOURCE && !force) return BASE_SYSTEM_RARITY_SOURCE;
+
+  const source = getCurrentSystemRaritySource();
+  BASE_SYSTEM_RARITY_SOURCE = source && typeof source === "object" ? deepClone(source) : {};
+  return BASE_SYSTEM_RARITY_SOURCE;
+}
+
+function getSystemRaritySourceForMerge() {
+  return initializeSystemRarityBaseline();
+}
 
 const BUILTIN_RARITY_ALIASES = Object.freeze({
   common: RARITY_TIERS.COMMON,
@@ -144,7 +168,7 @@ function parseRarityEntries(rawData, { fallbackSystem = false } = {}) {
 }
 
 export function getSystemRarityEntries() {
-  const source = CONFIG?.DND5E?.itemRarity ?? game?.dnd5e?.config?.itemRarity;
+  const source = getSystemRaritySourceForMerge();
   const entries = parseRarityEntries(source, { fallbackSystem: true });
   return entries.length ? entries : getFallbackRarityEntries();
 }

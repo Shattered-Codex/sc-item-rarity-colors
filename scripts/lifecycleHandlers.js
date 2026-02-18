@@ -3,6 +3,7 @@ import { debugLog } from "../core/debug.js";
 import { ensureRuntimeRarityStyles } from "../core/runtimeRarityStyles.js";
 import {
   applyMergedRarityConfigToDnd5e,
+  initializeSystemRarityBaseline,
   RARITY_LIST_ENABLED_SETTING_KEY,
   RARITY_LIST_SETTING_KEY,
 } from "../core/rarityListConfig.js";
@@ -18,6 +19,7 @@ import { maybeShowSupportCard } from "./supportCard.js";
 
 export async function onInit() {
   debugLog("Lifecycle: init start");
+  initializeSystemRarityBaseline();
 
   Handlebars.registerHelper("eq", function(a, b) {
     return a === b;
