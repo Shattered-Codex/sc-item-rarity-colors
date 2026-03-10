@@ -47,20 +47,6 @@ function registerObjectSetting(moduleId, key, name, defaultValue) {
   });
 }
 
-function registerSupportCardSetting(moduleId) {
-  const key = "supportCardDisabled";
-  if (game.settings.settings.has(`${moduleId}.${key}`)) return;
-
-  game.settings.register(moduleId, key, {
-    name: "Support Chat Card - disable",
-    hint: "If enabled, the support chat card will not show on startup.",
-    scope: "world",
-    config: true,
-    type: Boolean,
-    default: false,
-  });
-}
-
 function registerDebugSetting(moduleId) {
   const key = DEBUG_LOGS_SETTING_KEY;
   if (game.settings.settings.has(`${moduleId}.${key}`)) return;
@@ -138,6 +124,5 @@ export function registerModuleSettings(MODULE_ID) {
     getDefaultSpellSchoolStylesSetting()
   );
 
-  registerSupportCardSetting(MODULE_ID);
   registerDebugSetting(MODULE_ID);
 }

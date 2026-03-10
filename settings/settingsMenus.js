@@ -61,7 +61,7 @@ export function registerMenus(MODULE_ID) {
   game.settings.registerMenu(MODULE_ID, "spellSchoolSettingsConfig", {
     name: "Spell School Color Configuration",
     label: "Configure Spell School Colors",
-    icon: "fas fa-wand-magic-sparkles",
+    icon: "fas fa-book-sparkles",
     type: SpellSchoolSettingsLauncher,
     restricted: false,
     hint: "Configure spell visuals by magic school, with optional school+level variants.",
