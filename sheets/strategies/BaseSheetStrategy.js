@@ -14,6 +14,7 @@ import {
 import { raritySupportsBorderGlow, raritySupportsBorderGradient } from "../../core/rarityConfig.js";
 import { buildRaritySettings } from "../../core/settingsManager.js";
 import { getItemRarity } from "../../scripts/itemRarityHelper.js";
+import { getActiveSpellStyleForItem } from "../../scripts/spellSchoolHelper.js";
 
 /**
  * Base Sheet Strategy
@@ -79,19 +80,140 @@ export class BaseSheetStrategy {
     // Default: no-op, override if needed.
   }
 
+  _applyResolvedStyles($itemElement, $gradientElement, $borderElement, titleSelectors, detailsSelectors, settings, options = {}) {
+    const rarity = options?.rarity ?? null;
+    const preview = options?.preview === true;
+    const useRarityCapabilities = options?.useRarityCapabilities === true;
+    let borderMode = "none";
+
+    if (!settings.enableInventoryGradientEffects || !settings.enableItemColor) {
+      clearInventoryGradient($gradientElement);
+    } else {
+      applyInventoryGradient($gradientElement, settings, { rarity, preview });
+    }
+
+    this.prepareBorderElement($borderElement);
+
+    if (!settings.enableInventoryBorders) {
+      clearInventoryBorder($borderElement);
+    } else if (settings.enableItemColor) {
+      borderMode = "item-color";
+      $borderElement.each((_, icon) => {
+        const borderSettings = {
+          ...settings,
+          backgroundColor: settings.backgroundColor,
+          gradientColor: settings.gradientColor,
+          gradientEnabled: settings.gradientEnabled,
+          glowEnabled: settings.glowEnabled,
+        };
+        applyInventoryBorder(icon, borderSettings, DEFAULT_GLOW_INTENSITY, { rarity, preview });
+      });
+    } else if (settings.enableInventoryBorderColor && settings.inventoryBorderColor) {
+      const hasBorderGradient = useRarityCapabilities
+        ? raritySupportsBorderGradient(rarity)
+        : true;
+      const hasBorderGlow = useRarityCapabilities
+        ? raritySupportsBorderGlow(rarity)
+        : true;
+
+      if (hasBorderGradient) {
+        const hasSecondaryColor = settings.inventoryBorderSecondaryColor
+          && settings.inventoryBorderSecondaryColor !== settings.inventoryBorderColor;
+        const secondaryColor = hasSecondaryColor
+          ? settings.inventoryBorderSecondaryColor
+          : settings.inventoryBorderColor;
+        borderMode = hasSecondaryColor && settings.enableInventoryBorderGlow && hasBorderGlow
+          ? "border-color-glow"
+          : (hasSecondaryColor ? "border-color-gradient" : "border-color-solid");
+
+        const borderSettings = {
+          ...settings,
+          backgroundColor: settings.inventoryBorderColor,
+          gradientColor: secondaryColor,
+          gradientEnabled: hasSecondaryColor && (!settings.enableInventoryBorderGlow || !hasBorderGlow),
+          glowEnabled: settings.enableInventoryBorderGlow && hasSecondaryColor && hasBorderGlow,
+        };
+        $borderElement.each((_, icon) => {
+          applyInventoryBorder(icon, borderSettings, DEFAULT_GLOW_INTENSITY, { rarity, preview });
+        });
+      } else {
+        borderMode = "border-color-solid";
+        const borderSettings = {
+          ...settings,
+          backgroundColor: settings.inventoryBorderColor,
+          gradientColor: settings.inventoryBorderColor,
+          gradientEnabled: false,
+          glowEnabled: false,
+        };
+        $borderElement.each((_, icon) => {
+          applyInventoryBorder(icon, borderSettings, DEFAULT_GLOW_INTENSITY, { rarity, preview });
+        });
+      }
+    } else {
+      clearInventoryBorder($borderElement);
+    }
+
+    if (settings.enableInventoryTitleColor && settings.inventoryTitleColor) {
+      applyTitleColor($itemElement, settings.inventoryTitleColor, titleSelectors, { preview });
+    } else {
+      clearTitleColor($itemElement, titleSelectors);
+    }
+
+    if (settings.enableInventoryDetailsColor && settings.inventoryDetailsColor) {
+      applyDetailsColor($itemElement, settings.inventoryDetailsColor, detailsSelectors, { preview });
+    } else {
+      clearDetailsColor($itemElement, detailsSelectors);
+    }
+
+    return {
+      borderMode,
+      gradientApplied: settings.enableInventoryGradientEffects && settings.enableItemColor,
+      titleColorApplied: settings.enableInventoryTitleColor && Boolean(settings.inventoryTitleColor),
+      detailsColorApplied: settings.enableInventoryDetailsColor && Boolean(settings.inventoryDetailsColor),
+    };
+  }
+
   /**
    * Apply styles to a single item.
    * @param {jQuery} $itemElement - Item container element.
    * @param {object} item - Item document.
-   * @param {string} _moduleId - Module ID (reserved for future use).
+   * @param {string} moduleId - Module ID.
    */
-  applyItemStyles($itemElement, item, _moduleId) {
+  applyItemStyles($itemElement, item, moduleId) {
     const $gradientElement = this.getGradientElement($itemElement);
     const $borderElement = this.getBorderElement($itemElement);
     const titleSelectors = this.getTitleSelectors();
     const detailsSelectors = this.getDetailsSelectors();
     const itemId = item?.id ?? item?._id ?? null;
     const itemName = item?.name ?? null;
+
+    const spellStyle = getActiveSpellStyleForItem(item, moduleId);
+    if (spellStyle) {
+      clearRarityClasses($itemElement);
+      $itemElement.addClass("scirc-managed-item-row");
+
+      const summary = this._applyResolvedStyles(
+        $itemElement,
+        $gradientElement,
+        $borderElement,
+        titleSelectors,
+        detailsSelectors,
+        spellStyle.settings,
+        { preview: true, useRarityCapabilities: false }
+      );
+
+      debugLog("Actor spell styles applied", {
+        strategy: this.constructor.name,
+        itemId,
+        itemName,
+        profileKey: spellStyle.profileKey,
+        school: spellStyle.school,
+        level: spellStyle.level,
+        useLevelVariants: spellStyle.useLevelVariants,
+        ...summary,
+      });
+      return;
+    }
 
     const rarity = getItemRarity(item);
     if (!rarity) {
@@ -112,92 +234,23 @@ export class BaseSheetStrategy {
     const raritySettings = buildRaritySettings(rarity);
     $itemElement.addClass("scirc-managed-item-row");
     applyRarityClass($itemElement, rarity);
-    let borderMode = "none";
 
-    if (!raritySettings.enableInventoryGradientEffects || !raritySettings.enableItemColor) {
-      clearInventoryGradient($gradientElement);
-    } else {
-      applyInventoryGradient($gradientElement, raritySettings, { rarity });
-    }
-
-    this.prepareBorderElement($borderElement);
-
-    if (!raritySettings.enableInventoryBorders) {
-      clearInventoryBorder($borderElement);
-    } else if (raritySettings.enableItemColor) {
-      borderMode = "item-color";
-      $borderElement.each((_, icon) => {
-        const borderSettings = {
-          ...raritySettings,
-          backgroundColor: raritySettings.backgroundColor,
-          gradientColor: raritySettings.gradientColor,
-          gradientEnabled: raritySettings.gradientEnabled,
-          glowEnabled: raritySettings.glowEnabled,
-        };
-        applyInventoryBorder(icon, borderSettings, DEFAULT_GLOW_INTENSITY, { rarity });
-      });
-    } else if (raritySettings.enableInventoryBorderColor && raritySettings.inventoryBorderColor) {
-      const hasBorderGradient = raritySupportsBorderGradient(rarity);
-      const hasBorderGlow = raritySupportsBorderGlow(rarity);
-
-      if (hasBorderGradient) {
-        const hasSecondaryColor = raritySettings.inventoryBorderSecondaryColor
-          && raritySettings.inventoryBorderSecondaryColor !== raritySettings.inventoryBorderColor;
-        const secondaryColor = hasSecondaryColor
-          ? raritySettings.inventoryBorderSecondaryColor
-          : raritySettings.inventoryBorderColor;
-        borderMode = hasSecondaryColor && raritySettings.enableInventoryBorderGlow && hasBorderGlow
-          ? "border-color-glow"
-          : (hasSecondaryColor ? "border-color-gradient" : "border-color-solid");
-
-        const borderSettings = {
-          ...raritySettings,
-          backgroundColor: raritySettings.inventoryBorderColor,
-          gradientColor: secondaryColor,
-          gradientEnabled: hasSecondaryColor && (!raritySettings.enableInventoryBorderGlow || !hasBorderGlow),
-          glowEnabled: raritySettings.enableInventoryBorderGlow && hasSecondaryColor && hasBorderGlow,
-        };
-        $borderElement.each((_, icon) => {
-          applyInventoryBorder(icon, borderSettings, DEFAULT_GLOW_INTENSITY, { rarity });
-        });
-      } else {
-        borderMode = "border-color-solid";
-        const borderSettings = {
-          ...raritySettings,
-          backgroundColor: raritySettings.inventoryBorderColor,
-          gradientColor: raritySettings.inventoryBorderColor,
-          gradientEnabled: false,
-          glowEnabled: false,
-        };
-        $borderElement.each((_, icon) => {
-          applyInventoryBorder(icon, borderSettings, DEFAULT_GLOW_INTENSITY, { rarity });
-        });
-      }
-    } else {
-      clearInventoryBorder($borderElement);
-    }
-
-    if (raritySettings.enableInventoryTitleColor && raritySettings.inventoryTitleColor) {
-      applyTitleColor($itemElement, raritySettings.inventoryTitleColor, titleSelectors);
-    } else {
-      clearTitleColor($itemElement, titleSelectors);
-    }
-
-    if (raritySettings.enableInventoryDetailsColor && raritySettings.inventoryDetailsColor) {
-      applyDetailsColor($itemElement, raritySettings.inventoryDetailsColor, detailsSelectors);
-    } else {
-      clearDetailsColor($itemElement, detailsSelectors);
-    }
+    const summary = this._applyResolvedStyles(
+      $itemElement,
+      $gradientElement,
+      $borderElement,
+      titleSelectors,
+      detailsSelectors,
+      raritySettings,
+      { rarity, preview: false, useRarityCapabilities: true }
+    );
 
     debugLog("Actor item styles applied", {
       strategy: this.constructor.name,
       itemId,
       itemName,
       rarity,
-      gradientApplied: raritySettings.enableInventoryGradientEffects && raritySettings.enableItemColor,
-      borderMode,
-      titleColorApplied: raritySettings.enableInventoryTitleColor && Boolean(raritySettings.inventoryTitleColor),
-      detailsColorApplied: raritySettings.enableInventoryDetailsColor && Boolean(raritySettings.inventoryDetailsColor),
+      ...summary,
     });
   }
 }

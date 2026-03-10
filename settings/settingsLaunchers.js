@@ -1,6 +1,7 @@
 // settings/settingsLaunchers.js
 import { ItemRaritySettingsApp } from "../apps/ItemRaritySettingsApp.js";
 import { RarityListManagerApp } from "../apps/RarityListManagerApp.js";
+import { SpellSchoolSettingsApp } from "../apps/SpellSchoolSettingsApp.js";
 
 // Base launcher class for item rarity settings.
 // Uses ApplicationV2 with HandlebarsApplicationMixin for compatibility with FoundryVTT v13+
@@ -99,6 +100,14 @@ export class ItemRaritySourceSettingsLauncher extends ItemRaritySettingsLauncher
   _openTargetApp(force = false, options = {}) {
     const moduleId = this.constructor.MODULE_ID || RarityListManagerApp.MODULE_ID;
     const app = new RarityListManagerApp({}, moduleId);
+    app.render(force, options);
+  }
+}
+
+export class SpellSchoolSettingsLauncher extends ItemRaritySettingsLauncher {
+  _openTargetApp(force = false, options = {}) {
+    const moduleId = this.constructor.MODULE_ID || SpellSchoolSettingsApp.MODULE_ID;
+    const app = new SpellSchoolSettingsApp({}, moduleId);
     app.render(force, options);
   }
 }

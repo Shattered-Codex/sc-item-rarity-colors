@@ -9,6 +9,7 @@ import {
 } from "../core/rarityListConfig.js";
 import { DEBUG_LOGS_SETTING_KEY } from "../core/debug.js";
 import { buildRarityFieldSettingName, getRarityFieldDefinitions } from "../core/rarityFieldSchema.js";
+import { getDefaultSpellSchoolStylesSetting, SPELL_SCHOOL_STYLES_SETTING_KEY } from "../core/spellSchoolConfig.js";
 
 // Register settings for item rarity colors.
 function registerColorSetting(moduleId, key, name, defaultValue) {
@@ -129,6 +130,13 @@ export function registerModuleSettings(MODULE_ID) {
   for (const entry of mergedRarities) {
     registerRaritySettings(MODULE_ID, entry.key, entry.label);
   }
+
+  registerObjectSetting(
+    MODULE_ID,
+    SPELL_SCHOOL_STYLES_SETTING_KEY,
+    "Spell School Style Configuration",
+    getDefaultSpellSchoolStylesSetting()
+  );
 
   registerSupportCardSetting(MODULE_ID);
   registerDebugSetting(MODULE_ID);

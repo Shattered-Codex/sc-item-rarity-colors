@@ -39,6 +39,7 @@ export async function onInit() {
 
   await registerModulePartials(MODULE_ID, [
     "item-template.html",
+    "spell-template.html",
   ]);
 
   debugLog("Lifecycle: init complete");

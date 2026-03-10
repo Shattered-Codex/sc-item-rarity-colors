@@ -90,6 +90,92 @@
   align-self: center;
 }
 
+.sc-item-rarity-colors__header-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 320px) minmax(0, 220px);
+  grid-template-areas:
+    "school level"
+    "toggle .";
+  column-gap: 0.75rem;
+  row-gap: 0.35rem;
+  align-self: stretch;
+  align-items: end;
+  justify-content: end;
+}
+
+.sc-item-rarity-colors__header-controls label {
+  color: var(--scirc-text-dim);
+}
+
+.sc-item-rarity-colors__header-controls .form-group {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.sc-item-rarity-colors__header-controls .form-group .form-fields {
+  justify-content: flex-start;
+}
+
+.sc-item-rarity-colors__header-controls .sc-item-rarity-colors__rarity-select {
+  min-width: 0;
+  width: 100%;
+}
+
+.sc-item-rarity-colors__school-selector,
+.sc-item-rarity-colors__level-selector {
+  margin: 0;
+}
+
+.sc-item-rarity-colors__school-selector {
+  grid-area: school;
+}
+
+.sc-item-rarity-colors__level-selector {
+  grid-area: level;
+  justify-self: start;
+}
+
+.sc-item-rarity-colors__level-variant-inline {
+  grid-area: toggle;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 24px;
+  justify-self: start;
+}
+
+.sc-item-rarity-colors__level-variant-inline label {
+  margin: 0;
+  line-height: 1.1;
+}
+
+.sc-item-rarity-colors__level-variant-inline .sc-item-rarity-colors__checkbox {
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  min-height: 16px;
+  margin: 0;
+}
+
+.sc-item-rarity-colors--spell-school-manager .sc-item-rarity-colors__header {
+  grid-template-columns: minmax(0, 1fr) minmax(560px, 620px);
+}
+
+.sc-item-rarity-colors--spell-school-manager .sc-item-rarity-colors__header-controls {
+  grid-template-columns: minmax(0, 340px) minmax(0, 240px);
+  justify-content: start;
+}
+
+.sc-item-rarity-colors--spell-school-manager .sc-item-rarity-colors__header-controls .sc-item-rarity-colors__rarity-select {
+  min-width: 0;
+}
+
+.sc-item-rarity-colors--spell-school-manager .sc-item-rarity-colors__level-selector label {
+  white-space: nowrap;
+}
+
 .sc-item-rarity-colors__rarity-selector label {
   color: var(--scirc-text-dim);
 }
@@ -377,6 +463,22 @@
 
 @media (max-width: 1120px) {
   .sc-item-rarity-colors__header {
+    grid-template-columns: 1fr;
+  }
+
+  .sc-item-rarity-colors__header-controls {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "school"
+      "toggle"
+      "level";
+    row-gap: 0.35rem;
+    column-gap: 0;
+    justify-content: stretch;
+  }
+
+  .sc-item-rarity-colors--spell-school-manager .sc-item-rarity-colors__header-controls {
+    justify-content: stretch;
     grid-template-columns: 1fr;
   }
 
