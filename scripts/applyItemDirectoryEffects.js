@@ -4,6 +4,7 @@
  */
 
 import { getItemRarity } from "./itemRarityHelper.js";
+import { getActiveSpellStyleForItem } from "./spellSchoolHelper.js";
 import { buildRaritySettings } from "../core/settingsManager.js";
 import { isModuleSettingChange, registerSettingChangeHooks } from "../core/settingChangeHelper.js";
 import { debugLog, debugWarn } from "../core/debug.js";
@@ -22,20 +23,14 @@ const DIRECTORY_ROW_SELECTOR = ".directory-item.entry.document.item, .directory-
 const DIRECTORY_STATE_CLASSES = ["scirc-dir-gradient-enabled", "scirc-dir-text-enabled"];
 
 function getItemIdFromElement(element) {
-  const fromDataset = element?.dataset?.documentId
+  return element?.dataset?.documentId
     || element?.dataset?.entryId
     || element?.dataset?.itemId
-    || element?.dataset?.id;
-  if (fromDataset) return fromDataset;
-
-  const fromAttributes = element?.getAttribute?.("data-document-id")
+    || element?.dataset?.id
+    || element?.getAttribute?.("data-document-id")
     || element?.getAttribute?.("data-entry-id")
-    || element?.getAttribute?.("data-item-id");
-  if (fromAttributes) return fromAttributes;
-
-  const rawHtml = element?.outerHTML || "";
-  const match = rawHtml.match(/data-(?:document-id|entry-id|item-id)="(.*?)"/i);
-  return match?.[1] || null;
+    || element?.getAttribute?.("data-item-id")
+    || null;
 }
 
 function resolveItemFromCollection(collection, itemId) {
@@ -201,11 +196,53 @@ export function applyItemDirectoryEffects(moduleId) {
 
     clearRowVisuals(rowElement);
 
+    const spellStyle = getActiveSpellStyleForItem(item, moduleId);
+    if (spellStyle) {
+      const spellSettings = spellStyle.settings;
+
+      if (spellSettings.enableFoundryInterfaceGradientEffects && spellSettings.enableItemColor) {
+        const primaryColor = spellSettings.backgroundColor || "#ffffff";
+        const secondaryColor = spellSettings.gradientEnabled
+          && spellSettings.gradientColor
+          && spellSettings.gradientColor !== "#ffffff"
+          ? spellSettings.gradientColor
+          : "#252830";
+        rowElement.classList.add("scirc-dir-gradient-enabled");
+        rowElement.style.setProperty("--scirc-dir-bg-primary", primaryColor);
+        rowElement.style.setProperty("--scirc-dir-bg-secondary", secondaryColor);
+        rowElement.style.setProperty("--scirc-dir-bg-fallback", "#252830");
+      }
+
+      if (spellSettings.enableFoundryInterfaceTextColor && spellSettings.foundryInterfaceTextColor) {
+        rowElement.classList.add("scirc-dir-text-enabled");
+        rowElement.style.setProperty("--scirc-dir-text-color", spellSettings.foundryInterfaceTextColor);
+      }
+
+      return {
+        applied: true,
+        source: "spell-style",
+        profileKey: spellStyle.profileKey,
+        school: spellStyle.school,
+        level: spellStyle.level,
+      };
+    }
+
     const rarity = getItemRarity(item);
-    if (!rarity) return { applied: false, reason: "missing-rarity" };
+    if (!rarity) {
+      return {
+        applied: false,
+        reason: "missing-rarity",
+      };
+    }
 
     const settings = getCachedRaritySettings(rarity);
-    if (!settings) return { applied: false, reason: "missing-settings", rarity };
+    if (!settings) {
+      return {
+        applied: false,
+        reason: "missing-settings",
+        rarity,
+      };
+    }
 
     applyRarityClass(rowElement, rarity);
 
@@ -219,6 +256,7 @@ export function applyItemDirectoryEffects(moduleId) {
 
     return {
       applied: true,
+      source: "rarity",
       rarity,
       gradientApplied: settings.enableFoundryInterfaceGradientEffects && settings.enableItemColor,
       textColorApplied: settings.enableFoundryInterfaceTextColor && Boolean(settings.foundryInterfaceTextColor),
@@ -233,6 +271,7 @@ export function applyItemDirectoryEffects(moduleId) {
     let unresolvedCount = 0;
     let noRarityCount = 0;
     let noSettingsCount = 0;
+    let spellStyleCount = 0;
 
     for (const rowElement of rows) {
       const item = resolveItemForRow(rowElement, app);
@@ -242,6 +281,7 @@ export function applyItemDirectoryEffects(moduleId) {
         continue;
       }
       const result = applyStylesToDirectoryRow(item, rowElement);
+      if (result?.source === "spell-style") spellStyleCount += 1;
       if (result?.applied) {
         appliedCount += 1;
         continue;
@@ -258,6 +298,7 @@ export function applyItemDirectoryEffects(moduleId) {
       unresolvedCount,
       noRarityCount,
       noSettingsCount,
+      spellStyleCount,
     });
 
     if (unresolvedCount > 0) {
@@ -336,14 +377,12 @@ export function applyItemDirectoryEffects(moduleId) {
     if (isSettingsTransactionActive(moduleId)) return;
 
     raritySettingsCache.clear();
-    ensureRuntimeRarityStyles(moduleId);
     debugLog("setting change matched module for item directory; cache cleared");
     requestRefresh("setting-change", REFRESH_DELAYS_MS.SETTINGS_CHANGE);
   });
 
   registerSettingsTransactionCompleteHook(moduleId, () => {
     raritySettingsCache.clear();
-    ensureRuntimeRarityStyles(moduleId);
     requestRefresh("settings-transaction-complete", REFRESH_DELAYS_MS.SETTINGS_CHANGE);
   });
 

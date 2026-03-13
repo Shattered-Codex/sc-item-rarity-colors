@@ -9,6 +9,7 @@ import {
 } from "../core/rarityListConfig.js";
 import { DEBUG_LOGS_SETTING_KEY } from "../core/debug.js";
 import { buildRarityFieldSettingName, getRarityFieldDefinitions } from "../core/rarityFieldSchema.js";
+import { getDefaultSpellSchoolStylesSetting, SPELL_SCHOOL_STYLES_SETTING_KEY } from "../core/spellSchoolConfig.js";
 
 // Register settings for item rarity colors.
 function registerColorSetting(moduleId, key, name, defaultValue) {
@@ -43,20 +44,6 @@ function registerObjectSetting(moduleId, key, name, defaultValue) {
     config: false,
     type: Object,
     default: defaultValue,
-  });
-}
-
-function registerSupportCardSetting(moduleId) {
-  const key = "supportCardDisabled";
-  if (game.settings.settings.has(`${moduleId}.${key}`)) return;
-
-  game.settings.register(moduleId, key, {
-    name: "Support Chat Card - disable",
-    hint: "If enabled, the support chat card will not show on startup.",
-    scope: "world",
-    config: true,
-    type: Boolean,
-    default: false,
   });
 }
 
@@ -130,6 +117,12 @@ export function registerModuleSettings(MODULE_ID) {
     registerRaritySettings(MODULE_ID, entry.key, entry.label);
   }
 
-  registerSupportCardSetting(MODULE_ID);
+  registerObjectSetting(
+    MODULE_ID,
+    SPELL_SCHOOL_STYLES_SETTING_KEY,
+    "Spell School Style Configuration",
+    getDefaultSpellSchoolStylesSetting()
+  );
+
   registerDebugSetting(MODULE_ID);
 }

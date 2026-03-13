@@ -6,7 +6,7 @@
 [![Support on Patreon](https://img.shields.io/badge/Patreon-Shattered%20Codex-FF424D?logo=patreon&logoColor=white)](https://www.patreon.com/c/shatteredcodex)
 ![Downloads](https://img.shields.io/github/downloads/Shattered-Codex/sc-item-rarity-colors/total)
 
-Color item rarities in D&D 5e with full per-rarity control for item sheets, actor inventories, and the Foundry item directory.
+Color item rarities and spells in D&D 5e, with full control for item sheets, actor inventories, and the Foundry item directory.
 
 ## What This Module Does
 
@@ -19,6 +19,7 @@ Color item rarities in D&D 5e with full per-rarity control for item sheets, acto
   - Foundry item directory rows
 - Includes a rarity list manager (add, remove, rename, reorder, show/hide).
 - Plays nicely with Custom DND5E rarity data when both modules are active.
+- Includes Spell School color configuration for spells, with optional per-level variants.
 
 ---
 
@@ -45,6 +46,13 @@ Open:
 ### Color Configuration
 
 ![Color configuration screen](https://i.imgur.com/8cUooJt.png)
+
+### Spell School Color Configuration
+
+Spells can also change color by **magic school**.  
+You can optionally enable **level variants**, combining school + spell level for more granular styling.
+
+![Spell school color configuration](https://i.imgur.com/wQKxB4Q.png)
 
 When **Tidy 5e Sheet** is installed and active, an extra button is shown to transfer rarity colors to Tidy:
 

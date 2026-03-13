@@ -1,4 +1,5 @@
 import { applyRarityStyles, getItemRarity, removeRarityStyles } from "./itemRarityHelper.js";
+import { getActiveSpellStyleForItem } from "./spellSchoolHelper.js";
 import { buildRaritySettings } from "../core/settingsManager.js";
 import { isModuleSettingChange, registerSettingChangeHooks } from "../core/settingChangeHelper.js";
 import { debugLog, debugWarn } from "../core/debug.js";
@@ -70,6 +71,23 @@ export function applyItemRarityEffects(moduleId) {
     }
     const sheetType = getSheetType(app) || getSheetType(html);
     const textStyleStrategy = getItemSheetTextStyleStrategy(sheetType);
+    const spellStyle = getActiveSpellStyleForItem(item, moduleId);
+    if (spellStyle) {
+      applyRarityStyles(sheetEl, spellStyle.settings, {
+        textStyleStrategy,
+        preview: true,
+      });
+      debugLog("Item sheet spell style applied", {
+        itemId,
+        itemName,
+        sheetType,
+        profileKey: spellStyle.profileKey,
+        school: spellStyle.school,
+        level: spellStyle.level,
+        useLevelVariants: spellStyle.useLevelVariants,
+      });
+      return;
+    }
 
     // If no rarity, remove all rarity styles and restore default
     if (!rarity) {
@@ -80,29 +98,29 @@ export function applyItemRarityEffects(moduleId) {
         sheetType,
         textStrategy: textStyleStrategy?.constructor?.name ?? null,
       });
-      return;
+    } else {
+      // Retrieve rarity-specific settings (colors, gradients, etc.)
+      const settings = buildRaritySettings(rarity);
+      if (!settings) {
+        debugWarn("Rarity settings not found for item sheet", { itemId, itemName, rarity });
+        removeRarityStyles(sheetEl, { textStyleStrategy });
+      } else {
+        // Apply visual styles (border, glow, etc.)
+        applyRarityStyles(sheetEl, settings, { textStyleStrategy, rarity });
+        debugLog("Item sheet styles applied", {
+          itemId,
+          itemName,
+          sheetType,
+          rarity,
+          textStrategy: textStyleStrategy?.constructor?.name ?? null,
+          enableItemColor: settings.enableItemColor,
+          gradientEnabled: settings.gradientEnabled,
+          glowEnabled: settings.glowEnabled,
+          enableTextColor: settings.enableTextColor,
+        });
+      }
     }
 
-    // Retrieve rarity-specific settings (colors, gradients, etc.)
-    const settings = buildRaritySettings(rarity);
-    if (!settings) {
-      debugWarn("Rarity settings not found for item sheet", { itemId, itemName, rarity });
-      return;
-    }
-
-    // Apply visual styles (border, glow, etc.)
-    applyRarityStyles(sheetEl, settings, { textStyleStrategy, rarity });
-    debugLog("Item sheet styles applied", {
-      itemId,
-      itemName,
-      sheetType,
-      rarity,
-      textStrategy: textStyleStrategy?.constructor?.name ?? null,
-      enableItemColor: settings.enableItemColor,
-      gradientEnabled: settings.gradientEnabled,
-      glowEnabled: settings.glowEnabled,
-      enableTextColor: settings.enableTextColor,
-    });
   }
 
   /**
@@ -161,13 +179,11 @@ export function applyItemRarityEffects(moduleId) {
   registerSettingChangeHooks((moduleOrSetting, maybeKey) => {
     if (!isModuleSettingChange(moduleOrSetting, maybeKey, moduleId)) return;
     if (isSettingsTransactionActive(moduleId)) return;
-    ensureRuntimeRarityStyles(moduleId);
     debugLog("setting change matched module for item sheets; queued refresh");
     itemSheetRefresh.request("setting-change");
   });
 
   registerSettingsTransactionCompleteHook(moduleId, () => {
-    ensureRuntimeRarityStyles(moduleId);
     itemSheetRefresh.request("settings-transaction-complete");
   });
 

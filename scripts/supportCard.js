@@ -1,47 +1,98 @@
 import { MODULE_ID } from "../core/constants.js";
 
-const SUPPORT_CARD_HTML = `
-  <div style="padding: 5px;">
-    <div style="color: #e7e7e7; padding: 10px; background-color: #212121; border: 3px solid #18c26a; border-radius: 10px;">
-      <h2 style="margin: 0 0 10px 0; text-align: center; color: #ffffff;">SC Item Rarity Colors</h2>
-      <p style="text-align: center;">
-        <a href="https://www.patreon.com/c/shatteredcodex" target="_blank" rel="noopener">
-          <img src="modules/sc-item-rarity-colors/assets/imgs/shattered-codex.png" alt="Shattered Codex" style="display: block; margin: 0 auto;">
-        </a>
-      </p>
-      <hr>
-      <div>
-        <p style="text-align: justify;">Support us on Patreon to help us keep creating.</p>
-        <p style="text-align: justify;">There you can find exclusive modules and content from Shattered Codex.</p>
-        <p style="text-align: center; line-height: 150%;">
-          <a href="https://www.patreon.com/c/shatteredcodex" target="_blank" rel="noopener">Patreon</a>
-        </p>
+const PATREON_URL = "https://www.patreon.com/c/shatteredcodex";
+const GITHUB_ISSUES_URL = "https://github.com/Shattered-Codex/sc-item-rarity-colors/issues";
+const SUPPORT_CARD_SIGNATURE = "scirc-chat-card";
+const PATREON_MODULES = [
+  {
+    name: "More Gems",
+    description: "More than 100 gems ready to use, plus gem-related items, with new content added every month.",
+  },
+  {
+    name: "Setforge",
+    description: "Create gear sets that grant extra effects as more set pieces are equipped.",
+  },
+  {
+    name: "Forged Sets",
+    description: "New ready-to-use sets released every month.",
+  },
+  {
+    name: "Runesmit",
+    description: "Create your own runes with an interface focused on customization and rune building.",
+  },
+  {
+    name: "The Cauldron",
+    description: "A crafting-focused module.",
+  },
+];
+
+const FREE_MODULES = [
+  {
+    name: "SC Simple Socket",
+    description: "Add sockets to items with Active Effects, Activities, and Status integration.",
+  },
+];
+
+function buildSupportCardHtml({ moduleTitle, moduleVersion }) {
+  const moduleList = PATREON_MODULES
+    .map((entry) => `<li style="margin: 0; padding: 0.18rem 0;"><strong>${entry.name}</strong>: ${entry.description}</li>`)
+    .join("");
+  const freeModuleList = FREE_MODULES
+    .map((entry) => `<li style="margin: 0; padding: 0.18rem 0;"><strong>${entry.name}</strong>: ${entry.description}</li>`)
+    .join("");
+
+  return `
+    <section class="${SUPPORT_CARD_SIGNATURE}" style="margin: 0.25rem 0; padding: 0; border: 1px solid #c89d47; border-radius: 12px; overflow: hidden; background: radial-gradient(circle at 15% -10%, #2f3a4e 0%, #131924 48%, #0d1118 100%); color: #ece6d8; box-shadow: 0 0 0 1px rgba(200, 157, 71, 0.22), 0 10px 24px rgba(0, 0, 0, 0.35);">
+      <header style="padding: 0.75rem 0.9rem; border-bottom: 1px solid rgba(200, 157, 71, 0.35); background: #151d2a;">
+        <div style="display: flex; align-items: center; gap: 0.65rem;">
+          <img src="modules/sc-item-rarity-colors/assets/imgs/shattered-codex.webp" alt="${moduleTitle}" style="width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 1px solid rgba(200, 157, 71, 0.5);">
+          <div>
+            <h3 style="margin: 0; color: #f6efdd; font-size: 1rem; line-height: 1.2;">${moduleTitle}</h3>
+            <p style="margin: 0.1rem 0 0; color: #d9c79c; font-size: 0.8rem; line-height: 1.2;">Version ${moduleVersion}</p>
+          </div>
+        </div>
+      </header>
+      <div style="padding: 0.85rem 0.9rem;">
+        <p style="margin: 0 0 0.65rem; color: #e9e2d2; line-height: 1.45;">Support my work and stay up to date with exclusive modules and development progress.</p>
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.75rem;">
+          <a href="${PATREON_URL}" target="_blank" rel="noopener" style="display: inline-block; padding: 0.32rem 0.62rem; border-radius: 999px; text-decoration: none; font-weight: 700; color: #fff8f6; background: #cf3040; border: 1px solid rgba(255, 255, 255, 0.18);">&#10084; Patreon</a>
+          <a href="${GITHUB_ISSUES_URL}" target="_blank" rel="noopener" style="display: inline-block; padding: 0.32rem 0.62rem; border-radius: 999px; text-decoration: none; font-weight: 700; color: #e7f4ff; background: #2d476a; border: 1px solid rgba(255, 255, 255, 0.14);">Issues / Requests</a>
+        </div>
+        <section style="padding: 0.6rem 0.65rem; border: 1px solid rgba(200, 157, 71, 0.32); border-radius: 8px; background: rgba(16, 22, 31, 0.66); margin-bottom: 0.55rem;">
+          <p style="margin: 0 0 0.35rem; color: #f0dfb1; font-weight: 700; letter-spacing: 0.01em;">Patreon modules</p>
+          <ul style="margin: 0; padding: 0 0 0 1.1rem; color: #e5ddca; line-height: 1.35;">
+            ${moduleList}
+          </ul>
+        </section>
+        <section style="padding: 0.6rem 0.65rem; border: 1px solid rgba(86, 126, 184, 0.42); border-radius: 8px; background: rgba(14, 20, 32, 0.7);">
+          <p style="margin: 0 0 0.35rem; color: #b9d3ff; font-weight: 700; letter-spacing: 0.01em;">Free modules</p>
+          <ul style="margin: 0; padding: 0 0 0 1.1rem; color: #d6dfef; line-height: 1.35;">
+            ${freeModuleList}
+          </ul>
+        </section>
       </div>
-      <hr>
-      <div style="font-style: italic;">
-        <p style="text-align: justify;">This chat card will only be shown once. Enable it again in the settings if needed.</p>
-      </div>
-    </div>
-  </div>
-`;
+    </section>
+  `;
+}
 
 /**
- * Show the support card once for GMs.
+ * Show the support card for GMs on every startup.
  */
 export async function maybeShowSupportCard() {
   if (!game.user?.isGM) return;
-  if (!game.settings.settings.has(`${MODULE_ID}.supportCardDisabled`)) return;
 
-  const isDisabled = game.settings.get(MODULE_ID, "supportCardDisabled");
-  if (isDisabled) return;
+  const moduleData = game.modules.get(MODULE_ID);
+  const moduleTitle = moduleData?.title || "SC - Item Rarity Colors";
+  const moduleVersion = moduleData?.version || "unknown";
+  const recentMessages = game.messages?.contents?.slice(-5) ?? [];
+  const alreadyPosted = recentMessages.some((message) => message?.content?.includes(SUPPORT_CARD_SIGNATURE));
+  if (alreadyPosted) return;
 
   const userId = game.user?._id ?? game.user?.id ?? game.userId;
 
   await ChatMessage.create({
     user: userId,
     speaker: ChatMessage.getSpeaker(),
-    content: SUPPORT_CARD_HTML,
+    content: buildSupportCardHtml({ moduleTitle, moduleVersion }),
   });
-
-  await game.settings.set(MODULE_ID, "supportCardDisabled", true);
 }

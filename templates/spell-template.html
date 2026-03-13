@@ -1,0 +1,166 @@
+<div class="sc-item-rarity-colors__preview-label">Spell Sheet</div>
+<div class="mini-item-sheet"
+     style="
+       --primary-color: {{backgroundColor}};
+       --text-color: {{textColor}};
+       --secondary-color: {{secondaryColor}};
+       --use-gradient: {{#if gradient}}1{{else}}0{{/if}};
+       --use-glow: {{#if glow}}1{{else}}0{{/if}};
+     ">
+  <div class="application sheet dnd5e2 standard-form item tab-description editable" autocomplete="off">
+    <header class="window-header">
+      <i class="window-icon fa-fw hidden"></i>
+      <h1 class="window-title">Spell: Fireball</h1>
+      <h2 class="window-subtitle"></h2>
+      <div class="header-elements"></div>
+    </header>
+
+    <section class="sheet-header" data-application-part="header">
+      <div class="left">
+        <img class="item-image" src="icons/magic/fire/projectile-fireball-smoke-large-orange.webp" alt="Fireball" data-action="editImage">
+      </div>
+
+      <div class="middle identity-info">
+        <input type="text" id="item-name" name="name" value="Fireball" class="document-name uninput">
+        <ul class="subtitles unlist">
+          <li class="item-rarity">
+            <select name="system.level">
+              <option value="3" selected>3rd-level Spell</option>
+            </select>
+          </li>
+          <li class="item-rarity">
+            <select name="system.school">
+              <option value="evo" selected>Evocation</option>
+            </select>
+          </li>
+        </ul>
+      </div>
+
+      <div class="right common-fields physical">
+        <div class="quantity">
+          <span class="separator"><i class="fas fa-bolt"></i></span>
+          <input type="text" name="system.activation" value="Action" readonly>
+        </div>
+        <div class="weight">
+          <input type="text" name="system.range" value="150 ft" readonly>
+          <select name="system.target">
+            <option value="radius" selected>20 ft Radius</option>
+          </select>
+        </div>
+        <div class="price">
+          <input type="text" name="system.components" value="V, S, M" readonly>
+          <select name="system.duration">
+            <option value="inst" selected>Instant</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <div data-application-part="tabs">
+      <nav class="sheet-tabs tabs" aria-roledescription="Form Tab Navigation">
+        <a data-action="tab" data-group="primary" data-tab="description" class="active">
+          <span>Description</span>
+        </a>
+        <a data-action="tab" data-group="primary" data-tab="details">
+          <span>Details</span>
+        </a>
+        <a data-action="tab" data-group="primary" data-tab="activities">
+          <span>Activities</span>
+        </a>
+        <a data-action="tab" data-group="primary" data-tab="effects">
+          <span>Effects</span>
+        </a>
+      </nav>
+      <hr class="ampersand">
+    </div>
+  </div>
+</div>
+
+<div class="sc-item-rarity-colors__preview-label">Inventory</div>
+<div class="inventory-preview-item"
+     style="
+       --gradient-color: {{#if gradientEnabled}}{{backgroundColor}}{{else}}transparent{{/if}};
+       --gradient-color-2: {{#if gradientEnabled}}{{gradientColor}}{{else}}transparent{{/if}};
+       --title-color: {{#if enableTitleColor}}{{titleColor}}{{else}}inherit{{/if}};
+       --details-color: {{#if enableDetailsColor}}{{detailsColor}}{{else}}inherit{{/if}};
+     ">
+  <div class="items-section card" data-group-type="spell" data-column-min-width="250">
+    <div class="items-header header">
+      <h3 class="item-name">Spells</h3>
+      <div class="item-header item-price hidden-width" data-column-id="price" data-column-width="80" data-column-priority="300">School</div>
+      <div class="item-header item-weight hidden-width" data-column-id="weight" data-column-width="60" data-column-priority="400">Lvl</div>
+      <div class="item-header item-quantity hidden-width" data-column-id="quantity" data-column-width="70" data-column-priority="500">Cast</div>
+      <div class="item-header item-roll" data-column-id="roll" data-column-width="40" data-column-priority="800">DC</div>
+      <div class="item-header item-formula" data-column-id="formula" data-column-width="80" data-column-priority="700">Damage</div>
+      <div class="item-header item-charges" data-column-id="charges" data-column-width="70" data-column-priority="600">Slots</div>
+      <div class="item-header item-controls" data-column-id="controls" data-column-width="70" data-column-priority="1000"></div>
+    </div>
+    <ol class="item-list unlist">
+      <li class="item collapsible collapsed" data-item-name="Fireball">
+        <div class="item-row">
+          <div class="item-name">
+            <img class="item-image gold-icon" src="icons/magic/fire/projectile-fireball-smoke-large-orange.webp" alt="Fireball" draggable="false">
+            <div class="name name-stacked">
+              <span class="title">Fireball</span>
+              <span class="subtitle">Evocation • 3rd Level</span>
+            </div>
+            <div class="tags"></div>
+          </div>
+          <div class="item-detail item-price hidden-width" data-column-id="price">
+            Evocation
+          </div>
+          <div class="item-detail item-weight hidden-width" data-column-id="weight">
+            <i class="fa-solid fa-layer-group" inert=""></i> 3
+          </div>
+          <div class="item-detail item-quantity hidden-width" data-column-id="quantity">
+            Action
+          </div>
+          <div class="item-detail item-roll" data-column-id="roll">
+            <span class="value">15</span>
+          </div>
+          <div class="item-detail item-formula" data-column-id="formula">
+            <div class="row">
+              <span class="formula">8d6 Fire</span>
+            </div>
+          </div>
+          <div class="item-detail item-uses" data-column-id="charges">
+            <input type="text" value="2" placeholder="0" readonly>
+            <span class="separator">/</span>
+            <span class="max">3</span>
+          </div>
+          <div class="item-detail item-controls always-visible" data-column-id="controls">
+            <span class="unbutton config-button item-control item-action active">
+              <i class="fa-solid fa-wand-magic-sparkles" inert=""></i>
+            </span>
+            <span class="unbutton config-button item-control item-action">
+              <i class="fa-solid fa-expand" inert=""></i>
+            </span>
+            <span class="unbutton config-button item-control">
+              <i class="fa-solid fa-ellipsis-vertical" inert=""></i>
+            </span>
+          </div>
+        </div>
+      </li>
+    </ol>
+  </div>
+</div>
+
+<div class="sc-item-rarity-colors__preview-label">Sidebar</div>
+<div class="foundry-interface-preview">
+  <div class="directory-window">
+    <ol class="directory-list">
+      <li class="directory-item entry document item flexrow" data-entry-id="preview-item-a" draggable="true" style="display: flex;">
+        <img class="thumbnail" src="icons/svg/book.svg" alt="Magic Missile">
+        <a class="entry-name ellipsis" data-action="activateEntry">Magic Missile</a>
+      </li>
+      <li class="directory-item entry document item flexrow is-target" data-entry-id="preview-item-b" draggable="true" style="display: flex;">
+        <img class="thumbnail" src="icons/magic/fire/projectile-fireball-smoke-large-orange.webp" alt="Fireball">
+        <a class="entry-name ellipsis" data-action="activateEntry">Fireball</a>
+      </li>
+      <li class="directory-item entry document item flexrow" data-entry-id="preview-item-c" draggable="true" style="display: flex;">
+        <img class="thumbnail" src="icons/svg/book.svg" alt="Shield">
+        <a class="entry-name ellipsis" data-action="activateEntry">Shield</a>
+      </li>
+    </ol>
+  </div>
+</div>

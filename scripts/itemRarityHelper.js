@@ -25,16 +25,6 @@ function clearSheetBackgroundState($element) {
 }
 
 /**
- * Normalize a rarity string to match module settings.
- *
- * @param {string} rawRarity - The original rarity string.
- * @returns {string|null} - Normalized rarity or null if invalid.
- */
-export function normalizeRarity(rawRarity) {
-  return normalizeRarityKey(rawRarity);
-}
-
-/**
  * Extract raw rarity from supported item schema variants.
  *
  * @param {object} item - Item document or plain item-like object.
@@ -55,7 +45,7 @@ export function extractRawItemRarity(item) {
  * @returns {string|null}
  */
 export function getItemRarity(item) {
-  return normalizeRarity(extractRawItemRarity(item));
+  return normalizeRarityKey(extractRawItemRarity(item));
 }
 
 /**

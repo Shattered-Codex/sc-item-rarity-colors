@@ -1,5 +1,10 @@
-import { ItemRaritySettingsLauncher, ItemRaritySourceSettingsLauncher } from "./settingsLaunchers.js";
+import {
+  ItemRaritySettingsLauncher,
+  ItemRaritySourceSettingsLauncher,
+  SpellSchoolSettingsLauncher,
+} from "./settingsLaunchers.js";
 import { ItemRaritySettingsApp } from "../apps/ItemRaritySettingsApp.js";
+import { SpellSchoolSettingsApp } from "../apps/SpellSchoolSettingsApp.js";
 import { SupportMenu } from "./SupportMenu.js";
 import { TidyRaritySyncMenu } from "./TidyRaritySyncMenu.js";
 
@@ -49,5 +54,16 @@ export function registerMenus(MODULE_ID) {
   Hooks.on("renderSettingsConfig", (_app, html) => {
     SupportMenu.bindSettingsButton(html);
     TidyRaritySyncMenu.bindSettingsRowVisibility(html);
+  });
+
+  SpellSchoolSettingsApp.MODULE_ID = MODULE_ID;
+  SpellSchoolSettingsLauncher.MODULE_ID = MODULE_ID;
+  game.settings.registerMenu(MODULE_ID, "spellSchoolSettingsConfig", {
+    name: "Spell School Color Configuration",
+    label: "Configure Spell School Colors",
+    icon: "fas fa-book-sparkles",
+    type: SpellSchoolSettingsLauncher,
+    restricted: false,
+    hint: "Configure spell visuals by magic school, with optional school+level variants.",
   });
 }

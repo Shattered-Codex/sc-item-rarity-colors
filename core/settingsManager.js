@@ -40,31 +40,16 @@ export function getSetting(moduleId, key, defaultValue = null) {
  * @returns {*}
  */
 export function getRaritySetting(moduleId, rarity, settingKey, defaultValue = null) {
-  const candidates = new Set();
-  const addCandidate = (value) => {
-    if (typeof value !== "string") return;
-    const trimmed = value.trim();
-    if (!trimmed) return;
-    candidates.add(trimmed);
-  };
-
   const normalized = normalizeRarityKey(rarity);
-  addCandidate(normalized);
+  const raw = rarity !== undefined && rarity !== null ? String(rarity).trim() : "";
 
-  if (rarity !== undefined && rarity !== null) {
-    const raw = String(rarity).trim();
-    addCandidate(raw);
-    addCandidate(raw.toLowerCase());
-    addCandidate(raw.replace(/([a-z])([A-Z])/g, "$1$2").toLowerCase());
-    addCandidate(raw.replace(/[\s_-]+/g, ""));
-    addCandidate(raw.replace(/[\s_-]+/g, "").toLowerCase());
-  }
-
-  if (normalized) {
-    addCandidate(normalized.toLowerCase());
-    addCandidate(normalized.replace(/([a-z])([A-Z])/g, "$1$2").toLowerCase());
-    addCandidate(normalized.replace(/[\s_-]+/g, ""));
-    addCandidate(normalized.replace(/[\s_-]+/g, "").toLowerCase());
+  const seen = new Set();
+  const candidates = [];
+  for (const v of [normalized, raw, raw.toLowerCase()]) {
+    if (typeof v === "string" && v && !seen.has(v)) {
+      seen.add(v);
+      candidates.push(v);
+    }
   }
 
   for (const candidate of candidates) {
