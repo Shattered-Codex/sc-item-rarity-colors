@@ -135,13 +135,11 @@ export function applyActorInventoryEffects(moduleId) {
   registerSettingChangeHooks((moduleOrSetting, maybeKey) => {
     if (!isModuleSettingChange(moduleOrSetting, maybeKey, moduleId)) return;
     if (isSettingsTransactionActive(moduleId)) return;
-    ensureRuntimeRarityStyles(moduleId);
     debugLog("setting change matched module for actor inventory; queued refresh");
     actorSheetRefresh.request("setting-change");
   });
 
   registerSettingsTransactionCompleteHook(moduleId, () => {
-    ensureRuntimeRarityStyles(moduleId);
     actorSheetRefresh.request("settings-transaction-complete");
   });
 

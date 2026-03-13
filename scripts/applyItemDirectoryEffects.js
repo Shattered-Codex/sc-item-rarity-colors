@@ -23,20 +23,14 @@ const DIRECTORY_ROW_SELECTOR = ".directory-item.entry.document.item, .directory-
 const DIRECTORY_STATE_CLASSES = ["scirc-dir-gradient-enabled", "scirc-dir-text-enabled"];
 
 function getItemIdFromElement(element) {
-  const fromDataset = element?.dataset?.documentId
+  return element?.dataset?.documentId
     || element?.dataset?.entryId
     || element?.dataset?.itemId
-    || element?.dataset?.id;
-  if (fromDataset) return fromDataset;
-
-  const fromAttributes = element?.getAttribute?.("data-document-id")
+    || element?.dataset?.id
+    || element?.getAttribute?.("data-document-id")
     || element?.getAttribute?.("data-entry-id")
-    || element?.getAttribute?.("data-item-id");
-  if (fromAttributes) return fromAttributes;
-
-  const rawHtml = element?.outerHTML || "";
-  const match = rawHtml.match(/data-(?:document-id|entry-id|item-id)="(.*?)"/i);
-  return match?.[1] || null;
+    || element?.getAttribute?.("data-item-id")
+    || null;
 }
 
 function resolveItemFromCollection(collection, itemId) {
@@ -383,14 +377,12 @@ export function applyItemDirectoryEffects(moduleId) {
     if (isSettingsTransactionActive(moduleId)) return;
 
     raritySettingsCache.clear();
-    ensureRuntimeRarityStyles(moduleId);
     debugLog("setting change matched module for item directory; cache cleared");
     requestRefresh("setting-change", REFRESH_DELAYS_MS.SETTINGS_CHANGE);
   });
 
   registerSettingsTransactionCompleteHook(moduleId, () => {
     raritySettingsCache.clear();
-    ensureRuntimeRarityStyles(moduleId);
     requestRefresh("settings-transaction-complete", REFRESH_DELAYS_MS.SETTINGS_CHANGE);
   });
 

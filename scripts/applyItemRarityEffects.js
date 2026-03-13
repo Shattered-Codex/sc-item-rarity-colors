@@ -179,13 +179,11 @@ export function applyItemRarityEffects(moduleId) {
   registerSettingChangeHooks((moduleOrSetting, maybeKey) => {
     if (!isModuleSettingChange(moduleOrSetting, maybeKey, moduleId)) return;
     if (isSettingsTransactionActive(moduleId)) return;
-    ensureRuntimeRarityStyles(moduleId);
     debugLog("setting change matched module for item sheets; queued refresh");
     itemSheetRefresh.request("setting-change");
   });
 
   registerSettingsTransactionCompleteHook(moduleId, () => {
-    ensureRuntimeRarityStyles(moduleId);
     itemSheetRefresh.request("settings-transaction-complete");
   });
 
