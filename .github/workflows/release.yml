@@ -124,8 +124,8 @@ jobs:
             exit 1
           fi
 
-          if ! unzip -l "${ZIP_PATH}" | grep -q "assets/imgs/shattered-codex.png"; then
-            echo "Required asset missing from package: assets/imgs/shattered-codex.png"
+          if ! unzip -l "${ZIP_PATH}" | grep -Eq "assets/imgs/shattered-codex\\.(png|webp)$"; then
+            echo "Required asset missing from package: assets/imgs/shattered-codex.(png|webp)"
             exit 1
           fi
 
