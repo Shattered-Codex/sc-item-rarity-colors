@@ -1,4 +1,16 @@
 <footer class="form-footer" data-application-part="footer">
+  <div class="sc-item-rarity-colors__save-state {{saveStateClass}}" data-save-state>
+    <span class="sc-item-rarity-colors__save-state-dot" aria-hidden="true"></span>
+    <span data-save-state-label>{{saveStateLabel}}</span>
+  </div>
+  <div class="sc-item-rarity-colors__footer-tools">
+    <button type="button" class="sc-item-rarity-colors__tool-button" data-action="import-config">
+      <i class="fas fa-file-import"></i> Import
+    </button>
+    <button type="button" class="sc-item-rarity-colors__tool-button" data-action="export-config">
+      <i class="fas fa-file-export"></i> Export
+    </button>
+  </div>
   <button type="submit" class="sc-item-rarity-colors__save-button save-button">
     <i class="fas fa-floppy-disk"></i> Save and Close
   </button>

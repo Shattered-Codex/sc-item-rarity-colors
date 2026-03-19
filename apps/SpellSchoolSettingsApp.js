@@ -2,6 +2,11 @@ import { updateColorPickerVisibility } from "../ui/visibilityManager.js";
 import { updateMiniSheetPreview } from "../ui/previewUpdater.js";
 import { DEFAULT_COLORS, MODULE_ID as DEFAULT_MODULE_ID } from "../core/constants.js";
 import { normalizeHexColor } from "../core/colorUtils.js";
+import {
+  buildConfigEnvelope,
+  downloadConfigEnvelope,
+  promptForConfigEnvelope,
+} from "../core/configPortability.js";
 import { getRarityFieldDefinitions } from "../core/rarityFieldSchema.js";
 import { createAnimationFrameScheduler, scheduleOnNextAnimationFrame } from "../core/refreshScheduler.js";
 import { runSettingsTransaction } from "../core/settingsTransaction.js";
@@ -12,13 +17,23 @@ import {
   getSpellLevelEntries,
   getSpellSchoolEntries,
   getSpellSchoolStylesSetting,
+  normalizeSpellStyleFieldValues,
   normalizeSpellSchoolStylesSetting,
   normalizeSpellLevel,
   normalizeSpellSchoolKey,
   SPELL_SCHOOL_STYLES_SETTING_KEY,
 } from "../core/spellSchoolConfig.js";
+import {
+  applySpellThemePresetToDraft,
+  CUSTOM_SPELL_THEME_ID,
+  detectSpellThemePresetId,
+  getSpellThemePreset,
+  getSpellThemePresetOptions,
+} from "../core/spellThemePresets.js";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
+
+const SPELL_SCHOOL_CONFIG_KIND = "spell-school-settings";
 
 export class SpellSchoolSettingsApp extends HandlebarsApplicationMixin(ApplicationV2) {
   constructor(context = "general", options = {}, moduleId) {
@@ -26,6 +41,7 @@ export class SpellSchoolSettingsApp extends HandlebarsApplicationMixin(Applicati
     this.moduleId = moduleId || SpellSchoolSettingsApp.MODULE_ID;
     this.selectedSchool = null;
     this.selectedLevel = 0;
+    this.selectedThemeId = CUSTOM_SPELL_THEME_ID;
     this.useLevelVariants = false;
     this._schools = [];
     this._levels = getSpellLevelEntries();
@@ -201,6 +217,7 @@ export class SpellSchoolSettingsApp extends HandlebarsApplicationMixin(Applicati
     );
 
     this._draftProfiles = { ...seed.profiles };
+    this._refreshSelectedThemeId();
   }
 
   _ensureCurrentProfileDraft() {
@@ -236,6 +253,206 @@ export class SpellSchoolSettingsApp extends HandlebarsApplicationMixin(Applicati
     }
 
     this._draftProfiles[profileKey] = profileDraft;
+  }
+
+  _buildDraftSetting() {
+    return normalizeSpellSchoolStylesSetting({
+      useLevelVariants: this.useLevelVariants,
+      profiles: this._draftProfiles || {},
+    });
+  }
+
+  _refreshSelectedThemeId() {
+    this.selectedThemeId = detectSpellThemePresetId(this._draftProfiles, {
+      schools: this._getSchoolOptions(),
+      levels: this._getLevelOptions().map((level) => level.value),
+    });
+    return this.selectedThemeId;
+  }
+
+  _hasUnsavedChanges() {
+    const moduleId = this._getEffectiveModuleId();
+    const currentSetting = getSpellSchoolStylesSetting(moduleId);
+    const draftSetting = this._buildDraftSetting();
+    const deepEqual = foundry?.utils?.deepEqual
+      ?? ((left, right) => JSON.stringify(left) === JSON.stringify(right));
+    return !deepEqual(currentSetting, draftSetting);
+  }
+
+  _getSaveStateContext() {
+    const dirty = this._hasUnsavedChanges();
+    return dirty
+      ? {
+        saveStateLabel: "Unsaved changes",
+        saveStateClass: "is-dirty",
+      }
+      : {
+        saveStateLabel: "All changes saved",
+        saveStateClass: "is-clean",
+      };
+  }
+
+  _syncThemeControlState(formElement = this.form) {
+    if (!formElement) return;
+
+    const themeSelect = formElement.querySelector('select[name="selected-theme"]');
+    if (themeSelect && themeSelect.value !== this.selectedThemeId) {
+      themeSelect.value = this.selectedThemeId;
+    }
+  }
+
+  _syncSaveStateIndicator() {
+    const state = this._getSaveStateContext();
+    const statusElement = this.element?.querySelector("[data-save-state]");
+    const labelElement = this.element?.querySelector("[data-save-state-label]");
+    if (!statusElement || !labelElement) return;
+
+    statusElement.classList.toggle("is-dirty", state.saveStateClass === "is-dirty");
+    statusElement.classList.toggle("is-clean", state.saveStateClass === "is-clean");
+    labelElement.textContent = state.saveStateLabel;
+  }
+
+  _applySelectedThemePreset() {
+    if (this.selectedThemeId === CUSTOM_SPELL_THEME_ID) return false;
+
+    const applied = applySpellThemePresetToDraft(this._draftProfiles, this.selectedThemeId, {
+      schools: this._getSchoolOptions(),
+      levels: this._getLevelOptions().map((level) => level.value),
+    });
+
+    if (applied) {
+      this._refreshSelectedThemeId();
+    }
+
+    return applied;
+  }
+
+  _getSupportedProfileKeys() {
+    const keys = new Set();
+    const schools = this._getSchoolOptions();
+    const levels = this._getLevelOptions().map((level) => level.value);
+
+    for (const school of schools) {
+      const baseKey = buildSpellProfileKey(school.key, null, false);
+      if (baseKey) keys.add(baseKey);
+
+      for (const level of levels) {
+        const profileKey = buildSpellProfileKey(school.key, level, true);
+        if (profileKey) keys.add(profileKey);
+      }
+    }
+
+    return keys;
+  }
+
+  _buildExportData() {
+    this._ensureDraftSettings();
+    this._captureCurrentProfileDraft(this.form);
+
+    return {
+      selectedSchool: this.selectedSchool,
+      selectedLevel: this.selectedLevel,
+      setting: this._buildDraftSetting(),
+    };
+  }
+
+  _applyImportedConfigData(data) {
+    if (!data || typeof data !== "object") {
+      throw new Error("Imported config data is invalid.");
+    }
+
+    this._ensureDraftSettings();
+
+    const rawSetting = data.setting && typeof data.setting === "object" ? data.setting : data;
+    const importedProfiles = rawSetting?.profiles;
+    if (!importedProfiles || typeof importedProfiles !== "object") {
+      throw new Error("Imported file does not contain spell school profiles.");
+    }
+
+    if ("useLevelVariants" in rawSetting) {
+      this.useLevelVariants = rawSetting.useLevelVariants === true
+        || rawSetting.useLevelVariants === "true"
+        || rawSetting.useLevelVariants === "on"
+        || rawSetting.useLevelVariants === 1
+        || rawSetting.useLevelVariants === "1";
+    }
+
+    const supportedProfileKeys = this._getSupportedProfileKeys();
+    const nextDraftProfiles = {
+      ...(this._draftProfiles || {}),
+    };
+
+    let importedCount = 0;
+    let ignoredCount = 0;
+    let appliedFieldCount = 0;
+
+    for (const [profileKey, rawFields] of Object.entries(importedProfiles)) {
+      if (!supportedProfileKeys.has(profileKey) || !rawFields || typeof rawFields !== "object") {
+        ignoredCount += 1;
+        continue;
+      }
+
+      const existingFields = nextDraftProfiles[profileKey] || getDefaultSpellStyleFieldValues();
+      const normalizedFields = normalizeSpellStyleFieldValues(rawFields, existingFields);
+      let profileAppliedFields = 0;
+
+      for (const field of this._getFieldDefinitions()) {
+        if (!(field.key in rawFields)) continue;
+        profileAppliedFields += 1;
+      }
+
+      if (profileAppliedFields === 0) {
+        ignoredCount += 1;
+        continue;
+      }
+
+      nextDraftProfiles[profileKey] = normalizedFields;
+      importedCount += 1;
+      appliedFieldCount += profileAppliedFields;
+    }
+
+    this._draftProfiles = nextDraftProfiles;
+
+    const importedSchool = normalizeSpellSchoolKey(data.selectedSchool);
+    if (importedSchool) {
+      this.selectedSchool = importedSchool;
+    }
+
+    const importedLevel = normalizeSpellLevel(data.selectedLevel);
+    if (importedLevel !== null) {
+      this.selectedLevel = importedLevel;
+    }
+
+    this._ensureCurrentProfileDraft();
+    this._refreshSelectedThemeId();
+
+    return {
+      importedCount,
+      ignoredCount,
+      appliedFieldCount,
+    };
+  }
+
+  async _exportConfig() {
+    const moduleId = this._getEffectiveModuleId();
+    const envelope = buildConfigEnvelope(
+      SPELL_SCHOOL_CONFIG_KIND,
+      this._buildExportData(),
+      { moduleId }
+    );
+
+    const result = await downloadConfigEnvelope(envelope, "scirc-spell-school-settings");
+    ui.notifications.info(`Exported spell school settings to ${result.fileName}.`);
+  }
+
+  async _importConfig() {
+    const { fileName, envelope } = await promptForConfigEnvelope(SPELL_SCHOOL_CONFIG_KIND);
+    const result = this._applyImportedConfigData(envelope.data);
+    await this.render(true);
+
+    ui.notifications.info(
+      `Imported spell school settings from ${fileName}: ${result.importedCount} profile(s), ${result.appliedFieldCount} field(s) applied${result.ignoredCount > 0 ? `, ${result.ignoredCount} entr${result.ignoredCount === 1 ? "y was" : "ies were"} ignored` : ""}.`
+    );
   }
 
   _prepareContext() {
@@ -291,18 +508,40 @@ export class SpellSchoolSettingsApp extends HandlebarsApplicationMixin(Applicati
     const title = this.useLevelVariants
       ? `${selectedSchoolLabel} • ${levelLabel} Spell Settings`
       : `${selectedSchoolLabel} Spell Settings`;
+    const saveState = this._getSaveStateContext();
+    const selectedThemePreset = getSpellThemePreset(this.selectedThemeId);
+    const themeTooltip = selectedThemePreset
+      ? `Choose a preset to apply school and level spell visuals. You can still adjust colors manually. Current preset: ${selectedThemePreset.label}. ${selectedThemePreset.description}`
+      : "Choose a preset to apply school and level spell visuals. You can still adjust colors manually.";
+    const themeOptions = [
+      ...getSpellThemePresetOptions().map((option) => ({
+        ...option,
+        selected: option.id === this.selectedThemeId,
+      })),
+      {
+        id: CUSTOM_SPELL_THEME_ID,
+        label: "Custom",
+        selected: this.selectedThemeId === CUSTOM_SPELL_THEME_ID,
+        disabled: true,
+      },
+    ];
 
     return {
       title,
       fields,
       groupedFields,
       selectedProfileKey: profileKey,
+      themeOptions,
+      selectedThemeId: this.selectedThemeId,
+      themeTooltip,
       schoolOptions: schools.map((school) => ({
         ...school,
         selected: school.key === this.selectedSchool,
       })),
       selectedSchool: this.selectedSchool,
       useLevelVariants: this.useLevelVariants,
+      saveStateLabel: saveState.saveStateLabel,
+      saveStateClass: saveState.saveStateClass,
       levelOptions: levels.map((level) => ({
         value: level.value,
         label: level.label,
@@ -332,6 +571,32 @@ export class SpellSchoolSettingsApp extends HandlebarsApplicationMixin(Applicati
       cancelButton.addEventListener("click", () => this.close());
     }
 
+    const exportButton = this.element?.querySelector('[data-action="export-config"]');
+    if (exportButton) {
+      exportButton.addEventListener("click", async () => {
+        try {
+          await this._exportConfig();
+        } catch (error) {
+          if (error?.message === "No file selected.") return;
+          console.error(`${this._getEffectiveModuleId()} | Failed to export spell school settings.`, error);
+          ui.notifications.error(error?.message || "Failed to export spell school settings.");
+        }
+      });
+    }
+
+    const importButton = this.element?.querySelector('[data-action="import-config"]');
+    if (importButton) {
+      importButton.addEventListener("click", async () => {
+        try {
+          await this._importConfig();
+        } catch (error) {
+          if (error?.message === "No file selected.") return;
+          console.error(`${this._getEffectiveModuleId()} | Failed to import spell school settings.`, error);
+          ui.notifications.error(error?.message || "Failed to import spell school settings.");
+        }
+      });
+    }
+
     if (!this.form) return;
 
     const schoolSelect = this.form.querySelector('select[name="selected-school"]');
@@ -339,6 +604,24 @@ export class SpellSchoolSettingsApp extends HandlebarsApplicationMixin(Applicati
       schoolSelect.addEventListener("change", async (event) => {
         this._captureCurrentProfileDraft(this.form);
         this.selectedSchool = normalizeSpellSchoolKey(event.currentTarget.value) || this.selectedSchool;
+        await this.render(true);
+      });
+    }
+
+    const themeSelect = this.form.querySelector('select[name="selected-theme"]');
+    if (themeSelect) {
+      themeSelect.addEventListener("change", async (event) => {
+        this._captureCurrentProfileDraft(this.form);
+        const nextThemeId = event.currentTarget.value || CUSTOM_SPELL_THEME_ID;
+        if (nextThemeId === CUSTOM_SPELL_THEME_ID) {
+          this._refreshSelectedThemeId();
+          this._syncThemeControlState(this.form);
+          this._syncSaveStateIndicator();
+          return;
+        }
+
+        this.selectedThemeId = nextThemeId;
+        this._applySelectedThemePreset();
         await this.render(true);
       });
     }
@@ -364,20 +647,26 @@ export class SpellSchoolSettingsApp extends HandlebarsApplicationMixin(Applicati
 
     const miniSheet = $(this.form).find(".mini-item-sheet .application.sheet.item");
     const inventoryPreview = $(this.form).find(".inventory-preview-item");
-    if (!miniSheet.length && !inventoryPreview.length) {
-      return;
-    }
 
     const refreshUi = () => {
       updateColorPickerVisibility(this.form);
       this._captureCurrentProfileDraft(this.form);
+      this._refreshSelectedThemeId();
+      this._syncThemeControlState(this.form);
+      this._syncSaveStateIndicator();
       const activeProfileKey = this._getCurrentProfileKey();
       if (!activeProfileKey) return;
-      updateMiniSheetPreview(this.form, activeProfileKey);
+      if (miniSheet.length || inventoryPreview.length) {
+        updateMiniSheetPreview(this.form, activeProfileKey);
+      }
     };
     const frameRefreshUi = createAnimationFrameScheduler(refreshUi);
 
     refreshUi();
+
+    if (!miniSheet.length && !inventoryPreview.length) {
+      return;
+    }
 
     this._bindColorControlInputs(this.form, () => {
       frameRefreshUi.request();
@@ -388,6 +677,9 @@ export class SpellSchoolSettingsApp extends HandlebarsApplicationMixin(Applicati
       input.addEventListener("input", refreshUi);
       input.addEventListener("change", refreshUi);
     });
+
+    this._syncThemeControlState(this.form);
+    this._syncSaveStateIndicator();
   }
 
   static async onSubmit(event, form, formData) {
@@ -396,10 +688,7 @@ export class SpellSchoolSettingsApp extends HandlebarsApplicationMixin(Applicati
 
     this._captureCurrentProfileDraft(form);
 
-    const nextSetting = normalizeSpellSchoolStylesSetting({
-      useLevelVariants: this.useLevelVariants,
-      profiles: this._draftProfiles || {},
-    });
+    const nextSetting = this._buildDraftSetting();
 
     const currentSetting = getSpellSchoolStylesSetting(moduleId);
     const deepEqual = foundry?.utils?.deepEqual

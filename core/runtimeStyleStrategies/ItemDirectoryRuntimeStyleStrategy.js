@@ -11,6 +11,9 @@ export class ItemDirectoryRuntimeStyleStrategy extends BaseRuntimeStyleStrategy 
     if (settings.enableFoundryInterfaceGradientEffects && settings.enableItemColor) {
       const dirSecondary = settings.gradientEnabled ? colors.sheetSecondary : "#252830";
       rules.push(`
+.directory-item.${rarityClass}.scirc-dir-gradient-enabled,
+.directory-item.document.${rarityClass}.scirc-dir-gradient-enabled,
+.directory-item.entry.document.${rarityClass}.scirc-dir-gradient-enabled,
 .directory-item.item.${rarityClass}.scirc-dir-gradient-enabled,
 .directory-item.document.item.${rarityClass}.scirc-dir-gradient-enabled,
 .directory-item.entry.document.item.${rarityClass}.scirc-dir-gradient-enabled {
@@ -22,6 +25,9 @@ export class ItemDirectoryRuntimeStyleStrategy extends BaseRuntimeStyleStrategy 
 
     if (settings.enableFoundryInterfaceTextColor) {
       rules.push(`
+.directory-item.${rarityClass}.scirc-dir-text-enabled,
+.directory-item.document.${rarityClass}.scirc-dir-text-enabled,
+.directory-item.entry.document.${rarityClass}.scirc-dir-text-enabled,
 .directory-item.item.${rarityClass}.scirc-dir-text-enabled,
 .directory-item.document.item.${rarityClass}.scirc-dir-text-enabled,
 .directory-item.entry.document.item.${rarityClass}.scirc-dir-text-enabled {

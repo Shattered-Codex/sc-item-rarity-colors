@@ -1,18 +1,40 @@
 <div class="sc-item-rarity-colors__form">
-  <header class="sc-item-rarity-colors__header">
+  <header class="sc-item-rarity-colors__header sc-item-rarity-colors__header--item">
     <div class="sc-item-rarity-colors__header-copy">
       <h4>{{title}}</h4>
       <p class="hint">Configure background, text, borders, gradients and glow per rarity.</p>
     </div>
 
-    <div class="sc-item-rarity-colors__rarity-selector form-group">
-      <label for="selected-rarity">Rarity</label>
-      <div class="form-fields">
-        <select id="selected-rarity" name="selected-rarity" class="sc-item-rarity-colors__rarity-select">
-          {{#each rarityOptions}}
-            <option value="{{this.key}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
-          {{/each}}
-        </select>
+    <div class="sc-item-rarity-colors__header-aside sc-item-rarity-colors__header-aside--item">
+      <div class="sc-item-rarity-colors__theme-selector form-group">
+        <label for="selected-theme">
+          Theme
+          <i
+            class="fas fa-circle-info sc-item-rarity-colors__tooltip-icon"
+            data-tooltip="{{themeTooltip}}"
+            data-tooltip-direction="UP"
+            aria-label="{{themeTooltip}}"
+            tabindex="0"
+          ></i>
+        </label>
+        <div class="form-fields">
+          <select id="selected-theme" name="selected-theme" class="sc-item-rarity-colors__rarity-select">
+            {{#each themeOptions}}
+              <option value="{{this.id}}" {{#if this.selected}}selected{{/if}} {{#if this.disabled}}disabled{{/if}}>{{this.label}}</option>
+            {{/each}}
+          </select>
+        </div>
+      </div>
+
+      <div class="sc-item-rarity-colors__rarity-selector form-group">
+        <label for="selected-rarity">Rarity</label>
+        <div class="form-fields">
+          <select id="selected-rarity" name="selected-rarity" class="sc-item-rarity-colors__rarity-select">
+            {{#each rarityOptions}}
+              <option value="{{this.key}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+            {{/each}}
+          </select>
+        </div>
       </div>
     </div>
   </header>

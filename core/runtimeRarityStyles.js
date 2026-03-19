@@ -1,4 +1,5 @@
 import { MODULE_ID } from "./constants.js";
+import { normalizeColorWithFallback as normalizeColor } from "./colorUtils.js";
 import { getMergedRarityEntries, normalizeRarityKey } from "./rarityListConfig.js";
 import { buildRaritySettings } from "./settingsManager.js";
 import { ActorInventoryRuntimeStyleStrategy } from "./runtimeStyleStrategies/ActorInventoryRuntimeStyleStrategy.js";
@@ -12,14 +13,6 @@ const runtimeStrategies = [
   new ActorInventoryRuntimeStyleStrategy(),
   new ItemDirectoryRuntimeStyleStrategy(),
 ];
-
-function normalizeColor(value, fallback) {
-  const raw = String(value ?? "").trim();
-  if (!raw) return fallback;
-  if (/^#[0-9a-f]{3,8}$/i.test(raw)) return raw;
-  if (/^[0-9a-f]{3,8}$/i.test(raw)) return `#${raw}`;
-  return fallback;
-}
 
 export function toRarityClassKey(rarity) {
   return String(rarity || "")

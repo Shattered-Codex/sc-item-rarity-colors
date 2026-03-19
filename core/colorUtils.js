@@ -1,4 +1,20 @@
 /**
+ * Normalize a hex color value, returning a fallback on invalid input.
+ * Accepts values with or without leading '#'. Preserves original casing.
+ *
+ * @param {*} value
+ * @param {string} fallback
+ * @returns {string}
+ */
+export function normalizeColorWithFallback(value, fallback) {
+  const raw = String(value ?? "").trim();
+  if (!raw) return fallback;
+  if (/^#[0-9a-fA-F]{3,8}$/.test(raw)) return raw;
+  if (/^[0-9a-fA-F]{3,8}$/.test(raw)) return `#${raw}`;
+  return fallback;
+}
+
+/**
  * Normalize hex color values for settings and UI controls.
  *
  * @param {string} value
