@@ -2,7 +2,10 @@ import { MODULE_ID } from "../core/constants.js";
 
 const PATREON_URL = "https://www.patreon.com/c/shatteredcodex";
 const GITHUB_ISSUES_URL = "https://github.com/Shattered-Codex/sc-item-rarity-colors/issues";
-const SUPPORT_CARD_SIGNATURE = "scirc-chat-card";
+const MODULE_SUPPORT_CARD_SIGNATURE = "scirc-chat-card";
+const SHARED_SUPPORT_CARD_SIGNATURE = "sc-shattered-codex-support-card";
+const SHARED_SUPPORT_CARD_STATE_KEY = "__scShatteredCodexSupportCardState";
+const RECENT_MESSAGE_LIMIT = 5;
 const PATREON_MODULES = [
   {
     name: "More Gems",
@@ -28,7 +31,11 @@ const PATREON_MODULES = [
 
 const FREE_MODULES = [
   {
-    name: "SC Simple Socket",
+    name: "SC - Item Rarity Colors",
+    description: "Automatically color item sheets based on rarity, with optional gradients and glowing outlines.",
+  },
+  {
+    name: "SC - Simple Sockets",
     description: "Add sockets to items with Active Effects, Activities, and Status integration.",
   },
 ];
@@ -42,7 +49,7 @@ function buildSupportCardHtml({ moduleTitle, moduleVersion }) {
     .join("");
 
   return `
-    <section class="${SUPPORT_CARD_SIGNATURE}" style="margin: 0.25rem 0; padding: 0; border: 1px solid #c89d47; border-radius: 12px; overflow: hidden; background: radial-gradient(circle at 15% -10%, #2f3a4e 0%, #131924 48%, #0d1118 100%); color: #ece6d8; box-shadow: 0 0 0 1px rgba(200, 157, 71, 0.22), 0 10px 24px rgba(0, 0, 0, 0.35);">
+    <section class="${SHARED_SUPPORT_CARD_SIGNATURE} ${MODULE_SUPPORT_CARD_SIGNATURE}" style="margin: 0.25rem 0; padding: 0; border: 1px solid #c89d47; border-radius: 12px; overflow: hidden; background: radial-gradient(circle at 15% -10%, #2f3a4e 0%, #131924 48%, #0d1118 100%); color: #ece6d8; box-shadow: 0 0 0 1px rgba(200, 157, 71, 0.22), 0 10px 24px rgba(0, 0, 0, 0.35);">
       <header style="padding: 0.75rem 0.9rem; border-bottom: 1px solid rgba(200, 157, 71, 0.35); background: #151d2a;">
         <div style="display: flex; align-items: center; gap: 0.65rem;">
           <img src="modules/sc-item-rarity-colors/assets/imgs/shattered-codex.webp" alt="${moduleTitle}" style="width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 1px solid rgba(200, 157, 71, 0.5);">
@@ -75,6 +82,25 @@ function buildSupportCardHtml({ moduleTitle, moduleVersion }) {
   `;
 }
 
+function getRecentMessages() {
+  return game.messages?.contents?.slice(-RECENT_MESSAGE_LIMIT) ?? [];
+}
+
+function hasRecentSupportCard(messages = getRecentMessages()) {
+  return messages.some((message) => message?.content?.includes?.(SHARED_SUPPORT_CARD_SIGNATURE));
+}
+
+function getSharedState() {
+  const existing = globalThis[SHARED_SUPPORT_CARD_STATE_KEY];
+  if (existing && typeof existing === "object") {
+    return existing;
+  }
+
+  const state = { posting: false };
+  globalThis[SHARED_SUPPORT_CARD_STATE_KEY] = state;
+  return state;
+}
+
 /**
  * Show the support card for GMs on every startup.
  */
@@ -84,15 +110,24 @@ export async function maybeShowSupportCard() {
   const moduleData = game.modules.get(MODULE_ID);
   const moduleTitle = moduleData?.title || "SC - Item Rarity Colors";
   const moduleVersion = moduleData?.version || "unknown";
-  const recentMessages = game.messages?.contents?.slice(-5) ?? [];
-  const alreadyPosted = recentMessages.some((message) => message?.content?.includes(SUPPORT_CARD_SIGNATURE));
-  if (alreadyPosted) return;
+  if (hasRecentSupportCard()) return;
 
-  const userId = game.user?._id ?? game.user?.id ?? game.userId;
+  const sharedState = getSharedState();
+  if (sharedState.posting) return;
 
-  await ChatMessage.create({
-    user: userId,
-    speaker: ChatMessage.getSpeaker(),
-    content: buildSupportCardHtml({ moduleTitle, moduleVersion }),
-  });
+  sharedState.posting = true;
+
+  try {
+    if (hasRecentSupportCard()) return;
+
+    const userId = game.user?._id ?? game.user?.id ?? game.userId;
+
+    await ChatMessage.create({
+      user: userId,
+      speaker: ChatMessage.getSpeaker(),
+      content: buildSupportCardHtml({ moduleTitle, moduleVersion }),
+    });
+  } finally {
+    sharedState.posting = false;
+  }
 }

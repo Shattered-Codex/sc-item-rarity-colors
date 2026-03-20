@@ -1,6 +1,6 @@
 /**
  * Foundry Item Directory Effects
- * Applies rarity-based visual effects to item rows in the world Items sidebar tab.
+ * Applies rarity-based visual effects to item rows in the world Items sidebar and item compendium listings.
  */
 
 import { getItemRarity } from "./itemRarityHelper.js";
@@ -19,8 +19,60 @@ import {
   registerSettingsTransactionCompleteHook,
 } from "../core/settingsTransaction.js";
 
-const DIRECTORY_ROW_SELECTOR = ".directory-item.entry.document.item, .directory-item.document.item, .directory-item.item";
+const DIRECTORY_ROW_SELECTOR = ".directory-item.entry.document, .directory-item.document, .directory-item";
+const ITEM_DOCUMENT_ROW_SELECTOR = ".directory-item.entry.document.item, .directory-item.document.item, .directory-item.item";
 const DIRECTORY_STATE_CLASSES = ["scirc-dir-gradient-enabled", "scirc-dir-text-enabled"];
+const LIVE_DIRECTORY_ROOT_SELECTOR = [
+  ".application.directory.compendium-directory",
+  ".application.directory.sidebar-popout",
+  ".sidebar-popout.directory",
+  "#sidebar .sidebar-tab.directory[data-tab=\"items\"]",
+  "#sidebar .tab.directory[data-tab=\"items\"]",
+].join(", ");
+const COMPENDIUM_INDEX_FIELDS = [
+  "type",
+  "system.rarity",
+  "system.details.rarity",
+  "system.school",
+  "system.level",
+  "system.details.level",
+];
+
+function getCompendiumApplicationClass() {
+  return foundry?.applications?.sidebar?.apps?.Compendium ?? null;
+}
+
+function getCollectionDocumentName(collection) {
+  return collection?.documentName
+    || collection?.documentClass?.documentName
+    || collection?.metadata?.type
+    || collection?.metadata?.documentName
+    || null;
+}
+
+function isItemCollection(collection) {
+  return getCollectionDocumentName(collection) === "Item";
+}
+
+function isItemCompendiumApp(app) {
+  const CompendiumApplication = getCompendiumApplicationClass();
+  const isCompendiumInstance = CompendiumApplication ? app instanceof CompendiumApplication : false;
+  if (!isCompendiumInstance) return false;
+  return isItemCollection(app?.collection);
+}
+
+function isItemDirectoryApp(app) {
+  if (!app) return false;
+  if (isItemCompendiumApp(app)) return true;
+  if (app?.tabName === "items") return true;
+  if (app?.documentName === "Item") return true;
+  if (app?.documentClass?.documentName === "Item") return true;
+  if (isItemCollection(app?.collection)) return true;
+  if (isItemCollection(app?.documents)) return true;
+  const root = resolveRootElement(app?.element);
+  if (isItemDirectoryRoot(root)) return true;
+  return false;
+}
 
 function getItemIdFromElement(element) {
   return element?.dataset?.documentId
@@ -33,16 +85,126 @@ function getItemIdFromElement(element) {
     || null;
 }
 
+function getItemUuidFromElement(element) {
+  return element?.dataset?.uuid
+    || element?.dataset?.documentUuid
+    || element?.dataset?.entryUuid
+    || element?.getAttribute?.("data-uuid")
+    || element?.getAttribute?.("data-document-uuid")
+    || element?.getAttribute?.("data-entry-uuid")
+    || null;
+}
+
+function getObjectValueByPath(object, path) {
+  if (!object || typeof object !== "object" || !path) return undefined;
+
+  const nestedValue = String(path)
+    .split(".")
+    .reduce((value, key) => (value && typeof value === "object" ? value[key] : undefined), object);
+  return nestedValue !== undefined ? nestedValue : object[path];
+}
+
+function buildCompendiumIndexItemLike(entry, rowElement = null) {
+  if (!entry || typeof entry !== "object") return null;
+
+  const rawRarity = getObjectValueByPath(entry, "system.rarity");
+  const rawRarityValue = getObjectValueByPath(entry, "system.rarity.value");
+  const detailsRarity = getObjectValueByPath(entry, "system.details.rarity");
+  const rawSchool = getObjectValueByPath(entry, "system.school");
+  const rawSchoolValue = getObjectValueByPath(entry, "system.school.value");
+  const rawLevel = getObjectValueByPath(entry, "system.level");
+  const detailsLevel = getObjectValueByPath(entry, "system.details.level");
+  const type = entry.type ?? null;
+
+  const itemLike = {
+    _id: entry._id ?? entry.id ?? getItemIdFromElement(rowElement) ?? null,
+    id: entry._id ?? entry.id ?? getItemIdFromElement(rowElement) ?? null,
+    uuid: entry.uuid ?? getItemUuidFromElement(rowElement) ?? null,
+    type,
+    system: {},
+  };
+
+  if (rawRarityValue !== undefined) {
+    itemLike.system.rarity = { value: rawRarityValue };
+  } else if (rawRarity !== undefined) {
+    itemLike.system.rarity = rawRarity;
+  }
+
+  if (detailsRarity !== undefined) {
+    itemLike.system.details = itemLike.system.details || {};
+    itemLike.system.details.rarity = detailsRarity;
+  }
+
+  if (rawSchoolValue !== undefined) {
+    itemLike.system.school = { value: rawSchoolValue };
+  } else if (rawSchool !== undefined) {
+    itemLike.system.school = rawSchool;
+  }
+
+  if (rawLevel !== undefined) {
+    itemLike.system.level = rawLevel;
+  }
+
+  if (detailsLevel !== undefined) {
+    itemLike.system.details = itemLike.system.details || {};
+    itemLike.system.details.level = detailsLevel;
+  }
+
+  const hasRarityData = rawRarityValue !== undefined || rawRarity !== undefined || detailsRarity !== undefined;
+  const hasSpellData = type === "spell" || rawSchoolValue !== undefined || rawSchool !== undefined || rawLevel !== undefined || detailsLevel !== undefined;
+  if (!hasRarityData && !hasSpellData) return null;
+
+  return itemLike;
+}
+
+function resolveItemFromCompendiumIndex(collection, rowElement) {
+  if (!isItemCollection(collection) || !collection?.index?.get) return null;
+
+  const itemId = getItemIdFromElement(rowElement);
+  if (!itemId) return null;
+
+  const entry = collection.index.get(itemId);
+  if (!entry) return null;
+
+  return buildCompendiumIndexItemLike(entry, rowElement);
+}
+
 function resolveItemFromCollection(collection, itemId) {
   if (!collection?.get || !itemId) return null;
 
   const entry = collection.get(itemId);
   if (!entry) return null;
-  if (entry.documentName === "Item" || entry.system || entry.type) return entry;
+  if (entry.documentName === "Item" && entry.system) return entry;
+  if (entry.system) return entry;
 
   if (entry.uuid && typeof fromUuidSync === "function") {
     const resolved = fromUuidSync(entry.uuid);
     if (resolved?.documentName === "Item") return resolved;
+  }
+
+  return null;
+}
+
+async function resolveItemFromCollectionAsync(collection, itemId, uuid = null) {
+  const syncResolved = resolveItemFromCollection(collection, itemId);
+  if (syncResolved) return syncResolved;
+
+  if (uuid && typeof fromUuid === "function") {
+    const resolved = await fromUuid(uuid);
+    if (resolved?.documentName === "Item") return resolved;
+  }
+
+  if (itemId && typeof collection?.getDocument === "function") {
+    const resolved = await collection.getDocument(itemId);
+    if (resolved?.documentName === "Item") return resolved;
+  }
+
+  if (collection?.index?.get && itemId) {
+    const entry = collection.index.get(itemId);
+    if (entry?.uuid && typeof fromUuid === "function") {
+      const resolved = await fromUuid(entry.uuid);
+      if (resolved?.documentName === "Item") return resolved;
+    }
   }
 
   return null;
@@ -55,6 +217,7 @@ function resolveItemFromRow(app, rowElement) {
   const candidates = [
     game?.items,
     app?.collection,
+    app?.collection?.index,
     app?.documents,
     ui?.sidebar?.tabs?.items?.collection,
   ];
@@ -121,6 +284,34 @@ function resolveRootElement(htmlOrElement) {
   return null;
 }
 
+function isPreviewRoot(rootElement) {
+  const root = resolveRootElement(rootElement);
+  if (!root?.closest) return false;
+  return Boolean(root.closest(".sc-item-rarity-colors__preview, .foundry-interface-preview"));
+}
+
+function isItemDirectoryRoot(rootElement) {
+  const root = resolveRootElement(rootElement);
+  if (!root?.querySelector) return false;
+  if (isPreviewRoot(root)) return false;
+  if (!root.querySelector(ITEM_DOCUMENT_ROW_SELECTOR)) return false;
+  return Boolean(root.matches?.(LIVE_DIRECTORY_ROOT_SELECTOR));
+}
+
+function findItemDirectoryRoots(rootElement) {
+  const root = resolveRootElement(rootElement);
+  if (!root?.querySelectorAll) return [];
+
+  const roots = [];
+  if (isItemDirectoryRoot(root)) roots.push(root);
+
+  root.querySelectorAll(LIVE_DIRECTORY_ROOT_SELECTOR).forEach((candidate) => {
+    if (isItemDirectoryRoot(candidate)) roots.push(candidate);
+  });
+
+  return roots;
+}
+
 function getRowsFromRoot(rootElement) {
   const root = resolveRootElement(rootElement);
   if (!root?.querySelectorAll) return [];
@@ -132,6 +323,14 @@ function getRowsFromRoot(rootElement) {
 }
 
 function resolveItemForRow(rowElement, app = null) {
+  const indexedCompendiumItem = resolveItemFromCompendiumIndex(app?.collection, rowElement);
+  if (indexedCompendiumItem) return indexedCompendiumItem;
+
+  if (app?.collection || app?.documents) {
+    const scoped = resolveItemFromRow(app, rowElement);
+    if (scoped) return scoped;
+  }
+
   const itemId = getItemIdFromElement(rowElement);
   if (itemId) {
     const direct = game?.items?.get?.(itemId);
@@ -139,6 +338,22 @@ function resolveItemForRow(rowElement, app = null) {
   }
 
   return resolveItemFromRow(app, rowElement);
+}
+
+function buildAsyncResolutionCacheKey(rowElement, app = null) {
+  const uuid = getItemUuidFromElement(rowElement);
+  if (uuid) return `uuid:${uuid}`;
+
+  const itemId = getItemIdFromElement(rowElement);
+  const packId = app?.collection?.metadata?.id
+    || app?.collection?.collection
+    || app?.collection?.identifier
+    || app?.id
+    || null;
+
+  if (packId && itemId) return `pack:${packId}:${itemId}`;
+  if (itemId) return `item:${itemId}`;
+  return null;
 }
 
 function getKnownItemDirectoryRoots() {
@@ -156,32 +371,87 @@ function getKnownItemDirectoryRoots() {
   addRoot(ui?.sidebar?.tabs?.items?.element, ui?.sidebar?.tabs?.items ?? null);
 
   for (const win of Object.values(ui?.windows ?? {})) {
-    if (win?.tabName !== "items") continue;
+    if (!isItemDirectoryApp(win)) continue;
     addRoot(win?.element, win);
   }
 
   for (const popout of Object.values(ui?.sidebar?.popouts ?? {})) {
-    if (popout?.tabName !== "items") continue;
+    if (!isItemDirectoryApp(popout)) continue;
     addRoot(popout?.element, popout);
+  }
+
+  // Foundry v13: ApplicationV2 apps live in foundry.applications.instances, not ui.windows.
+  // Without this, item compendia are found via DOM scan below with app=null, causing
+  // item resolution to fail (no app.collection) and styles to be cleared on every refresh.
+  if (foundry?.applications?.instances) {
+    for (const app of foundry.applications.instances.values()) {
+      if (!isItemDirectoryApp(app)) continue;
+      addRoot(app?.element, app);
+    }
+  }
+
+  if (document?.querySelectorAll) {
+    document.querySelectorAll(LIVE_DIRECTORY_ROOT_SELECTOR).forEach((element) => {
+      if (!isItemDirectoryRoot(element)) return;
+      addRoot(element, null);
+    });
   }
 
   return roots;
 }
 
 function isItemsSidebarContext(app, html) {
+  if (isItemDirectoryApp(app)) return true;
   if (app?.tabName) return app.tabName === "items";
   if (app?.id === "items" || app?.options?.id === "items") return true;
   if (typeof app?.id === "string" && app.id.toLowerCase().includes("item")) return true;
   if (typeof app?.constructor?.name === "string" && app.constructor.name.toLowerCase().includes("item")) return true;
 
   const root = resolveRootElement(html);
-  if (!root?.querySelector) return false;
-  return Boolean(root.querySelector(DIRECTORY_ROW_SELECTOR));
+  return isItemDirectoryRoot(root);
 }
 
 export function applyItemDirectoryEffects(moduleId) {
   ensureRuntimeRarityStyles(moduleId);
   const raritySettingsCache = new Map();
+  const resolvedDocumentCache = new Map();
+  const compendiumIndexLoadCache = new Map();
+  const observedRoots = new WeakMap();
+
+  const getCollectionCacheKey = (collection) => collection?.metadata?.id
+    || collection?.collection
+    || collection?.identifier
+    || null;
+
+  const ensureCompendiumIndexFieldsLoaded = async (collection) => {
+    if (!isItemCollection(collection) || typeof collection?.getIndex !== "function") return;
+
+    const cacheKey = getCollectionCacheKey(collection);
+    const loadIndex = async () => {
+      await collection.getIndex({ fields: COMPENDIUM_INDEX_FIELDS });
+    };
+
+    if (!cacheKey) {
+      await loadIndex();
+      return;
+    }
+
+    if (!compendiumIndexLoadCache.has(cacheKey)) {
+      compendiumIndexLoadCache.set(
+        cacheKey,
+        loadIndex().catch((error) => {
+          compendiumIndexLoadCache.delete(cacheKey);
+          debugWarn("Failed to preload item compendium index fields", {
+            cacheKey,
+            message: error?.message ?? String(error),
+          });
+          throw error;
+        })
+      );
+    }
+
+    await compendiumIndexLoadCache.get(cacheKey);
+  };
 
   const getCachedRaritySettings = (rarity) => {
     if (!rarity) return null;
@@ -263,9 +533,64 @@ export function applyItemDirectoryEffects(moduleId) {
     };
   };
 
-  const applyStylesToItemDirectoryRoot = (rootElement, app = null) => {
+  const resolveItemForRowAsync = async (rowElement, app = null) => {
+    const syncResolved = resolveItemForRow(rowElement, app);
+    if (syncResolved?.system) return syncResolved;
+
+    const cacheKey = buildAsyncResolutionCacheKey(rowElement, app);
+    if (cacheKey && resolvedDocumentCache.has(cacheKey)) {
+      return resolvedDocumentCache.get(cacheKey);
+    }
+
+    const itemId = getItemIdFromElement(rowElement);
+    const uuid = getItemUuidFromElement(rowElement);
+
+    const indexedCompendiumItem = resolveItemFromCompendiumIndex(app?.collection, rowElement);
+    if (indexedCompendiumItem) {
+      if (cacheKey) resolvedDocumentCache.set(cacheKey, indexedCompendiumItem);
+      return indexedCompendiumItem;
+    }
+
+    const scopedCollections = [app?.collection, app?.documents, app?.collection?.index];
+
+    for (const collection of scopedCollections) {
+      const resolved = await resolveItemFromCollectionAsync(collection, itemId, uuid);
+      if (!resolved) continue;
+      if (cacheKey) resolvedDocumentCache.set(cacheKey, resolved);
+      return resolved;
+    }
+
+    if (uuid && typeof fromUuid === "function") {
+      const resolved = await fromUuid(uuid);
+      if (resolved?.documentName === "Item") {
+        if (cacheKey) resolvedDocumentCache.set(cacheKey, resolved);
+        return resolved;
+      }
+    }
+
+    if (itemId) {
+      const direct = game?.items?.get?.(itemId);
+      if (direct?.system) {
+        if (cacheKey) resolvedDocumentCache.set(cacheKey, direct);
+        return direct;
+      }
+    }
+
+    return null;
+  };
+
+  const applyStylesToItemDirectoryRoot = async (rootElement, app = null) => {
     const rows = getRowsFromRoot(rootElement);
     if (!rows.length) return;
+
+    try {
+      await ensureCompendiumIndexFieldsLoaded(app?.collection);
+    } catch (error) {
+      debugWarn("Compendium index preload failed; falling back to document resolution", {
+        appId: app?.id ?? null,
+        message: error?.message ?? String(error),
+      });
+    }
 
     let appliedCount = 0;
     let unresolvedCount = 0;
@@ -273,22 +598,24 @@ export function applyItemDirectoryEffects(moduleId) {
     let noSettingsCount = 0;
     let spellStyleCount = 0;
 
-    for (const rowElement of rows) {
-      const item = resolveItemForRow(rowElement, app);
+    const items = await Promise.all(rows.map((rowElement) => resolveItemForRowAsync(rowElement, app)));
+
+    rows.forEach((rowElement, index) => {
+      const item = items[index];
       if (!item) {
         clearRowVisuals(rowElement);
         unresolvedCount += 1;
-        continue;
+        return;
       }
       const result = applyStylesToDirectoryRow(item, rowElement);
       if (result?.source === "spell-style") spellStyleCount += 1;
       if (result?.applied) {
         appliedCount += 1;
-        continue;
+        return;
       }
       if (result?.reason === "missing-rarity") noRarityCount += 1;
       if (result?.reason === "missing-settings") noSettingsCount += 1;
-    }
+    });
 
     debugLog("Item directory styles pass complete", {
       appId: app?.id ?? null,
@@ -309,17 +636,12 @@ export function applyItemDirectoryEffects(moduleId) {
     }
   };
 
-  const refreshAllKnownItemDirectories = () => {
+  const refreshAllKnownItemDirectories = async () => {
     const roots = getKnownItemDirectoryRoots();
-    if (!roots.length) {
-      // Fallback for Foundry render timings where sidebar roots are not available yet.
-      debugWarn("No known item directory roots found; using document fallback refresh");
-      applyStylesToItemDirectoryRoot(document);
-      return;
-    }
+    if (!roots.length) return;
 
     for (const root of roots) {
-      applyStylesToItemDirectoryRoot(root.element, root.app);
+      await applyStylesToItemDirectoryRoot(root.element, root.app);
     }
   };
 
@@ -334,15 +656,64 @@ export function applyItemDirectoryEffects(moduleId) {
     directoryRefresh.request(reason, delayMs);
   };
 
+  const observeDirectoryRoot = (rootElement, app = null, { allowLooseRoot = false } = {}) => {
+    const root = resolveRootElement(rootElement);
+    const isObservableRoot = allowLooseRoot ? !isPreviewRoot(root) : isItemDirectoryRoot(root);
+    if (!root || observedRoots.has(root) || typeof MutationObserver !== "function" || !isObservableRoot) return;
+
+    const observer = new MutationObserver(() => {
+      if (!root.isConnected) {
+        observer.disconnect();
+        observedRoots.delete(root);
+        return;
+      }
+      requestRefresh("item-directory-mutation");
+    });
+
+    observer.observe(root, {
+      childList: true,
+      subtree: true,
+    });
+
+    observedRoots.set(root, observer);
+  };
+
+  const disconnectObservedRoots = (rootElement) => {
+    const roots = [
+      resolveRootElement(rootElement),
+      ...findItemDirectoryRoots(rootElement),
+    ].filter(Boolean);
+    roots.forEach((root) => {
+      const observer = observedRoots.get(root);
+      if (!observer) return;
+      observer.disconnect();
+      observedRoots.delete(root);
+    });
+  };
+
   const scheduleApply = (htmlOrElement, app) => {
     const root = resolveRootElement(htmlOrElement);
+    const directoryRoots = findItemDirectoryRoots(root);
+    const shouldUseLooseCompendiumRoot = Boolean(
+      root
+      && !directoryRoots.length
+      && (isItemCompendiumApp(app) || isItemCollection(app?.collection))
+    );
     debugLog("Item directory render scheduling styles", {
       appId: app?.id ?? null,
       tabName: app?.tabName ?? null,
       hasRoot: Boolean(root),
+      directoryRootCount: directoryRoots.length,
+      looseCompendiumRoot: shouldUseLooseCompendiumRoot,
     });
-    if (root) {
-      runNowAndOnNextAnimationFrame(() => applyStylesToItemDirectoryRoot(root, app));
+    if (directoryRoots.length) {
+      directoryRoots.forEach((directoryRoot) => {
+        observeDirectoryRoot(directoryRoot, app);
+        runNowAndOnNextAnimationFrame(() => void applyStylesToItemDirectoryRoot(directoryRoot, app));
+      });
+    } else if (shouldUseLooseCompendiumRoot) {
+      observeDirectoryRoot(root, app, { allowLooseRoot: true });
+      runNowAndOnNextAnimationFrame(() => void applyStylesToItemDirectoryRoot(root, app));
     }
     // Extra pass to catch delayed DOM injections in sidebar render cycle.
     setTimeout(
@@ -353,6 +724,39 @@ export function applyItemDirectoryEffects(moduleId) {
 
   Hooks.on("renderItemDirectory", (app, html) => {
     scheduleApply(html, app);
+  });
+
+  Hooks.on("renderCompendium", (app, html) => {
+    const isItemApp = isItemDirectoryApp(app) || isItemCollection(app?.collection);
+    const root = resolveRootElement(html);
+    if (!isItemApp && !isItemDirectoryRoot(root)) return;
+    scheduleApply(html, app);
+  });
+
+  Hooks.on("renderApplicationV2", (app, element) => {
+    // isItemCompendiumApp relies on foundry.applications.sidebar.apps.Compendium existing,
+    // which may not be present in all Foundry versions. Fall back to isItemCollection on the
+    // collection, which is the actual reliable signal that this is an item compendium.
+    const isItemComp = isItemCompendiumApp(app) || isItemCollection(app?.collection);
+    if (!isItemComp) return;
+    scheduleApply(element, app);
+    // Compendium item lists in Foundry v13 load asynchronously after the initial render hook.
+    // Schedule a delayed refresh so styles are applied once items are in the DOM.
+    requestRefresh("compendium-async-load", 500);
+  });
+
+  Hooks.on("closeApplicationV2", (app, element) => {
+    if (!isItemCompendiumApp(app)) return;
+    disconnectObservedRoots(element ?? app?.element ?? null);
+  });
+
+  Hooks.on("updateCompendium", (collection) => {
+    if (!isItemCollection(collection)) return;
+
+    const cacheKey = getCollectionCacheKey(collection);
+    if (cacheKey) compendiumIndexLoadCache.delete(cacheKey);
+    resolvedDocumentCache.clear();
+    requestRefresh("updateCompendium");
   });
 
   Hooks.on("renderSidebarTab", (app, html) => {
@@ -377,18 +781,29 @@ export function applyItemDirectoryEffects(moduleId) {
     if (isSettingsTransactionActive(moduleId)) return;
 
     raritySettingsCache.clear();
+    resolvedDocumentCache.clear();
     debugLog("setting change matched module for item directory; cache cleared");
     requestRefresh("setting-change", REFRESH_DELAYS_MS.SETTINGS_CHANGE);
   });
 
   registerSettingsTransactionCompleteHook(moduleId, () => {
     raritySettingsCache.clear();
+    resolvedDocumentCache.clear();
     requestRefresh("settings-transaction-complete", REFRESH_DELAYS_MS.SETTINGS_CHANGE);
   });
 
-  Hooks.on("createItem", () => requestRefresh("createItem"));
-  Hooks.on("updateItem", () => requestRefresh("updateItem"));
-  Hooks.on("deleteItem", () => requestRefresh("deleteItem"));
+  Hooks.on("createItem", () => {
+    resolvedDocumentCache.clear();
+    requestRefresh("createItem");
+  });
+  Hooks.on("updateItem", () => {
+    resolvedDocumentCache.clear();
+    requestRefresh("updateItem");
+  });
+  Hooks.on("deleteItem", () => {
+    resolvedDocumentCache.clear();
+    requestRefresh("deleteItem");
+  });
 
   debugLog("Item directory rarity hooks registered");
   requestRefresh("initialization");
