@@ -10,6 +10,7 @@ import {
 import { DEBUG_LOGS_SETTING_KEY } from "../core/debug.js";
 import { buildRarityFieldSettingName, getRarityFieldDefinitions } from "../core/rarityFieldSchema.js";
 import { getDefaultSpellSchoolStylesSetting, SPELL_SCHOOL_STYLES_SETTING_KEY } from "../core/spellSchoolConfig.js";
+import { SUPPORT_CARD_HIDE_SETTING_KEY, SUPPORT_CARD_VERSION_SETTING_KEY } from "../core/constants.js";
 
 // Register settings for item rarity colors.
 function registerColorSetting(moduleId, key, name, defaultValue) {
@@ -59,6 +60,28 @@ function registerDebugSetting(moduleId) {
     type: Boolean,
     default: false,
   });
+}
+
+function registerSupportCardSettings(moduleId) {
+  if (!game.settings.settings.has(`${moduleId}.${SUPPORT_CARD_HIDE_SETTING_KEY}`)) {
+    game.settings.register(moduleId, SUPPORT_CARD_HIDE_SETTING_KEY, {
+      name: "Hide automatic support message until next update",
+      hint: "After the support card appears once for the current version, this option is checked automatically. Uncheck it if you want the card to appear whenever the world loads.",
+      scope: "client",
+      config: true,
+      type: Boolean,
+      default: false,
+    });
+  }
+
+  if (!game.settings.settings.has(`${moduleId}.${SUPPORT_CARD_VERSION_SETTING_KEY}`)) {
+    game.settings.register(moduleId, SUPPORT_CARD_VERSION_SETTING_KEY, {
+      scope: "client",
+      config: false,
+      type: String,
+      default: "",
+    });
+  }
 }
 
 function registerRaritySettings(moduleId, rarityKey, rarityLabel) {
@@ -125,4 +148,5 @@ export function registerModuleSettings(MODULE_ID) {
   );
 
   registerDebugSetting(MODULE_ID);
+  registerSupportCardSettings(MODULE_ID);
 }

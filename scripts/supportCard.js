@@ -1,4 +1,8 @@
-import { MODULE_ID } from "../core/constants.js";
+import {
+  MODULE_ID,
+  SUPPORT_CARD_HIDE_SETTING_KEY,
+  SUPPORT_CARD_VERSION_SETTING_KEY,
+} from "../core/constants.js";
 
 const PATREON_URL = "https://www.patreon.com/c/shatteredcodex";
 const GITHUB_ISSUES_URL = "https://github.com/Shattered-Codex/sc-item-rarity-colors/issues";
@@ -96,38 +100,83 @@ function getSharedState() {
     return existing;
   }
 
-  const state = { posting: false };
+  const state = { posting: false, postPromise: null };
   globalThis[SHARED_SUPPORT_CARD_STATE_KEY] = state;
   return state;
 }
 
+function normalizeVersion(version) {
+  const normalized = String(version ?? "").trim();
+  return normalized || "unknown";
+}
+
+function getStoredSupportCardVersion() {
+  return String(game.settings.get(MODULE_ID, SUPPORT_CARD_VERSION_SETTING_KEY) ?? "").trim();
+}
+
+function shouldSuppressSupportCard(moduleVersion) {
+  const hideSupportCard = game.settings.get(MODULE_ID, SUPPORT_CARD_HIDE_SETTING_KEY) === true;
+  return hideSupportCard && getStoredSupportCardVersion() === normalizeVersion(moduleVersion);
+}
+
+async function acknowledgeSupportCardVersion(moduleVersion) {
+  const normalizedVersion = normalizeVersion(moduleVersion);
+  await game.settings.set(MODULE_ID, SUPPORT_CARD_HIDE_SETTING_KEY, true);
+  if (getStoredSupportCardVersion() !== normalizedVersion) {
+    await game.settings.set(MODULE_ID, SUPPORT_CARD_VERSION_SETTING_KEY, normalizedVersion);
+  }
+}
+
 /**
- * Show the support card for GMs on every startup.
+ * Show the support card for GMs once per module version unless the user unchecks the setting.
  */
 export async function maybeShowSupportCard() {
   if (!game.user?.isGM) return;
 
   const moduleData = game.modules.get(MODULE_ID);
   const moduleTitle = moduleData?.title || "SC - Item Rarity Colors";
-  const moduleVersion = moduleData?.version || "unknown";
-  if (hasRecentSupportCard()) return;
+  const moduleVersion = normalizeVersion(moduleData?.version);
+  if (shouldSuppressSupportCard(moduleVersion)) return;
+  if (hasRecentSupportCard()) {
+    await acknowledgeSupportCardVersion(moduleVersion);
+    return;
+  }
 
   const sharedState = getSharedState();
-  if (sharedState.posting) return;
+  if (sharedState.posting) {
+    try {
+      await sharedState.postPromise;
+    } catch (error) {
+      console.error(`${MODULE_ID} | Failed waiting for support card post`, error);
+    }
 
+    if (hasRecentSupportCard()) {
+      await acknowledgeSupportCardVersion(moduleVersion);
+    }
+    return;
+  }
+
+  const userId = game.user?._id ?? game.user?.id ?? game.userId;
   sharedState.posting = true;
-
-  try {
-    if (hasRecentSupportCard()) return;
-
-    const userId = game.user?._id ?? game.user?.id ?? game.userId;
+  sharedState.postPromise = (async () => {
+    if (hasRecentSupportCard()) {
+      await acknowledgeSupportCardVersion(moduleVersion);
+      return;
+    }
 
     await ChatMessage.create({
       user: userId,
       speaker: ChatMessage.getSpeaker(),
       content: buildSupportCardHtml({ moduleTitle, moduleVersion }),
     });
+
+    await acknowledgeSupportCardVersion(moduleVersion);
+  })();
+
+  try {
+    await sharedState.postPromise;
   } finally {
     sharedState.posting = false;
+    sharedState.postPromise = null;
   }
 }
