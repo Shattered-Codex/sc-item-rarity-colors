@@ -4,6 +4,8 @@
  */
 
 export const MODULE_ID = "sc-item-rarity-colors";
+export const SUPPORT_CARD_HIDE_SETTING_KEY = "hideSupportCardUntilNextUpdate";
+export const SUPPORT_CARD_VERSION_SETTING_KEY = "supportCardAcknowledgedVersion";
 
 // Default colors
 export const DEFAULT_COLORS = {
