@@ -91,10 +91,28 @@
   .item-weight .fa-weight-hanging,
   .item-uses,
   .item-charges,
-  .item-controls,
   .item-properties,
   .item-quantity,
   .item-formula dnd5e-icon
 ) {
   color: var(--scirc-inv-details-color, inherit) !important;
+}
+
+/* Preserve the native on/off affordance for inventory state controls. */
+.scirc-managed-item-row.scirc-inv-details-color-enabled .item-controls,
+.scirc-managed-item-row.scirc-inv-details-color-enabled .item-controls > .control-button,
+.scirc-managed-item-row.scirc-inv-details-color-enabled .item-controls .item-control {
+  color: var(--item-control-color, inherit) !important;
+}
+
+.scirc-managed-item-row.scirc-inv-details-color-enabled .item-controls .item-control.always-interactive,
+.editable .scirc-managed-item-row.scirc-inv-details-color-enabled .item-controls .item-control,
+.scirc-managed-item-row.scirc-inv-details-color-enabled .item-controls [data-context-menu],
+.scirc-managed-item-row.scirc-inv-details-color-enabled .item-controls [data-toggle-description] {
+  color: var(--item-control-interactive-color, var(--item-control-color, inherit)) !important;
+}
+
+.scirc-managed-item-row.scirc-inv-details-color-enabled .item-controls .item-control.active,
+.scirc-managed-item-row.scirc-inv-details-color-enabled .item-controls .item-control[aria-pressed="true"] {
+  color: var(--scirc-inv-details-color, var(--item-control-active-color, var(--item-control-interactive-color, inherit))) !important;
 }

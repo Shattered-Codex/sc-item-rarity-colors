@@ -1,20 +1,20 @@
-import { MODULE_ID, PATREON_URL } from "../core/constants.js";
+import { DOCS_URL, MODULE_ID } from "../core/constants.js";
 
 const api = foundry?.applications?.api ?? {};
 const { ApplicationV2 } = api;
 if (!ApplicationV2) {
-  throw new Error(`${MODULE_ID}: ApplicationV2 is required to render SupportMenu.`);
+  throw new Error(`${MODULE_ID}: ApplicationV2 is required to render DocumentationMenu.`);
 }
 
-const SUPPORT_MENU_KEY = `${MODULE_ID}.supportMenu`;
+const DOCUMENTATION_MENU_KEY = `${MODULE_ID}.docsMenu`;
 
-export class SupportMenu extends ApplicationV2 {
+export class DocumentationMenu extends ApplicationV2 {
   static DEFAULT_OPTIONS = foundry.utils.mergeObject(super.DEFAULT_OPTIONS, {
-    id: `${MODULE_ID}-support-menu`,
+    id: `${MODULE_ID}-documentation-menu`,
     window: {
-      title: "Support the developer",
+      title: "Documentation",
       resizable: false,
-      icon: "fas fa-heart",
+      icon: "fas fa-hat-wizard",
     },
     position: {
       width: 420,
@@ -22,41 +22,41 @@ export class SupportMenu extends ApplicationV2 {
     },
   }, { inplace: false });
 
-  render(...args) {
-    SupportMenu.openPatreon();
+  render(..._args) {
+    DocumentationMenu.openDocs();
     return this;
   }
 
-  static openPatreon() {
-    window?.open?.(PATREON_URL, "_blank", "noopener");
+  static openDocs() {
+    window?.open?.(DOCS_URL, "_blank", "noopener");
   }
 
   static bindSettingsButton(html) {
-    const root = SupportMenu.#resolveRoot(html);
+    const root = DocumentationMenu.#resolveRoot(html);
     if (!root) return;
 
     const selectors = [
-      `[data-setting-id="${SUPPORT_MENU_KEY}"]`,
-      `[data-menu-id="${SUPPORT_MENU_KEY}"]`,
-      `[data-key="${SUPPORT_MENU_KEY}"]`,
-      `[data-setting="${SUPPORT_MENU_KEY}"]`,
+      `[data-setting-id="${DOCUMENTATION_MENU_KEY}"]`,
+      `[data-menu-id="${DOCUMENTATION_MENU_KEY}"]`,
+      `[data-key="${DOCUMENTATION_MENU_KEY}"]`,
+      `[data-setting="${DOCUMENTATION_MENU_KEY}"]`,
     ];
     const candidates = root.querySelectorAll(selectors.join(","));
     for (const candidate of candidates) {
-      candidate.classList.add("scirc-support-setting-row");
+      candidate.classList.add("scirc-docs-setting-row");
 
       const button = candidate instanceof HTMLButtonElement
         ? candidate
         : candidate.querySelector("button");
       if (!button) continue;
-      button.classList.add("scirc-support-button");
-      if (button.dataset.scItemRaritySupportBound === "true") continue;
-      button.dataset.scItemRaritySupportBound = "true";
+      button.classList.add("scirc-docs-button");
+      if (button.dataset.scItemRarityDocsBound === "true") continue;
+      button.dataset.scItemRarityDocsBound = "true";
       button.addEventListener("click", (event) => {
         event.preventDefault();
         event.stopPropagation();
         event.stopImmediatePropagation();
-        SupportMenu.openPatreon();
+        DocumentationMenu.openDocs();
       }, { capture: true });
     }
   }
