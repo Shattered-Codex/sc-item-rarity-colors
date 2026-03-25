@@ -4,6 +4,7 @@
 ![System: dnd5e](https://img.shields.io/badge/System-dnd5e-blue)
 [![libWrapper Recommended](https://img.shields.io/badge/libWrapper-Recommended-8A2BE2)](https://github.com/ruipin/fvtt-lib-wrapper)
 [![Support on Patreon](https://img.shields.io/badge/Patreon-Shattered%20Codex-FF424D?logo=patreon&logoColor=white)](https://www.patreon.com/c/shatteredcodex)
+[![Wiki](https://img.shields.io/badge/Wiki-Shattered%20Codex-1F6FEB)](https://wiki.shattered-codex.com/modules/sc-item-rarity-colors)
 ![Downloads](https://img.shields.io/github/downloads/Shattered-Codex/sc-item-rarity-colors/total)
 
 Color item rarities and spells in D&D 5e, with full control for item sheets, actor inventories, and the Foundry item directory.
@@ -13,13 +14,14 @@ Color item rarities and spells in D&D 5e, with full control for item sheets, act
 - Lets you configure colors and effects for each rarity in one place.
 - Supports gradient and glow effects where available.
 - Works with both default D&D 5e sheet and Tidy sheet.
+- Includes built-in theme presets for item rarities, with manual overrides whenever you want a custom look.
 - Applies visuals to:
   - item sheets
   - actor inventory rows
   - Foundry item directory rows
 - Includes a rarity list manager (add, remove, rename, reorder, show/hide).
 - Plays nicely with Custom DND5E rarity data when both modules are active.
-- Includes Spell School color configuration for spells, with optional per-level variants.
+- Includes Spell School color configuration for spells, built-in spell theme presets, and optional per-level variants.
 
 ---
 
@@ -47,10 +49,15 @@ Open:
 
 ![Color configuration screen](https://i.imgur.com/8cUooJt.png)
 
+Choose from multiple built-in rarity theme presets to quickly apply a full visual style across the core rarity tiers, then fine-tune any field manually if you want a custom setup.
+
+![Rarity theme presets preview](https://i.imgur.com/L9RaGcX.png)
+
 ### Spell School Color Configuration
 
 Spells can also change color by **magic school**.  
-You can optionally enable **level variants**, combining school + spell level for more granular styling.
+You can optionally enable **level variants**, combining school + spell level for more granular styling.  
+Spell styling also includes multiple built-in theme presets, so you can switch the whole spell palette quickly before making individual adjustments.
 
 ![Spell school color configuration](https://i.imgur.com/wQKxB4Q.png)
 
@@ -89,6 +96,7 @@ If Tidy is not installed, this button is hidden.
 ## Notes
 
 - Rarity visuals are configurable per rarity tier.
+- Built-in presets are available for both item rarity themes and spell school themes.
 - You can keep your rarity list minimal or fully custom.
 - If Custom DND5E is enabled, rarity data can stay synchronized.
 

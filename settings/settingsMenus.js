@@ -5,6 +5,7 @@ import {
 } from "./settingsLaunchers.js";
 import { ItemRaritySettingsApp } from "../apps/ItemRaritySettingsApp.js";
 import { SpellSchoolSettingsApp } from "../apps/SpellSchoolSettingsApp.js";
+import { DocumentationMenu } from "./DocumentationMenu.js";
 import { SupportMenu } from "./SupportMenu.js";
 import { TidyRaritySyncMenu } from "./TidyRaritySyncMenu.js";
 
@@ -19,6 +20,15 @@ export function registerMenus(MODULE_ID) {
     hint: "Support Shattered Codex and help us keep building modules.",
     icon: "fas fa-heart",
     type: SupportMenu,
+    restricted: true,
+  });
+
+  game.settings.registerMenu(MODULE_ID, "docsMenu", {
+    name: "Documentation",
+    label: "Open documentation",
+    hint: "Open the SC - Item Rarity Colors documentation wiki.",
+    icon: "fas fa-hat-wizard",
+    type: DocumentationMenu,
     restricted: true,
   });
 
@@ -52,6 +62,7 @@ export function registerMenus(MODULE_ID) {
   });
 
   Hooks.on("renderSettingsConfig", (_app, html) => {
+    DocumentationMenu.bindSettingsButton(html);
     SupportMenu.bindSettingsButton(html);
     TidyRaritySyncMenu.bindSettingsRowVisibility(html);
   });

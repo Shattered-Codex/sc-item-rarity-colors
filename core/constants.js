@@ -6,6 +6,8 @@
 export const MODULE_ID = "sc-item-rarity-colors";
 export const SUPPORT_CARD_HIDE_SETTING_KEY = "hideSupportCardUntilNextUpdate";
 export const SUPPORT_CARD_VERSION_SETTING_KEY = "supportCardAcknowledgedVersion";
+export const DOCS_URL = "https://wiki.shattered-codex.com/modules/sc-item-rarity-colors";
+export const PATREON_URL = "https://www.patreon.com/c/shatteredcodex";
 
 // Default colors
 export const DEFAULT_COLORS = {

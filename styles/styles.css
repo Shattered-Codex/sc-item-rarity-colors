@@ -530,12 +530,24 @@
   box-shadow: 0 0 0 1px color-mix(in srgb, #7bffb8 55%, transparent 45%);
 }
 
-.scirc-support-button i {
+.scirc-docs-button i.fa-hat-wizard,
+.scirc-docs-setting-row i.fa-hat-wizard {
+  color: #3cba54;
+}
+
+.scirc-docs-button:hover i.fa-hat-wizard,
+.scirc-docs-button:focus i.fa-hat-wizard {
+  color: #62d276;
+  text-shadow: 0 0 6px rgba(60, 186, 84, 0.35);
+}
+
+.scirc-support-button i.fa-heart,
+.scirc-support-setting-row i.fa-heart {
   color: #ff424d;
 }
 
-.scirc-support-button:hover i,
-.scirc-support-button:focus i {
+.scirc-support-button:hover i.fa-heart,
+.scirc-support-button:focus i.fa-heart {
   color: #ff6a72;
   text-shadow: 0 0 6px rgba(255, 66, 77, 0.35);
 }
