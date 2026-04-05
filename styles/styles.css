@@ -293,7 +293,7 @@
 .sc-item-rarity-colors__preview {
   flex: 1;
   min-height: 0;
-  overflow: hidden;
+  overflow: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -567,8 +567,8 @@
   }
 
   .sc-item-rarity-colors .mini-item-sheet {
-    height: 170px;
-    min-height: 170px;
+    height: auto;
+    min-height: 194px;
     width: min(100%, 640px);
   }
 
@@ -583,8 +583,8 @@
 
 @media (max-height: 860px) {
   .sc-item-rarity-colors .mini-item-sheet {
-    height: 165px;
-    min-height: 165px;
+    height: auto;
+    min-height: 186px;
   }
 
   .sc-item-rarity-colors__preview-panel>.hint {
@@ -664,11 +664,12 @@
 
 /* Mini item sheet styles */
 .sc-item-rarity-colors .mini-item-sheet {
+  --scirc-preview-document-image-size: 96px;
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
-  height: 185px;
-  min-height: 185px;
+  height: auto;
+  min-height: 210px;
   max-height: none;
   justify-content: center;
   width: min(100%, 700px);
@@ -677,6 +678,135 @@
   transform: none;
   transform-origin: center;
   align-self: center;
+}
+
+.sc-item-rarity-colors .mini-item-sheet .sheet-header {
+  display: flex;
+  align-items: stretch;
+  gap: 0.75rem;
+  min-height: var(--scirc-preview-document-image-size);
+}
+
+.sc-item-rarity-colors .mini-item-sheet .sheet-header > .left {
+  flex: 0 0 var(--scirc-preview-document-image-size);
+  display: flex;
+  align-items: flex-start;
+}
+
+.sc-item-rarity-colors .mini-item-sheet .sheet-header > .middle {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  align-items: center;
+}
+
+.sc-item-rarity-colors .mini-item-sheet .sheet-header > .right {
+  flex: 0 0 96px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: end;
+}
+
+.sc-item-rarity-colors .mini-item-sheet .sheet-header .document-image,
+.sc-item-rarity-colors .mini-item-sheet .sheet-header .item-image {
+  display: block;
+  flex: 0 0 var(--scirc-preview-document-image-size);
+  width: var(--scirc-preview-document-image-size);
+  min-width: var(--scirc-preview-document-image-size);
+  max-width: var(--scirc-preview-document-image-size);
+  height: var(--scirc-preview-document-image-size);
+  max-height: var(--scirc-preview-document-image-size);
+  object-fit: cover;
+  object-position: center;
+  margin: 0;
+  border: 2px solid var(--dnd5e-color-gold, #b89b5d);
+  border-radius: 8px;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.35);
+  background: var(--dnd5e-background-alt-1, rgba(255, 255, 255, 0.06));
+}
+
+.sc-item-rarity-colors .mini-item-sheet .sheet-header .identity-info,
+.sc-item-rarity-colors .mini-item-sheet .sheet-header .common-fields {
+  width: 100%;
+}
+
+.sc-item-rarity-colors .mini-item-sheet .sheet-header .document-name,
+.sc-item-rarity-colors .mini-item-sheet .sheet-header input.document-name {
+  width: 100%;
+  min-width: 0;
+}
+
+.sc-item-rarity-colors .mini-item-sheet .sheet-header .subtitles {
+  width: 100%;
+}
+
+.sc-item-rarity-colors .mini-item-sheet--spell .sheet-header {
+  gap: 0.6rem;
+}
+
+.sc-item-rarity-colors .mini-item-sheet--spell .sheet-header > .middle {
+  justify-content: center;
+}
+
+.sc-item-rarity-colors .mini-item-sheet--spell .sheet-header > .right {
+  flex: 0 0 84px;
+  gap: 0.25rem;
+}
+
+.sc-item-rarity-colors .mini-item-sheet--spell .sheet-header .subtitles {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  height: auto;
+}
+
+.sc-item-rarity-colors .mini-item-sheet--spell .sheet-header .subtitles li {
+  width: 100%;
+}
+
+.sc-item-rarity-colors .mini-item-sheet--spell .sheet-header .subtitles li::after,
+.sc-item-rarity-colors .mini-item-sheet--spell .sheet-header .subtitles li::before {
+  display: none;
+  content: none;
+}
+
+.sc-item-rarity-colors .mini-item-sheet--spell .sheet-header .subtitles li.full-width {
+  flex: none;
+  text-align: center;
+  font-size: 0.76rem;
+}
+
+.sc-item-rarity-colors .mini-item-sheet--spell .sheet-header .common-fields {
+  gap: 0.25rem;
+  font-size: 0.72rem;
+}
+
+.sc-item-rarity-colors .mini-item-sheet--spell .sheet-header .common-fields .quantity,
+.sc-item-rarity-colors .mini-item-sheet--spell .sheet-header .common-fields .weight {
+  justify-content: center;
+  width: 100%;
+  min-height: 28px;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.sc-item-rarity-colors .mini-item-sheet--spell .sheet-header .common-fields .value {
+  white-space: nowrap;
+}
+
+.sc-item-rarity-colors .mini-item-sheet--spell .sheet-tabs.tabs {
+  justify-content: space-evenly;
+  gap: 0.2rem;
+}
+
+.sc-item-rarity-colors .mini-item-sheet--spell .sheet-tabs.tabs > a {
+  padding: 0.35rem 0.45rem;
+  font-size: 0.82rem;
 }
 
 .sc-item-rarity-colors__preview .mini-item-sheet {

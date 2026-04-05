@@ -1,6 +1,6 @@
 # SC - Item Rarity Colors
 
-![Foundry VTT 13+](https://img.shields.io/badge/Foundry%20VTT-13%2B-orange?logo=foundry-vtt&logoColor=white)
+![Foundry VTT v13-v14](https://img.shields.io/badge/Foundry%20VTT-v13--v14-orange?logo=foundry-vtt&logoColor=white)
 ![System: dnd5e](https://img.shields.io/badge/System-dnd5e-blue)
 [![libWrapper Recommended](https://img.shields.io/badge/libWrapper-Recommended-8A2BE2)](https://github.com/ruipin/fvtt-lib-wrapper)
 [![Support on Patreon](https://img.shields.io/badge/Patreon-Shattered%20Codex-FF424D?logo=patreon&logoColor=white)](https://www.patreon.com/c/shatteredcodex)
@@ -8,6 +8,8 @@
 ![Downloads](https://img.shields.io/github/downloads/Shattered-Codex/sc-item-rarity-colors/total)
 
 Color item rarities and spells in D&D 5e, with full control for item sheets, actor inventories, and the Foundry item directory.
+
+Compatible with **Foundry VTT v13 and v14**.
 
 ## What This Module Does
 
@@ -32,7 +34,7 @@ Color item rarities and spells in D&D 5e, with full control for item sheets, act
    `https://github.com/Shattered-Codex/sc-item-rarity-colors/releases/latest/download/module.json`
 3. Install and enable **SC - Item Rarity Colors** in your world.
 
-Compatible with **Foundry VTT v13+** and **dnd5e**.
+Compatible with **Foundry VTT v13 and v14** and **dnd5e**.
 
 ---
 
@@ -99,6 +101,7 @@ If Tidy is not installed, this button is hidden.
 - Built-in presets are available for both item rarity themes and spell school themes.
 - You can keep your rarity list minimal or fully custom.
 - If Custom DND5E is enabled, rarity data can stay synchronized.
+- Supports Foundry VTT **v13** and **v14**.
 
 ---
 

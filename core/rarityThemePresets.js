@@ -12,6 +12,15 @@ export const ITEM_RARITY_THEME_RARITIES = Object.freeze([
   RARITY_TIERS.ARTIFACT,
 ]);
 
+const DARK_TEXT_COOL = "#1A2230";
+const DARK_TEXT_WARM = "#2B2116";
+const DARK_TEXT_VIOLET = "#241A33";
+const DARK_TEXT_ROSE = "#2F1C2A";
+const LIGHT_TEXT_COOL = "#F4F8FC";
+const LIGHT_TEXT_WARM = "#FFF7EE";
+const LIGHT_TEXT_VIOLET = "#FAF6FF";
+const LIGHT_TEXT_ROSE = "#FFF6FB";
+
 function deepClone(value) {
   if (typeof foundry?.utils?.deepClone === "function") {
     return foundry.utils.deepClone(value);
@@ -556,6 +565,132 @@ export const ITEM_RARITY_THEME_PRESETS = Object.freeze([
         text: "#fff8fe",
         gradient: true,
         glow: true,
+      }),
+    }
+  ),
+  definePreset(
+    "sunlit-regalia",
+    "Sunlit Regalia",
+    "Brighter rarity gradients with dark lettering tuned for stronger contrast across sheets, inventory, and sidebar rows.",
+    {
+      [RARITY_TIERS.COMMON]: buildThemeRarityValues(RARITY_TIERS.COMMON, {
+        primary: "#8F9BAF",
+        secondary: "#DDE6F3",
+        text: DARK_TEXT_COOL,
+        gradient: true,
+        inventoryTitleColor: LIGHT_TEXT_COOL,
+        inventoryDetailsColor: DARK_TEXT_COOL,
+        foundryTextColor: "#F5F8FC",
+      }),
+      [RARITY_TIERS.UNCOMMON]: buildThemeRarityValues(RARITY_TIERS.UNCOMMON, {
+        primary: "#7EBA93",
+        secondary: "#D9F5E0",
+        text: DARK_TEXT_COOL,
+        gradient: true,
+        inventoryTitleColor: LIGHT_TEXT_COOL,
+        inventoryDetailsColor: DARK_TEXT_COOL,
+        foundryTextColor: "#F4FFF8",
+      }),
+      [RARITY_TIERS.RARE]: buildThemeRarityValues(RARITY_TIERS.RARE, {
+        primary: "#83ABE8",
+        secondary: "#DCEBFF",
+        text: DARK_TEXT_COOL,
+        gradient: true,
+        inventoryTitleColor: LIGHT_TEXT_COOL,
+        inventoryDetailsColor: DARK_TEXT_COOL,
+        foundryTextColor: "#F2F8FF",
+      }),
+      [RARITY_TIERS.VERY_RARE]: buildThemeRarityValues(RARITY_TIERS.VERY_RARE, {
+        primary: "#B295E9",
+        secondary: "#F0E5FF",
+        text: DARK_TEXT_VIOLET,
+        gradient: true,
+        inventoryTitleColor: LIGHT_TEXT_VIOLET,
+        inventoryDetailsColor: DARK_TEXT_VIOLET,
+        foundryTextColor: "#FBF7FF",
+      }),
+      [RARITY_TIERS.LEGENDARY]: buildThemeRarityValues(RARITY_TIERS.LEGENDARY, {
+        primary: "#DFAC67",
+        secondary: "#FFE6B0",
+        text: DARK_TEXT_WARM,
+        gradient: true,
+        glow: true,
+        inventoryTitleColor: LIGHT_TEXT_WARM,
+        inventoryDetailsColor: DARK_TEXT_WARM,
+        foundryTextColor: "#FFF8EE",
+      }),
+      [RARITY_TIERS.ARTIFACT]: buildThemeRarityValues(RARITY_TIERS.ARTIFACT, {
+        primary: "#D98FBD",
+        secondary: "#FFE0F0",
+        text: DARK_TEXT_ROSE,
+        gradient: true,
+        glow: true,
+        inventoryTitleColor: LIGHT_TEXT_ROSE,
+        inventoryDetailsColor: DARK_TEXT_ROSE,
+        foundryTextColor: "#FFF7FC",
+      }),
+    }
+  ),
+  definePreset(
+    "opal-scriptorium",
+    "Opal Scriptorium",
+    "Soft archive-inspired pastels with ink-dark text for a cleaner high-contrast fantasy look.",
+    {
+      [RARITY_TIERS.COMMON]: buildThemeRarityValues(RARITY_TIERS.COMMON, {
+        primary: "#A5ADBA",
+        secondary: "#EEF2F8",
+        text: DARK_TEXT_COOL,
+        gradient: true,
+        inventoryTitleColor: LIGHT_TEXT_COOL,
+        inventoryDetailsColor: DARK_TEXT_COOL,
+        foundryTextColor: "#F5F8FC",
+      }),
+      [RARITY_TIERS.UNCOMMON]: buildThemeRarityValues(RARITY_TIERS.UNCOMMON, {
+        primary: "#88B6A8",
+        secondary: "#E1F6EE",
+        text: DARK_TEXT_COOL,
+        gradient: true,
+        inventoryTitleColor: LIGHT_TEXT_COOL,
+        inventoryDetailsColor: DARK_TEXT_COOL,
+        foundryTextColor: "#F4FFF8",
+      }),
+      [RARITY_TIERS.RARE]: buildThemeRarityValues(RARITY_TIERS.RARE, {
+        primary: "#84B6C9",
+        secondary: "#DEF6FF",
+        text: DARK_TEXT_COOL,
+        gradient: true,
+        inventoryTitleColor: LIGHT_TEXT_COOL,
+        inventoryDetailsColor: DARK_TEXT_COOL,
+        foundryTextColor: "#F2FBFF",
+      }),
+      [RARITY_TIERS.VERY_RARE]: buildThemeRarityValues(RARITY_TIERS.VERY_RARE, {
+        primary: "#B8A0DA",
+        secondary: "#F2E9FF",
+        text: DARK_TEXT_VIOLET,
+        gradient: true,
+        inventoryTitleColor: LIGHT_TEXT_VIOLET,
+        inventoryDetailsColor: DARK_TEXT_VIOLET,
+        foundryTextColor: "#FBF7FF",
+      }),
+      [RARITY_TIERS.LEGENDARY]: buildThemeRarityValues(RARITY_TIERS.LEGENDARY, {
+        primary: "#D5A382",
+        secondary: "#FFE7D3",
+        text: DARK_TEXT_WARM,
+        gradient: true,
+        glow: true,
+        inventoryTitleColor: LIGHT_TEXT_WARM,
+        inventoryDetailsColor: DARK_TEXT_WARM,
+        foundryTextColor: "#FFF8F0",
+      }),
+      [RARITY_TIERS.ARTIFACT]: buildThemeRarityValues(RARITY_TIERS.ARTIFACT, {
+        primary: "#CB96A9",
+        secondary: "#FBE1EC",
+        text: DARK_TEXT_ROSE,
+        gradient: true,
+        glow: true,
+        inventoryTitleColor: LIGHT_TEXT_ROSE,
+        inventoryDetailsColor: DARK_TEXT_ROSE,
+        foundryTextColor: "#FFF8FC",
       }),
     }
   ),
