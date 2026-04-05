@@ -1,5 +1,5 @@
 <div class="sc-item-rarity-colors__preview-label">Spell Sheet</div>
-<div class="mini-item-sheet"
+<div class="mini-item-sheet mini-item-sheet--spell"
      style="
        --primary-color: {{backgroundColor}};
        --text-color: {{textColor}};
@@ -17,7 +17,7 @@
 
     <section class="sheet-header" data-application-part="header">
       <div class="left">
-        <img class="item-image" src="icons/magic/fire/projectile-fireball-smoke-large-orange.webp" alt="Fireball" data-action="editImage">
+        <img class="document-image item-image profile" src="icons/magic/fire/projectile-fireball-smoke-large-orange.webp" alt="Fireball" data-action="editImage">
       </div>
 
       <div class="middle identity-info">
@@ -28,30 +28,18 @@
               <option value="3" selected>3rd-level Spell</option>
             </select>
           </li>
-          <li class="item-rarity">
-            <select name="system.school">
-              <option value="evo" selected>Evocation</option>
-            </select>
+          <li class="full-width">
+            <span>Evocation</span>
           </li>
         </ul>
       </div>
 
-      <div class="right common-fields physical">
+      <div class="right common-fields">
         <div class="quantity">
-          <span class="separator"><i class="fas fa-bolt"></i></span>
-          <input type="text" name="system.activation" value="Action" readonly>
+          <span class="value">Action</span>
         </div>
         <div class="weight">
-          <input type="text" name="system.range" value="150 ft" readonly>
-          <select name="system.target">
-            <option value="radius" selected>20 ft Radius</option>
-          </select>
-        </div>
-        <div class="price">
-          <input type="text" name="system.components" value="V, S, M" readonly>
-          <select name="system.duration">
-            <option value="inst" selected>Instant</option>
-          </select>
+          <span class="value">150 ft</span>
         </div>
       </div>
     </section>
@@ -64,14 +52,10 @@
         <a data-action="tab" data-group="primary" data-tab="details">
           <span>Details</span>
         </a>
-        <a data-action="tab" data-group="primary" data-tab="activities">
-          <span>Activities</span>
-        </a>
         <a data-action="tab" data-group="primary" data-tab="effects">
           <span>Effects</span>
         </a>
       </nav>
-      <hr class="ampersand">
     </div>
   </div>
 </div>

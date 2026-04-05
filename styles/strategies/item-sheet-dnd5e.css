@@ -39,6 +39,18 @@
   color: var(--scirc-item-sheet-text-color) !important;
 }
 
+.scirc-item-sheet-text-dnd5e .sheet-header .right.common-fields.physical :is(
+  input,
+  select,
+  option,
+  .separator,
+  .value,
+  .currency,
+  i
+) {
+  color: var(--scirc-item-sheet-text-color) !important;
+}
+
 .scirc-item-sheet-text-dnd5e .details.tab :is(
   label,
   .hint,
