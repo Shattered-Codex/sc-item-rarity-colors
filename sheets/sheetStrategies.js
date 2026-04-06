@@ -10,6 +10,21 @@ import { debugLog, debugWarn } from "../core/debug.js";
 
 export { BaseSheetStrategy, Dnd5eSheetStrategy, Tidy5eSheetStrategy };
 
+const STRATEGY_REGISTRY = new Map([
+  ["dnd5e", () => new Dnd5eSheetStrategy()],
+  ["tidy5e", () => new Tidy5eSheetStrategy()],
+]);
+
+/**
+ * Register a custom sheet strategy for a given sheet type.
+ * Allows external code to extend without modifying this file.
+ * @param {string} sheetType
+ * @param {() => BaseSheetStrategy} factory
+ */
+export function registerSheetStrategy(sheetType, factory) {
+  STRATEGY_REGISTRY.set(sheetType, factory);
+}
+
 /**
  * Sheet Strategy Factory.
  * Returns the appropriate strategy based on sheet type.
@@ -17,15 +32,11 @@ export { BaseSheetStrategy, Dnd5eSheetStrategy, Tidy5eSheetStrategy };
  * @returns {BaseSheetStrategy}
  */
 export function getSheetStrategy(sheetType) {
-  switch (sheetType) {
-    case "tidy5e":
-      debugLog("Selected sheet strategy", { sheetType: "tidy5e", strategy: "Tidy5eSheetStrategy" });
-      return new Tidy5eSheetStrategy();
-    case "dnd5e":
-      debugLog("Selected sheet strategy", { sheetType: "dnd5e", strategy: "Dnd5eSheetStrategy" });
-      return new Dnd5eSheetStrategy();
-    default:
-      debugWarn("Unknown sheet type; falling back to Dnd5eSheetStrategy", { sheetType: sheetType ?? null });
-      return new Dnd5eSheetStrategy();
+  const factory = STRATEGY_REGISTRY.get(sheetType);
+  if (factory) {
+    debugLog("Selected sheet strategy", { sheetType, strategy: `${sheetType}SheetStrategy` });
+    return factory();
   }
+  debugWarn("Unknown sheet type; falling back to Dnd5eSheetStrategy", { sheetType: sheetType ?? null });
+  return new Dnd5eSheetStrategy();
 }

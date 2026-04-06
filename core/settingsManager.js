@@ -7,6 +7,12 @@ import { MODULE_ID } from "./constants.js";
 import { raritySupportsGradient, raritySupportsGlow, raritySupportsBorderGradient, raritySupportsBorderGlow } from "./rarityConfig.js";
 import { normalizeRarityKey } from "./rarityListConfig.js";
 
+const _raritySettingsCache = new Map();
+
+export function invalidateRaritySettingsCache() {
+  _raritySettingsCache.clear();
+}
+
 /**
  * Check if a setting exists in the game settings
  * @param {string} moduleId - Module ID
@@ -68,6 +74,11 @@ export function getRaritySetting(moduleId, rarity, settingKey, defaultValue = nu
  * @returns {object} Complete settings object
  */
 export function buildRaritySettings(rarity) {
+  const cacheKey = normalizeRarityKey(rarity) ?? String(rarity ?? "");
+  if (_raritySettingsCache.has(cacheKey)) {
+    return _raritySettingsCache.get(cacheKey);
+  }
+
   const settings = {
     // Item Sheet Background
     enableItemColor: getRaritySetting(MODULE_ID, rarity, "enable-item-color", false),
@@ -136,5 +147,6 @@ export function buildRaritySettings(rarity) {
     settings.enableInventoryBorderGlow = false;
   }
 
+  _raritySettingsCache.set(cacheKey, settings);
   return settings;
 }

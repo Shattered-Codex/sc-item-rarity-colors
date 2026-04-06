@@ -84,12 +84,26 @@ function applyStylesToActorInventory(actorApp, html, moduleId) {
 }
 
 /**
+ * Collect all open application instances across both legacy (ui.windows)
+ * and ApplicationV2 (foundry.applications.instances, Foundry v13+) registries.
+ */
+function getAllOpenApps() {
+  const apps = new Set(Object.values(ui.windows));
+  if (foundry?.applications?.instances) {
+    for (const app of foundry.applications.instances.values()) {
+      apps.add(app);
+    }
+  }
+  return apps;
+}
+
+/**
  * Reapply rarity effects to all open actor sheets
  * Triggered when settings are changed
  */
 function refreshAllActorSheets(moduleId) {
   let refreshedCount = 0;
-  for (const app of Object.values(ui.windows)) {
+  for (const app of getAllOpenApps()) {
     if (app.document?.documentName === "Actor") {
       applyStylesToActorInventory(app, app.element, moduleId);
       refreshedCount += 1;

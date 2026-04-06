@@ -124,12 +124,26 @@ export function applyItemRarityEffects(moduleId) {
   }
 
   /**
+   * Collect all open application instances across both legacy (ui.windows)
+   * and ApplicationV2 (foundry.applications.instances, Foundry v13+) registries.
+   */
+  function getAllOpenApps() {
+    const apps = new Set(Object.values(ui.windows));
+    if (foundry?.applications?.instances) {
+      for (const app of foundry.applications.instances.values()) {
+        apps.add(app);
+      }
+    }
+    return apps;
+  }
+
+  /**
    * Refresh all open item sheets to reapply rarity styles.
    * Useful after settings change or system updates.
    */
   function refreshAllItemSheets() {
     let refreshedCount = 0;
-    for (const app of Object.values(ui.windows)) {
+    for (const app of getAllOpenApps()) {
       if (app.document?.documentName === "Item") {
         applyStylesToSheet(app, app.element);
         refreshedCount += 1;
@@ -161,7 +175,7 @@ export function applyItemRarityEffects(moduleId) {
 
   function refreshOpenSheetsForItemId(itemId) {
     let refreshedCount = 0;
-    for (const app of Object.values(ui.windows)) {
+    for (const app of getAllOpenApps()) {
       if (app.document?.documentName !== "Item") continue;
       if (app.document.id !== itemId) continue;
       applyStylesToSheet(app, app.element);

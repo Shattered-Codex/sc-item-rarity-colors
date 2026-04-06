@@ -3,10 +3,12 @@ import { debugLog } from "../core/debug.js";
 import { ensureRuntimeRarityStyles } from "../core/runtimeRarityStyles.js";
 import {
   applyMergedRarityConfigToDnd5e,
+  clearNormalizeRarityKeyCache,
   initializeSystemRarityBaseline,
   RARITY_LIST_ENABLED_SETTING_KEY,
   RARITY_LIST_SETTING_KEY,
 } from "../core/rarityListConfig.js";
+import { invalidateRaritySettingsCache } from "../core/settingsManager.js";
 import { getSettingKeyFromHookPayload, isModuleSettingChange } from "../core/settingChangeHelper.js";
 import { isSettingsTransactionActive } from "../core/settingsTransaction.js";
 import { registerMenus } from "../settings/settingsMenus.js";
@@ -65,24 +67,31 @@ export function onReady() {
 export function onSettingChange(moduleOrSetting, maybeKey) {
   if (!isModuleSettingChange(moduleOrSetting, maybeKey, MODULE_ID)) return;
   if (isSettingsTransactionActive(MODULE_ID)) return;
+
+  invalidateRaritySettingsCache();
   ensureRuntimeRarityStyles(MODULE_ID);
 
   const fullSettingKey = getSettingKeyFromHookPayload(moduleOrSetting, maybeKey);
-  if (fullSettingKey !== `${MODULE_ID}.${RARITY_LIST_SETTING_KEY}`
-    && fullSettingKey !== `${MODULE_ID}.${RARITY_LIST_ENABLED_SETTING_KEY}`) return;
+  const isRarityListChange = fullSettingKey === `${MODULE_ID}.${RARITY_LIST_SETTING_KEY}`
+    || fullSettingKey === `${MODULE_ID}.${RARITY_LIST_ENABLED_SETTING_KEY}`;
+  if (!isRarityListChange) return;
 
+  clearNormalizeRarityKeyCache();
   debugLog("Lifecycle: setting change detected", { fullSettingKey });
   applyMergedRarityConfigToDnd5e(MODULE_ID);
 }
 
 export function onSettingsTransactionComplete(context = {}) {
   debugLog("Lifecycle: settings transaction complete", context);
+  invalidateRaritySettingsCache();
   applyMergedRarityConfigToDnd5e(MODULE_ID);
   ensureRuntimeRarityStyles(MODULE_ID);
 }
 
 export function onCustomDnd5eRarityConfig() {
   debugLog("Lifecycle: customDnd5e rarity config hook fired");
+  clearNormalizeRarityKeyCache();
+  invalidateRaritySettingsCache();
   applyMergedRarityConfigToDnd5e(MODULE_ID);
   ensureRuntimeRarityStyles(MODULE_ID);
 }
