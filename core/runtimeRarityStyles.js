@@ -8,6 +8,12 @@ import { ItemSheetRuntimeStyleStrategy } from "./runtimeStyleStrategies/ItemShee
 
 const STYLE_ELEMENT_ID = "scirc-runtime-rarity-styles";
 const RARITY_CLASS_PREFIX = "scirc-rarity-";
+let _cachedCssText = null;
+
+export function invalidateRuntimeStylesCache() {
+  _cachedCssText = null;
+}
+
 const runtimeStrategies = [
   new ItemSheetRuntimeStyleStrategy(),
   new ActorInventoryRuntimeStyleStrategy(),
@@ -107,6 +113,8 @@ function buildRuntimeStyleText(moduleId = MODULE_ID) {
 export function ensureRuntimeRarityStyles(moduleId = MODULE_ID) {
   if (!document?.head) return;
   const cssText = buildRuntimeStyleText(moduleId);
+  if (cssText === _cachedCssText) return;
+  _cachedCssText = cssText;
   let styleEl = document.getElementById(STYLE_ELEMENT_ID);
   if (!styleEl) {
     styleEl = document.createElement("style");

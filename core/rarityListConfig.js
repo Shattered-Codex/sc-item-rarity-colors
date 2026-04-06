@@ -5,6 +5,12 @@ export const RARITY_LIST_SETTING_KEY = "rarity-list-config";
 export const RARITY_LIST_ENABLED_SETTING_KEY = "rarity-list-enabled";
 let BASE_SYSTEM_RARITY_SOURCE = null;
 
+const _normalizeKeyCache = new Map();
+
+export function clearNormalizeRarityKeyCache() {
+  _normalizeKeyCache.clear();
+}
+
 function deepClone(value) {
   if (typeof foundry?.utils?.deepClone === "function") {
     return foundry.utils.deepClone(value);
@@ -75,19 +81,32 @@ export function normalizeRarityKey(rawKey) {
   const trimmed = String(rawKey).trim();
   if (!trimmed) return null;
 
+  if (_normalizeKeyCache.has(trimmed)) return _normalizeKeyCache.get(trimmed);
+
   const lookupKey = toRarityLookupKey(trimmed);
-  if (!lookupKey) return null;
+  if (!lookupKey) {
+    _normalizeKeyCache.set(trimmed, null);
+    return null;
+  }
 
   const builtin = BUILTIN_RARITY_ALIASES[lookupKey];
-  if (builtin) return builtin;
+  if (builtin) {
+    _normalizeKeyCache.set(trimmed, builtin);
+    return builtin;
+  }
 
   const knownKeys = getKnownRarityKeys();
   for (const knownKey of knownKeys) {
     if (toRarityLookupKey(knownKey) === lookupKey) {
-      return String(knownKey).trim();
+      const result = String(knownKey).trim();
+      if (_normalizeKeyCache.size > 200) _normalizeKeyCache.clear();
+      _normalizeKeyCache.set(trimmed, result);
+      return result;
     }
   }
 
+  if (_normalizeKeyCache.size > 200) _normalizeKeyCache.clear();
+  _normalizeKeyCache.set(trimmed, trimmed);
   return trimmed;
 }
 
