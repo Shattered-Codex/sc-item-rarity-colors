@@ -116,3 +116,16 @@
 .scirc-managed-item-row.scirc-inv-details-color-enabled .item-controls .item-control[aria-pressed="true"] {
   color: var(--scirc-inv-details-color, var(--item-control-active-color, var(--item-control-interactive-color, inherit))) !important;
 }
+
+/* Tidy 5e 13+ rows: the name cell and the column cells use their own markup. */
+.scirc-inv-title-color-enabled :is(
+  .item-name .cell-name,
+  .item-name .cell-context
+) {
+  color: var(--scirc-inv-title-color, inherit) !important;
+}
+
+.scirc-inv-details-color-enabled .tidy-table-cell:not(.primary),
+.scirc-inv-details-color-enabled .tidy-table-cell:not(.primary) :where(span, div, a, i, input, .color-text-lighter) {
+  color: var(--scirc-inv-details-color, inherit) !important;
+}

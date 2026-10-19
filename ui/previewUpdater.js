@@ -20,13 +20,18 @@ import { applyRarityClass, clearRarityClasses } from "../core/runtimeRarityStyle
 import { raritySupportsBorderGradient, raritySupportsBorderGlow } from "../core/rarityConfig.js";
 import { DEFAULT_COLORS, DEFAULT_GLOW_INTENSITY } from "../core/constants.js";
 import { scheduleOnNextAnimationFrame } from "../core/refreshScheduler.js";
+import { Tidy5eSheetStrategy } from "../sheets/strategies/Tidy5eSheetStrategy.js";
+
+const tidyStrategy = new Tidy5eSheetStrategy();
 
 /**
  * Update the mini item sheet preview
  * @param {HTMLElement} formElement - The form element
- * @param {string} rarity - Rarity tier
+ * @param {string} rarity - Rarity tier, or the spell profile key
+ * @param {object} [options]
+ * @param {boolean} [options.isSpell=false] - Spell profiles skip rarity capability checks, as at runtime.
  */
-export function updateMiniSheetPreview(formElement, rarity) {
+export function updateMiniSheetPreview(formElement, rarity, options = {}) {
   const $form = $(formElement);
   const $miniSheet = $form.find(".mini-item-sheet");
 
@@ -39,6 +44,13 @@ export function updateMiniSheetPreview(formElement, rarity) {
   const gradientEnabled = $form.find(`input[type="checkbox"][name="${rarity}-gradient-option"]`).is(":checked");
   const gradientColor = $form.find(`input[type="color"][name="${rarity}-secondary-item-color"]`).val();
   const glowEnabled = $form.find(`input[type="checkbox"][name="${rarity}-glow-option"]`).is(":checked");
+  const tidyBackgroundArea = $form.find(`select[name="${rarity}-tidy-background-area"]`).val() || "content";
+  const enableGoldAccentColor = $form.find(`input[type="checkbox"][name="${rarity}-enable-gold-accent-color"]`).is(":checked");
+  const goldAccentColor = $form.find(`input[type="color"][name="${rarity}-gold-accent-color"]`).val();
+  const enableTableHeaderColor = $form.find(`input[type="checkbox"][name="${rarity}-enable-table-header-color"]`).is(":checked");
+  const tableHeaderColor = $form.find(`input[type="color"][name="${rarity}-table-header-color"]`).val();
+  const enableTableHeaderTextColor = $form.find(`input[type="checkbox"][name="${rarity}-enable-table-header-text-color"]`).is(":checked");
+  const tableHeaderTextColor = $form.find(`input[type="color"][name="${rarity}-table-header-text-color"]`).val();
 
   const settings = {
     enableItemColor,
@@ -48,15 +60,70 @@ export function updateMiniSheetPreview(formElement, rarity) {
     gradientEnabled,
     gradientColor: gradientColor || DEFAULT_COLORS.BACKGROUND_FALLBACK,
     glowEnabled,
+    tidyBackgroundArea,
+    enableGoldAccentColor,
+    goldAccentColor,
+    enableTableHeaderColor,
+    tableHeaderColor,
+    enableTableHeaderTextColor,
+    tableHeaderTextColor,
   };
 
-  const $sheetContent = $miniSheet.find(".application.sheet.item");
-  if ($sheetContent.length) {
-    applyRarityStyles($sheetContent, settings, { rarity, preview: true });
-  }
+  // One call per sheet: the D&D 5e and Tidy previews need different text
+  // color strategies, which are detected from the element they are given.
+  $miniSheet.find(".application.sheet.item").each((_, sheet) => {
+    applyRarityStyles($(sheet), settings, { rarity, preview: true });
+  });
 
   updateInventoryPreview($form, rarity, settings);
+  updateTidyInventoryPreview($form, rarity, settings, options);
   updateFoundryInterfacePreview($form, rarity, settings);
+}
+
+/**
+ * Update the Tidy 5e inventory row through the same strategy the actor sheet
+ * uses at runtime, so the preview cannot drift from the real result.
+ */
+function updateTidyInventoryPreview($form, rarity, itemSheetSettings, options = {}) {
+  const $rows = $form.find(".tidy-inventory-preview .tidy-table-row-container");
+  if (!$rows.length) return;
+
+  const isChecked = (key) => $form.find(`input[type="checkbox"][name="${rarity}-${key}"]`).is(":checked");
+  const colorOf = (key, fallback) => $form.find(`input[type="color"][name="${rarity}-${key}"]`).val() || fallback;
+
+  const settings = {
+    ...itemSheetSettings,
+    enableInventoryGradientEffects: isChecked("enable-inventory-gradient-effects"),
+    enableInventoryBorders: isChecked("enable-inventory-borders"),
+    enableInventoryBorderColor: isChecked("enable-inventory-border-color"),
+    inventoryBorderColor: colorOf("inventory-border-color", DEFAULT_COLORS.BACKGROUND_FALLBACK),
+    inventoryBorderSecondaryColor: colorOf("inventory-border-secondary-color", undefined),
+    enableInventoryBorderGlow: isChecked("enable-inventory-border-glow"),
+    enableInventoryTitleColor: isChecked("enable-inventory-title-color"),
+    inventoryTitleColor: colorOf("inventory-title-color", DEFAULT_COLORS.TEXT_DEFAULT),
+    enableInventoryDetailsColor: isChecked("enable-inventory-details-color"),
+    inventoryDetailsColor: colorOf("inventory-details-color", DEFAULT_COLORS.TEXT_DEFAULT),
+  };
+
+  const isSpell = options.isSpell === true;
+  $rows.each((_, row) => {
+    const $row = $(row);
+    $row.addClass("scirc-managed-item-row");
+    if (isSpell) clearRarityClasses($row);
+    else applyRarityClass($row, rarity);
+
+    tidyStrategy._applyResolvedStyles(
+      $row,
+      tidyStrategy.getGradientElement($row),
+      tidyStrategy.getBorderElement($row),
+      tidyStrategy.getTitleSelectors(),
+      tidyStrategy.getDetailsSelectors(),
+      settings,
+      isSpell
+        ? { preview: true, useRarityCapabilities: false }
+        : { rarity, preview: true, useRarityCapabilities: true }
+    );
+  });
 }
 
 /**

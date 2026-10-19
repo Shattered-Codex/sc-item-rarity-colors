@@ -1,6 +1,6 @@
 import { MODULE_ID } from "./constants.js";
 import { normalizeHexColor } from "./colorUtils.js";
-import { getRarityFieldDefinitions } from "./rarityFieldSchema.js";
+import { getRarityFieldDefinitions, normalizeSelectFieldValue } from "./rarityFieldSchema.js";
 
 export const SPELL_SCHOOL_STYLES_SETTING_KEY = "spell-school-styles";
 
@@ -204,6 +204,11 @@ export function normalizeSpellStyleFieldValues(rawFields = {}, fallbackValues = 
       continue;
     }
 
+    if (field.type === "select") {
+      normalized[field.key] = normalizeSelectFieldValue(field, rawValue ?? fallback[field.key]);
+      continue;
+    }
+
     if (field.type === "color") {
       const normalizedColor = normalizeHexColor(rawValue, {
         allowShort: true,
@@ -233,6 +238,14 @@ export function buildSpellStyleSettingsFromFields(fields = {}) {
     gradientColor: values["secondary-item-color"],
 
     glowEnabled: values["glow-option"],
+    tidyBackgroundArea: values["tidy-background-area"],
+
+    enableGoldAccentColor: values["enable-gold-accent-color"],
+    goldAccentColor: values["gold-accent-color"],
+    enableTableHeaderColor: values["enable-table-header-color"],
+    tableHeaderColor: values["table-header-color"],
+    enableTableHeaderTextColor: values["enable-table-header-text-color"],
+    tableHeaderTextColor: values["table-header-text-color"],
 
     enableInventoryGradientEffects: values["enable-inventory-gradient-effects"],
     enableInventoryBorders: values["enable-inventory-borders"],
@@ -258,6 +271,9 @@ export function isSpellStyleSettingsActive(settings = {}) {
   return Boolean(
     settings.enableItemColor
       || settings.enableTextColor
+      || settings.enableGoldAccentColor
+      || settings.enableTableHeaderColor
+      || settings.enableTableHeaderTextColor
       || settings.enableInventoryGradientEffects
       || settings.enableInventoryBorders
       || settings.enableInventoryTitleColor

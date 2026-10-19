@@ -7,10 +7,10 @@ import {
   humanizeRarityLabel,
   normalizeRarityKey,
 } from "../core/rarityListConfig.js";
-import { DEBUG_LOGS_SETTING_KEY } from "../core/debug.js";
 import { buildRarityFieldSettingName, getRarityFieldDefinitions } from "../core/rarityFieldSchema.js";
 import { getDefaultSpellSchoolStylesSetting, SPELL_SCHOOL_STYLES_SETTING_KEY } from "../core/spellSchoolConfig.js";
-import { SUPPORT_CARD_HIDE_SETTING_KEY, SUPPORT_CARD_VERSION_SETTING_KEY } from "../core/constants.js";
+import { SUPPORT_CARD_VERSION_SETTING_KEY } from "../core/constants.js";
+import { ModuleSettingsCatalog } from "./ModuleSettingsCatalog.js";
 
 // Register settings for item rarity colors.
 function registerColorSetting(moduleId, key, name, defaultValue) {
@@ -48,40 +48,23 @@ function registerObjectSetting(moduleId, key, name, defaultValue) {
   });
 }
 
-function registerDebugSetting(moduleId) {
-  const key = DEBUG_LOGS_SETTING_KEY;
-  if (game.settings.settings.has(`${moduleId}.${key}`)) return;
-
-  game.settings.register(moduleId, key, {
-    name: "Enable Debug Logs",
-    hint: "Log rarity color flow details in the browser console for troubleshooting.",
-    scope: "client",
-    config: true,
-    type: Boolean,
-    default: false,
-  });
+// Options shown in the module settings window are registered from its catalog,
+// so the registration and the window cannot drift apart.
+function registerCatalogSettings(moduleId) {
+  for (const field of ModuleSettingsCatalog.fields()) {
+    if (game.settings.settings.has(`${moduleId}.${field.key}`)) continue;
+    game.settings.register(moduleId, field.key, ModuleSettingsCatalog.registration(field));
+  }
 }
 
-function registerSupportCardSettings(moduleId) {
-  if (!game.settings.settings.has(`${moduleId}.${SUPPORT_CARD_HIDE_SETTING_KEY}`)) {
-    game.settings.register(moduleId, SUPPORT_CARD_HIDE_SETTING_KEY, {
-      name: "Hide automatic support message until next update",
-      hint: "After the support card appears once for the current version, this option is checked automatically. Uncheck it if you want the card to appear whenever the world loads.",
-      scope: "client",
-      config: true,
-      type: Boolean,
-      default: false,
-    });
-  }
-
-  if (!game.settings.settings.has(`${moduleId}.${SUPPORT_CARD_VERSION_SETTING_KEY}`)) {
-    game.settings.register(moduleId, SUPPORT_CARD_VERSION_SETTING_KEY, {
-      scope: "client",
-      config: false,
-      type: String,
-      default: "",
-    });
-  }
+function registerSupportCardVersionSetting(moduleId) {
+  if (game.settings.settings.has(`${moduleId}.${SUPPORT_CARD_VERSION_SETTING_KEY}`)) return;
+  game.settings.register(moduleId, SUPPORT_CARD_VERSION_SETTING_KEY, {
+    scope: "client",
+    config: false,
+    type: String,
+    default: "",
+  });
 }
 
 function registerRaritySettings(moduleId, rarityKey, rarityLabel) {
@@ -101,6 +84,12 @@ function registerRaritySettings(moduleId, rarityKey, rarityLabel) {
 
     if (field.type === "color") {
       registerColorSetting(moduleId, settingKey, settingName, String(field.defaultValue || "#000000"));
+      continue;
+    }
+
+    if (field.type === "select") {
+      // Stored as a plain string, like colors.
+      registerColorSetting(moduleId, settingKey, settingName, String(field.defaultValue ?? ""));
       continue;
     }
   }
@@ -147,6 +136,6 @@ export function registerModuleSettings(MODULE_ID) {
     getDefaultSpellSchoolStylesSetting()
   );
 
-  registerDebugSetting(MODULE_ID);
-  registerSupportCardSettings(MODULE_ID);
+  registerCatalogSettings(MODULE_ID);
+  registerSupportCardVersionSetting(MODULE_ID);
 }

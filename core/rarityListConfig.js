@@ -235,6 +235,30 @@ function mergeEntries(...entryLists) {
   return Array.from(merged.values());
 }
 
+/**
+ * Normalizes edited rarity rows: invalid keys are dropped, later duplicates
+ * lose to the first occurrence, and an empty label falls back to the key.
+ */
+export function sanitizeRarityEntries(entries = []) {
+  const sanitized = [];
+  const seen = new Set();
+
+  for (const entry of entries) {
+    const key = normalizeRarityKey(entry?.key);
+    if (!key || seen.has(key)) continue;
+
+    seen.add(key);
+    sanitized.push({
+      key,
+      label: String(entry?.label || "").trim() || humanizeRarityLabel(key),
+      visible: entry?.visible !== false,
+      system: entry?.system === true,
+    });
+  }
+
+  return sanitized;
+}
+
 export function getMergedRarityEntries(moduleId = MODULE_ID, { includeHidden = false } = {}) {
   const moduleEntries = isModuleRarityListEnabled(moduleId) ? getModuleRarityEntries(moduleId) : [];
   const customEntries = getCustomDnd5eRarityEntries();

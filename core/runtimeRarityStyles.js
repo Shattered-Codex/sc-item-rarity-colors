@@ -77,6 +77,9 @@ function buildRuntimeStyleText(moduleId = MODULE_ID) {
     const sheetPrimary = normalizeColor(settings.backgroundColor, "#000000");
     const sheetSecondary = normalizeColor(settings.gradientColor, "#ffffff");
     const sheetText = normalizeColor(settings.itemSheetTextColor, "#000000");
+    const sheetGold = normalizeColor(settings.goldAccentColor, "#9f9275");
+    const sheetTableHeader = normalizeColor(settings.tableHeaderColor, "#491d25");
+    const sheetTableHeaderText = normalizeColor(settings.tableHeaderTextColor, "#ffffff");
     const dirText = normalizeColor(settings.foundryInterfaceTextColor, "#000000");
     const inventoryTitle = normalizeColor(settings.inventoryTitleColor, "#000000");
     const inventoryDetails = normalizeColor(settings.inventoryDetailsColor, "#000000");
@@ -87,6 +90,9 @@ function buildRuntimeStyleText(moduleId = MODULE_ID) {
       sheetPrimary,
       sheetSecondary,
       sheetText,
+      sheetGold,
+      sheetTableHeader,
+      sheetTableHeaderText,
       directoryText: dirText,
       inventoryTitle,
       inventoryDetails,

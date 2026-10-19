@@ -4,6 +4,11 @@
   border-radius: 8px;
   animation: scircGlowAnimation 3s infinite alternate;
   box-shadow: 0 0 15px var(--glow-primary, #ffffff);
+}
+
+/* The glow gradient is the sheet background; in Tidy sidebar mode the sheet
+   keeps Tidy's own background and only the frame glows. */
+.application.sheet.item.scirc-glow:not(.scirc-tidy-sidebar-bg) {
   background: linear-gradient(to left, var(--glow-primary, #ffffff), var(--glow-secondary, #ffffff));
   background-size: 200% 100%;
 }

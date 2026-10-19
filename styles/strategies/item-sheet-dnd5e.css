@@ -70,3 +70,55 @@
 ) {
   color: #000000 !important;
 }
+
+/* Gold accent (per rarity / spell school). The system derives several
+   variables from --dnd5e-color-gold where it declares them, so those are
+   redeclared here to follow the new color too. */
+.dnd5e2.sheet.item.scirc-item-sheet-gold-enabled {
+  --dnd5e-color-gold: var(--scirc-item-sheet-gold);
+  --dnd5e-ability-color: var(--scirc-item-sheet-gold);
+  --dnd5e-block-border-color: var(--scirc-item-sheet-gold);
+  --dnd5e-border-gold: 1px solid var(--scirc-item-sheet-gold);
+  --dnd5e-border-separator-warning: 1px dotted var(--scirc-item-sheet-gold);
+  --dnd5e-color-scrollbar: var(--scirc-item-sheet-gold);
+  --dnd5e-color-table-border: var(--scirc-item-sheet-gold);
+  --dnd5e-slot-border: 1px solid var(--scirc-item-sheet-gold);
+}
+
+/* The ampersand divider is a gold SVG image. Its two lines move into the
+   hr's own background so ::before can redraw the glyph as a mask filled
+   with the accent color. */
+.dnd5e2.sheet.item.scirc-item-sheet-gold-enabled hr.ampersand {
+  background:
+    linear-gradient(to left, var(--dnd5e-color-gold), transparent) left center / calc(50% - 14px) 1px no-repeat,
+    linear-gradient(to right, var(--dnd5e-color-gold), transparent) right center / calc(50% - 14px) 1px no-repeat;
+}
+
+.dnd5e2.sheet.item.scirc-item-sheet-gold-enabled hr.ampersand::before {
+  inset: 0;
+  background: var(--dnd5e-color-gold);
+  -webkit-mask: url("../../../../systems/dnd5e/ui/official/ampersand-gold.svg") no-repeat center / contain;
+  mask: url("../../../../systems/dnd5e/ui/official/ampersand-gold.svg") no-repeat center / contain;
+}
+
+.dnd5e2.sheet.item.scirc-item-sheet-gold-enabled hr.ampersand::after {
+  display: none;
+}
+
+/* Table header color (per rarity / spell school): the header bars of the
+   item sheet lists (Activities, Effects, Advancement...), drawn with the
+   system's gradient shape (#491d25 to #311b1f is the default). Only list
+   headers: the collapsible description cards share `.card .header` but are
+   not tables. Disabled headers keep their grey. */
+.dnd5e2.sheet.item.scirc-item-sheet-table-header-enabled .items-section > .items-header.header:not(.disabled) {
+  background: linear-gradient(to right,
+      var(--scirc-item-sheet-table-header),
+      color-mix(in srgb, var(--scirc-item-sheet-table-header) 67%, black 33%));
+}
+
+/* Table header text color (per rarity / spell school): the header title,
+   column labels, and icons. */
+.dnd5e2.sheet.item.scirc-item-sheet-table-header-text-enabled .items-section > .items-header.header,
+.dnd5e2.sheet.item.scirc-item-sheet-table-header-text-enabled .items-section > .items-header.header :is(h3, .item-header, .item-name, i) {
+  color: var(--scirc-item-sheet-table-header-text) !important;
+}

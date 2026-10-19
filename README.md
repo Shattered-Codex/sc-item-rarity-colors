@@ -43,6 +43,8 @@ Compatible with **Foundry VTT v13 and v14** and **dnd5e**.
 Open:
 **Configure Settings → Module Settings → SC - Item Rarity Colors**
 
+The module shows three buttons there — **Open settings**, **Configure items**, and **Configure spells** — followed by links to the wiki, Patreon, and Discord.
+
 ### General Module Settings
 
 ![General module settings](https://i.imgur.com/n4cvLjm.png)
@@ -63,11 +65,16 @@ Spell styling also includes multiple built-in theme presets, so you can switch t
 
 ![Spell school color configuration](https://i.imgur.com/wQKxB4Q.png)
 
-When **Tidy 5e Sheet** is installed and active, an extra button is shown to transfer rarity colors to Tidy:
+### Module Settings Window
+
+**Open settings** groups every other option in one window with tabs:
+
+- **Rarity list** — add, rename, reorder (drag), or hide rarities directly in the window.
+- **Integrations** — transfers rarity colors to **Tidy 5e Sheet** (available while Tidy is active).
+- **Chat messages** — the automatic support message toggle (per browser).
+- **Diagnostics** — debug logs (per browser).
 
 ![Tidy sync button](https://i.imgur.com/XbLseCg.png)
-
-If Tidy is not installed, this button is hidden.
 
 ### Rarity List Configuration
 

@@ -6,13 +6,38 @@ import { applyRarityClass, clearRarityClasses } from "../core/runtimeRarityStyle
 const SHEET_GLOW_CLASS = "scirc-glow";
 const SHEET_BG_CLASS = "scirc-item-sheet-bg-enabled";
 const SHEET_BG_GRADIENT_CLASS = "scirc-item-sheet-bg-gradient-enabled";
+// Tidy 5e only: the background colors also (or only) paint the sidebar.
+const SHEET_TIDY_SIDEBAR_BG_CLASS = "scirc-tidy-sidebar-bg";
 const SHEET_TEXT_COLOR_VAR = "--scirc-item-sheet-text-color";
+// Optional single-color accents: each toggles a class whose CSS re-points the
+// system/Tidy variables at the accent variable (see item sheet strategy CSS).
+const SHEET_ACCENTS = Object.freeze([
+  Object.freeze({
+    enabledKey: "enableGoldAccentColor",
+    colorKey: "goldAccentColor",
+    className: "scirc-item-sheet-gold-enabled",
+    variable: "--scirc-item-sheet-gold",
+  }),
+  Object.freeze({
+    enabledKey: "enableTableHeaderColor",
+    colorKey: "tableHeaderColor",
+    className: "scirc-item-sheet-table-header-enabled",
+    variable: "--scirc-item-sheet-table-header",
+  }),
+  Object.freeze({
+    enabledKey: "enableTableHeaderTextColor",
+    colorKey: "tableHeaderTextColor",
+    className: "scirc-item-sheet-table-header-text-enabled",
+    variable: "--scirc-item-sheet-table-header-text",
+  }),
+]);
 const SHEET_BG_PRIMARY_VAR = "--scirc-item-sheet-bg-primary";
 const SHEET_BG_SECONDARY_VAR = "--scirc-item-sheet-bg-secondary";
 const BORDER_GLOW_CLASS_REGEX = /(^|\s)(?:scirc-)?glow-fade-border-\S+/g;
 
 function clearSheetBackgroundState($element) {
   $element.removeClass(SHEET_BG_CLASS);
+  $element.removeClass(SHEET_TIDY_SIDEBAR_BG_CLASS);
   $element.removeClass(SHEET_BG_GRADIENT_CLASS);
   $element.css(SHEET_BG_PRIMARY_VAR, "");
   $element.css(SHEET_BG_SECONDARY_VAR, "");
@@ -66,7 +91,11 @@ export function applyRarityStyles(element, settings, options = {}) {
 
   // Background & Gradient
   if (settings.enableItemColor !== false) {
-    $element.addClass(SHEET_BG_CLASS);
+    // Tidy 5e sheets can put the color on the content (default), the sidebar,
+    // or both; every other sheet colors the whole window as before.
+    const tidyArea = $element.hasClass("tidy5e-sheet") ? settings.tidyBackgroundArea : null;
+    $element.toggleClass(SHEET_BG_CLASS, tidyArea !== "sidebar");
+    $element.toggleClass(SHEET_TIDY_SIDEBAR_BG_CLASS, tidyArea === "sidebar" || tidyArea === "sheet");
     if (preview) {
       $element.css(SHEET_BG_PRIMARY_VAR, settings.backgroundColor || "#ffffff");
     } else {
@@ -109,6 +138,13 @@ export function applyRarityStyles(element, settings, options = {}) {
     textStyleStrategy?.clearTextColor($element);
   }
 
+  // Accents (gold details, table headers)
+  for (const accent of SHEET_ACCENTS) {
+    const color = settings[accent.enabledKey] ? settings[accent.colorKey] : null;
+    $element.toggleClass(accent.className, Boolean(color));
+    $element.css(accent.variable, color && preview ? color : "");
+  }
+
   // Glow
   if (settings.enableItemColor !== false && settings.glowEnabled) {
     $element.addClass(SHEET_GLOW_CLASS);
@@ -148,6 +184,11 @@ export function removeRarityStyles(element, options = {}) {
 
   const textStyleStrategy = options.textStyleStrategy || getItemSheetTextStyleStrategyForElement($element);
   textStyleStrategy?.clearTextColor($element);
+
+  for (const accent of SHEET_ACCENTS) {
+    $element.removeClass(accent.className);
+    $element.css(accent.variable, "");
+  }
 
   // Remove glow class and related CSS variables
   $element.removeClass(SHEET_GLOW_CLASS);

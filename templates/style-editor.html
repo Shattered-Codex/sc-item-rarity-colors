@@ -1,0 +1,172 @@
+{{#*inline "colorControl"}}
+  <span class="sc-item-rarity-colors__color-control" data-color-control="{{field.name}}">
+    <input
+      type="text"
+      class="scirc-input sc-item-rarity-colors__hex-input"
+      data-hex-for="{{field.name}}"
+      value="{{field.value}}"
+      spellcheck="false"
+      autocomplete="off"
+      maxlength="7"
+      aria-label="{{field.label}} hex value"
+    />
+    <input
+      type="color"
+      id="{{field.name}}"
+      name="{{field.name}}"
+      class="sc-item-rarity-colors__color-picker"
+      value="{{field.value}}"
+      aria-label="{{field.label}}"
+    />
+  </span>
+{{/inline}}
+
+<section class="scirc-config scirc-style-editor" data-application-part="body">
+  <div class="scirc-config__body scirc-style-editor__body">
+    <aside class="scirc-config__rail scirc-style-rail">
+      <label class="scirc-style-field">
+        <span class="scirc-style-field__label">
+          Theme
+          <i class="fas fa-circle-info" data-tooltip="{{themeTooltip}}" aria-label="{{themeTooltip}}" tabindex="0"></i>
+        </span>
+        <select name="selected-theme" class="scirc-select">
+          {{#each themeOptions}}
+            <option value="{{this.id}}" {{#if this.selected}}selected{{/if}} {{#if this.disabled}}disabled{{/if}}>{{this.label}}</option>
+          {{/each}}
+        </select>
+      </label>
+
+      {{#if levelControls}}
+        <label class="scirc-style-toggle" data-tooltip="Style each school separately per spell level.">
+          <span class="scirc-check">
+            <input type="checkbox" name="use-level-variants" data-editor-control="level-variants" {{#if levelControls.enabled}}checked{{/if}} />
+            <span class="scirc-check__box"><i class="fas fa-check" aria-hidden="true"></i></span>
+          </span>
+          <span>Level variants</span>
+        </label>
+      {{/if}}
+
+      <h3 class="scirc-style-rail__title">{{railTitle}}</h3>
+      <nav class="scirc-style-rail__list" data-style-rail aria-label="{{railTitle}}">
+        {{#each entries}}
+          <button
+            type="button"
+            class="scirc-config__tab scirc-style-rail__item{{#if this.active}} is-active{{/if}}"
+            data-action="selectEntry"
+            data-entry-key="{{this.key}}"
+            aria-pressed="{{#if this.active}}true{{else}}false{{/if}}"
+          >
+            <span
+              class="scirc-style-rail__swatch{{#unless this.swatch}} is-empty{{/unless}}"
+              data-entry-swatch
+              {{#if this.swatch}}style="background: {{this.swatch}};"{{/if}}
+            ></span>
+            <span class="scirc-config__tab-label">{{this.label}}</span>
+            <span class="scirc-config__tab-dot" data-entry-dot {{#unless this.dirty}}hidden{{/unless}}></span>
+          </button>
+        {{/each}}
+      </nav>
+    </aside>
+
+    <div class="scirc-style-editor__main">
+      <header class="scirc-style-editor__head">
+        <div class="scirc-style-editor__heading">
+          <h2 class="scirc-config__panel-title">{{entryTitle}}</h2>
+          <p class="scirc-config__panel-hint">{{entryHint}}</p>
+        </div>
+        {{#if levelControls.enabled}}
+          <label class="scirc-style-field scirc-style-field--inline">
+            <span class="scirc-style-field__label">Spell level</span>
+            <select name="selected-level" class="scirc-select" data-editor-control="level">
+              {{#each levelControls.options}}
+                <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+              {{/each}}
+            </select>
+          </label>
+        {{/if}}
+      </header>
+
+      <div class="scirc-style-editor__grid">
+        <section class="scirc-style-editor__preview" aria-label="Live preview">
+          <div class="scirc-style-editor__preview-head">
+            <h3 class="scirc-config__section-title">Live preview</h3>
+            {{#if tidyPreviewPartial}}
+              <div class="scirc-segmented" role="tablist" aria-label="Preview sheet">
+                <button type="button" role="tab" class="scirc-segmented__option" data-action="setPreviewVariant" data-variant="dnd5e" aria-selected="true">
+                  D&amp;D 5e
+                </button>
+                <button type="button" role="tab" class="scirc-segmented__option" data-action="setPreviewVariant" data-variant="tidy5e" aria-selected="false">
+                  Tidy 5e
+                </button>
+              </div>
+            {{/if}}
+          </div>
+          <div class="scirc-style-editor__preview-body" data-preview-body>
+            <div class="sc-item-rarity-colors__preview" data-preview-content>
+              {{> (lookup this "previewPartial")}}
+              {{#if tidyPreviewPartial}}
+                {{> (lookup this "tidyPreviewPartial")}}
+              {{/if}}
+            </div>
+          </div>
+        </section>
+
+        <section class="scirc-style-editor__fields">
+          {{#each sections}}
+            <h3 class="scirc-config__section-title">{{this.title}}</h3>
+            <div class="scirc-style-rows">
+              {{#each this.rows}}
+                <div class="scirc-style-row{{#if this.nested}} is-nested{{/if}}" data-field-group>
+                  {{#if this.field.isCheckbox}}
+                    <label class="scirc-style-row__toggle" {{#if this.hint}}data-tooltip="{{this.hint}}"{{/if}}>
+                      <span class="scirc-check">
+                        <input type="checkbox" id="{{this.field.name}}" name="{{this.field.name}}" {{#if this.field.value}}checked{{/if}} />
+                        <span class="scirc-check__box"><i class="fas fa-check" aria-hidden="true"></i></span>
+                      </span>
+                      <span class="scirc-style-row__label">{{this.field.label}}</span>
+                    </label>
+                  {{else if this.field.isSelect}}
+                    <label class="scirc-style-row__label" for="{{this.field.name}}" {{#if this.hint}}data-tooltip="{{this.hint}}"{{/if}}>{{this.field.label}}</label>
+                    <select id="{{this.field.name}}" name="{{this.field.name}}" class="scirc-select scirc-select--compact">
+                      {{#each this.field.options}}
+                        <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+                      {{/each}}
+                    </select>
+                  {{else}}
+                    <span class="scirc-style-row__label">{{this.field.label}}</span>
+                    {{> colorControl field=this.field}}
+                  {{/if}}
+                  {{#if this.inline}}
+                    <span class="scirc-style-row__inline" data-field-group>
+                      {{> colorControl field=this.inline}}
+                    </span>
+                  {{/if}}
+                </div>
+              {{/each}}
+            </div>
+          {{/each}}
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <footer class="scirc-config__footer">
+    <span class="scirc-config-pill" data-status-pill hidden>
+      <span class="scirc-config-pill__dot" aria-hidden="true"></span>
+      <span data-status-pill-label></span>
+    </span>
+    <button type="button" class="scirc-btn scirc-btn--ghost" data-action="importConfig">
+      <i class="fas fa-file-import" aria-hidden="true"></i> Import
+    </button>
+    <button type="button" class="scirc-btn scirc-btn--ghost" data-action="exportConfig">
+      <i class="fas fa-file-export" aria-hidden="true"></i> Export
+    </button>
+    <span class="scirc-config__spacer"></span>
+    <button type="button" class="scirc-btn" data-action="closeEditor">
+      <i class="fas fa-xmark" aria-hidden="true"></i> Close
+    </button>
+    <button type="submit" class="scirc-btn scirc-btn--primary" data-save-button>
+      <i class="fas fa-floppy-disk" aria-hidden="true"></i> Save Changes
+    </button>
+  </footer>
+</section>

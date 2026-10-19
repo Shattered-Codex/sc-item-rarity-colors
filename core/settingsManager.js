@@ -101,6 +101,19 @@ export function buildRaritySettings(rarity) {
       ? getRaritySetting(MODULE_ID, rarity, "glow-option", false)
       : false,
 
+    // Gold accent (dnd5e / Tidy 5e gold details)
+    enableGoldAccentColor: getRaritySetting(MODULE_ID, rarity, "enable-gold-accent-color", false),
+    goldAccentColor: getRaritySetting(MODULE_ID, rarity, "gold-accent-color", "#9f9275"),
+
+    // Table header bars on the item sheet
+    enableTableHeaderColor: getRaritySetting(MODULE_ID, rarity, "enable-table-header-color", false),
+    tableHeaderColor: getRaritySetting(MODULE_ID, rarity, "table-header-color", "#491d25"),
+    enableTableHeaderTextColor: getRaritySetting(MODULE_ID, rarity, "enable-table-header-text-color", false),
+    tableHeaderTextColor: getRaritySetting(MODULE_ID, rarity, "table-header-text-color", "#ffffff"),
+
+    // Where the background goes on Tidy 5e sheets: content, sidebar, or sheet.
+    tidyBackgroundArea: getRaritySetting(MODULE_ID, rarity, "tidy-background-area", "content"),
+
     // Inventory Effects
     enableInventoryGradientEffects: getRaritySetting(MODULE_ID, rarity, "enable-inventory-gradient-effects", false),
     enableInventoryBorders: getRaritySetting(MODULE_ID, rarity, "enable-inventory-borders", false),

@@ -1,3 +1,99 @@
+/* Tidy 5e background area "sidebar" / "whole sheet" (per rarity): the item
+   sheet colors tint Tidy's sidebar. The color is a layer between the sidebar's
+   own textured background and its content, so the texture shows through. */
+.tidy5e-sheet.scirc-tidy-sidebar-bg .window-content aside.sidebar {
+  position: relative;
+  isolation: isolate;
+}
+
+.tidy5e-sheet.scirc-tidy-sidebar-bg .window-content aside.sidebar::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--scirc-item-sheet-bg-primary, #ffffff);
+  opacity: 0.78;
+  pointer-events: none;
+}
+
+.tidy5e-sheet.scirc-tidy-sidebar-bg.scirc-item-sheet-bg-gradient-enabled .window-content aside.sidebar::before {
+  background: linear-gradient(to bottom,
+      var(--scirc-item-sheet-bg-primary, #ffffff),
+      var(--scirc-item-sheet-bg-secondary, var(--scirc-item-sheet-bg-primary, #ffffff)));
+}
+
+/* Once the sheet scrolls, Tidy turns the window header into a solid bar: the
+   part over the sidebar repeats the sidebar texture and the rest gets a dark
+   card color. Both follow the area the rarity colors, so the bar matches what
+   is underneath it. */
+.tidy5e-sheet.scirc-item-sheet-bg-enabled > .window-header.scroll-marker-off-screen {
+  background: var(--scirc-item-sheet-bg-primary, #ffffff) !important;
+}
+
+.tidy5e-sheet.scirc-item-sheet-bg-enabled.scirc-item-sheet-bg-gradient-enabled > .window-header.scroll-marker-off-screen {
+  background: linear-gradient(to right,
+      var(--scirc-item-sheet-bg-primary, #ffffff),
+      var(--scirc-item-sheet-bg-secondary, var(--scirc-item-sheet-bg-primary, #ffffff))) !important;
+}
+
+/* The strip over the sidebar keeps Tidy's texture with the tint layered on
+   top, like the sidebar itself (top of a gradient = primary color). */
+.tidy5e-sheet.scirc-tidy-sidebar-bg > .window-header.scroll-marker-off-screen .header-over-sidebar {
+  background:
+    linear-gradient(
+      color-mix(in srgb, var(--scirc-item-sheet-bg-primary, #ffffff) 78%, transparent),
+      color-mix(in srgb, var(--scirc-item-sheet-bg-primary, #ffffff) 78%, transparent)),
+    var(--sidebar-bg) !important;
+}
+
+/* Gold accent (per rarity / spell school): Tidy's gold palette, window
+   border, and divider follow the accent color. */
+.tidy5e-sheet.application.item.scirc-item-sheet-gold-enabled {
+  --t5e-color-palette-gold-94: color-mix(in srgb, var(--scirc-item-sheet-gold) 36%, white 64%);
+  --t5e-color-palette-gold-89: color-mix(in srgb, var(--scirc-item-sheet-gold) 50%, white 50%);
+  --t5e-color-palette-gold-75: color-mix(in srgb, var(--scirc-item-sheet-gold) 74%, white 26%);
+  --t5e-color-palette-gold-62: var(--scirc-item-sheet-gold);
+  --t5e-color-palette-gold-56: color-mix(in srgb, var(--scirc-item-sheet-gold) 84%, black 16%);
+  --t5e-color-palette-gold-45: color-mix(in srgb, var(--scirc-item-sheet-gold) 70%, black 30%);
+  --t5e-color-palette-gold-35: color-mix(in srgb, var(--scirc-item-sheet-gold) 56%, black 44%);
+  --t5e-color-gold: var(--scirc-item-sheet-gold);
+  --t5e-color-text-gold: var(--scirc-item-sheet-gold);
+  --t5e-color-text-gold-light: color-mix(in srgb, var(--scirc-item-sheet-gold) 70%, white 30%);
+  --t5e-color-text-gold-emphasis: color-mix(in srgb, var(--scirc-item-sheet-gold) 82%, black 18%);
+  --t5e-color-text-oninverse-gold-light: color-mix(in srgb, var(--scirc-item-sheet-gold) 70%, white 30%);
+  --t5e-color-text-oninverse-gold-emphasis: color-mix(in srgb, var(--scirc-item-sheet-gold) 84%, white 16%);
+  --window-border-color: var(--scirc-item-sheet-gold);
+}
+
+/* Tidy draws this divider with a hard-coded gold gradient. */
+.tidy5e-sheet.application.item.scirc-item-sheet-gold-enabled hr.golden-fade::before {
+  background-image: linear-gradient(90deg,
+      transparent 0%,
+      color-mix(in srgb, var(--scirc-item-sheet-gold) 50%, transparent) 2rem calc(100% - 2rem),
+      transparent 100%);
+}
+
+/* Table header color (per rarity / spell school). */
+.tidy5e-sheet.application.item.scirc-item-sheet-table-header-enabled {
+  --t5e-table-header-background-left: var(--scirc-item-sheet-table-header);
+  --t5e-table-header-background-right: color-mix(in srgb, var(--scirc-item-sheet-table-header) 67%, black 33%);
+  --t5e-table-header-background-default: var(--scirc-item-sheet-table-header);
+  --t5e-table-header-border-color: color-mix(in srgb, var(--scirc-item-sheet-table-header) 58%, #151922 42%);
+}
+
+.tidy5e-sheet.application.item.scirc-item-sheet-table-header-enabled :is(.tidy-table-header-row, .item-table-header-row):not(.inline-activities-table .tidy-table-header-row) {
+  background: linear-gradient(to right,
+      var(--scirc-item-sheet-table-header),
+      color-mix(in srgb, var(--scirc-item-sheet-table-header) 67%, black 33%));
+}
+
+/* Table header text color (per rarity / spell school). Tidy derives the
+   header foreground from its theme accent, so it is set on every descendant. */
+.tidy5e-sheet.application.item.scirc-item-sheet-table-header-text-enabled :is(.tidy-table-header-row, .item-table-header-row),
+.tidy5e-sheet.application.item.scirc-item-sheet-table-header-text-enabled :is(.tidy-table-header-row, .item-table-header-row) * {
+  color: var(--scirc-item-sheet-table-header-text) !important;
+}
+
 /* Item sheet text color strategy: tidy5e */
 .scirc-item-sheet-text-tidy .tidy-tabs.item-tabs .tab-title {
   color: var(--scirc-item-sheet-text-color) !important;

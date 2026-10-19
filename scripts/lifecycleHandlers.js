@@ -42,6 +42,8 @@ export async function onInit() {
   await registerModulePartials(MODULE_ID, [
     "item-template.html",
     "spell-template.html",
+    "tidy-item-template.html",
+    "tidy-spell-template.html",
   ]);
 
   debugLog("Lifecycle: init complete");

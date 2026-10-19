@@ -1,0 +1,145 @@
+<section class="scirc-config" data-application-part="body">
+  <div class="scirc-config__body">
+    <nav class="scirc-config__rail" role="tablist" aria-label="Settings sections">
+      {{#each tabs}}
+        <button
+          type="button"
+          role="tab"
+          id="{{ ../formId }}-tab-{{ this.id }}"
+          class="scirc-config__tab{{#if this.active}} is-active{{/if}}"
+          data-action="switchTab"
+          data-tab-target="{{ this.id }}"
+          aria-selected="{{#if this.active}}true{{else}}false{{/if}}"
+          aria-controls="{{ ../formId }}-panel-{{ this.id }}"
+          tabindex="{{#if this.active}}0{{else}}-1{{/if}}"
+        >
+          <i class="{{ this.icon }}" aria-hidden="true"></i>
+          <span class="scirc-config__tab-label">{{ this.label }}</span>
+          <span class="scirc-config__tab-dot" data-tab-dot="{{ this.id }}" hidden></span>
+        </button>
+      {{/each}}
+    </nav>
+
+    <div class="scirc-config__content">
+      {{#unless isGM}}
+        <p class="scirc-config__notice">
+          <i class="fas fa-circle-info" aria-hidden="true"></i>
+          {{ playerNotice }}
+        </p>
+      {{/unless}}
+
+      {{#each sections}}
+        <section
+          id="{{ ../formId }}-panel-{{ this.id }}"
+          class="scirc-config__panel"
+          role="tabpanel"
+          aria-labelledby="{{ ../formId }}-tab-{{ this.id }}"
+          data-tab-panel="{{ this.id }}"
+          {{#unless this.active}}hidden{{/unless}}
+        >
+          <header class="scirc-config__panel-head">
+            <h2 class="scirc-config__panel-title">{{ this.title }}</h2>
+            <p class="scirc-config__panel-hint">{{ this.hint }}</p>
+          </header>
+
+          {{#if this.isRarityList}}
+            <div class="scirc-config__rows">
+              <label class="scirc-config-row">
+                <span class="scirc-config-row__copy">
+                  <span class="scirc-config-row__name">Use this module's rarity list</span>
+                  <span class="scirc-config-row__hint">When off, the list below is ignored and rarities come from Custom DND5E or the system.</span>
+                </span>
+                <span class="scirc-config-row__control">
+                  <span class="scirc-check">
+                    <input type="checkbox" data-rarity-enabled {{#if ../rarityListEnabled}}checked{{/if}} />
+                    <span class="scirc-check__box"><i class="fas fa-check" aria-hidden="true"></i></span>
+                  </span>
+                </span>
+              </label>
+            </div>
+
+            <h3 class="scirc-config__section-title">Rarities</h3>
+            <p class="scirc-config__section-hint">Drag to reorder. Unchecked rarities are hidden from item sheets. System rarities can be renamed or hidden, but not removed.</p>
+            <div class="scirc-rarity-list">
+              <div class="scirc-rarity-list__head" aria-hidden="true">
+                <span></span>
+                <span>Show</span>
+                <span>Key</span>
+                <span>Label</span>
+                <span></span>
+              </div>
+              <ul class="scirc-rarity-list__rows" data-rarity-list></ul>
+              <button type="button" class="scirc-btn scirc-btn--sm scirc-rarity-list__add" data-action="addRarity">
+                <i class="fas fa-plus" aria-hidden="true"></i> Add rarity
+              </button>
+            </div>
+          {{/if}}
+
+          <div class="scirc-config__rows">
+            {{#each this.fields}}
+              <label class="scirc-config-row">
+                <span class="scirc-config-row__copy">
+                  <span class="scirc-config-row__name">{{ this.name }}</span>
+                  <span class="scirc-config-row__hint">{{ this.hint }}</span>
+                </span>
+                <span class="scirc-config-row__control">
+                  <span class="scirc-check">
+                    <input
+                      type="checkbox"
+                      name="{{ this.key }}"
+                      {{#if this.checked}}checked{{/if}}
+                      data-default-checked="{{ this.defaultChecked }}"
+                    />
+                    <span class="scirc-check__box"><i class="fas fa-check" aria-hidden="true"></i></span>
+                  </span>
+                </span>
+              </label>
+            {{/each}}
+
+            {{#each this.actions}}
+              <div class="scirc-config-row scirc-config-row--action">
+                <span class="scirc-config-row__copy">
+                  <span class="scirc-config-row__name">
+                    {{ this.name }}
+                    {{#if this.status}}
+                      <span class="scirc-config-badge scirc-config-badge--{{ this.statusTone }}">{{ this.status }}</span>
+                    {{/if}}
+                  </span>
+                  <span class="scirc-config-row__hint">{{ this.hint }}</span>
+                </span>
+                <span class="scirc-config-row__control">
+                  <button
+                    type="button"
+                    class="scirc-btn"
+                    data-action="runAction"
+                    data-action-id="{{ this.id }}"
+                    {{#if this.disabled}}disabled{{/if}}
+                  >
+                    <i class="{{ this.icon }}" aria-hidden="true"></i> {{ this.label }}
+                  </button>
+                </span>
+              </div>
+            {{/each}}
+          </div>
+        </section>
+      {{/each}}
+    </div>
+  </div>
+
+  <footer class="scirc-config__footer">
+    <span class="scirc-config-pill" data-status-pill hidden>
+      <span class="scirc-config-pill__dot" aria-hidden="true"></span>
+      <span data-status-pill-label></span>
+    </span>
+    <span class="scirc-config__spacer"></span>
+    <button type="button" class="scirc-btn scirc-btn--ghost" data-action="resetActiveTab">
+      <i class="fas fa-rotate-left" aria-hidden="true"></i> Reset defaults
+    </button>
+    <button type="button" class="scirc-btn" data-action="close">
+      <i class="fas fa-xmark" aria-hidden="true"></i> Close
+    </button>
+    <button type="button" class="scirc-btn scirc-btn--primary" data-action="save" data-save-button>
+      <i class="fas fa-floppy-disk" aria-hidden="true"></i> Save Changes
+    </button>
+  </footer>
+</section>

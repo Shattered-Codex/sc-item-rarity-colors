@@ -1,80 +1,81 @@
 import {
   ItemRaritySettingsLauncher,
-  ItemRaritySourceSettingsLauncher,
   SpellSchoolSettingsLauncher,
 } from "./settingsLaunchers.js";
 import { ItemRaritySettingsApp } from "../apps/ItemRaritySettingsApp.js";
+import { ModuleSettingsApp } from "../apps/ModuleSettingsApp.js";
 import { SpellSchoolSettingsApp } from "../apps/SpellSchoolSettingsApp.js";
-import { DocumentationMenu } from "./DocumentationMenu.js";
-import { SupportMenu } from "./SupportMenu.js";
-import { TidyRaritySyncMenu } from "./TidyRaritySyncMenu.js";
+import { CommunityLinks } from "./CommunityLinks.js";
 
-// Main function to register all module menus.
+// Menu keys mapped to the modifier class their settings-list button receives.
+const MENU_BUTTON_CLASSES = Object.freeze({
+  moduleSettings: "scirc-menu-button--settings",
+  raritySettingsConfig: "scirc-menu-button--items",
+  spellSchoolSettingsConfig: "scirc-menu-button--spells",
+});
+
+/**
+ * Foundry's settings list shows three buttons for this module, in registration
+ * order: the settings window holding every general option, item colors, and
+ * spell colors. The wiki, Patreon, and Discord links are injected below them
+ * as one compact strip.
+ */
 export function registerMenus(MODULE_ID) {
-  // Set MODULE_ID for ItemRaritySettingsApp first
   ItemRaritySettingsApp.MODULE_ID = MODULE_ID;
-
-  game.settings.registerMenu(MODULE_ID, "supportMenu", {
-    name: "Support the developer",
-    label: "Patreon support",
-    hint: "Support Shattered Codex and help us keep building modules.",
-    icon: "fas fa-heart",
-    type: SupportMenu,
-    restricted: true,
-  });
-
-  game.settings.registerMenu(MODULE_ID, "docsMenu", {
-    name: "Documentation",
-    label: "Open documentation",
-    hint: "Open the SC - Item Rarity Colors documentation wiki.",
-    icon: "fas fa-hat-wizard",
-    type: DocumentationMenu,
-    restricted: true,
-  });
-
   ItemRaritySettingsLauncher.MODULE_ID = MODULE_ID;
+  SpellSchoolSettingsApp.MODULE_ID = MODULE_ID;
+  SpellSchoolSettingsLauncher.MODULE_ID = MODULE_ID;
+
+  game.settings.registerMenu(MODULE_ID, "moduleSettings", {
+    name: "Module Settings",
+    label: "Open settings",
+    hint: "Rarity list, Tidy 5e sync, chat messages, and diagnostics in one window.",
+    icon: "fas fa-sliders",
+    type: ModuleSettingsApp,
+    // Players still get the client-only sections, so this is not GM-gated.
+    restricted: false,
+  });
+
   game.settings.registerMenu(MODULE_ID, "raritySettingsConfig", {
-    name: "Item Rarity Configuration",
-    label: "Configure Rarity Colors",
+    name: "Item Rarity Colors",
+    label: "Configure items",
+    hint: "Colors, gradients, and glow for item sheets, inventories, and the item directory, per rarity.",
     icon: "fas fa-palette",
     type: ItemRaritySettingsLauncher,
     restricted: false,
-    hint: "Open a single configuration window and switch rarities from the selector at the top.",
   });
 
-  ItemRaritySourceSettingsLauncher.MODULE_ID = MODULE_ID;
-  game.settings.registerMenu(MODULE_ID, "raritySourceConfig", {
-    name: "Rarity Source Configuration",
-    label: "Configure Rarity List",
-    icon: "fas fa-list",
-    type: ItemRaritySourceSettingsLauncher,
-    restricted: true,
-    hint: "Manage rarity keys and labels in SC Item Rarity Colors. Changes are synced with Custom DND5E when available.",
-  });
-
-  game.settings.registerMenu(MODULE_ID, "tidyRaritySync", {
-    name: "Tidy Rarity Sync",
-    label: "Sync Colors to Tidy",
-    icon: "fas fa-arrows-rotate",
-    type: TidyRaritySyncMenu,
-    restricted: true,
-    hint: "Sync primary rarity colors from SC Item Rarity Colors to Tidy 5e rarity colors.",
-  });
-
-  Hooks.on("renderSettingsConfig", (_app, html) => {
-    DocumentationMenu.bindSettingsButton(html);
-    SupportMenu.bindSettingsButton(html);
-    TidyRaritySyncMenu.bindSettingsRowVisibility(html);
-  });
-
-  SpellSchoolSettingsApp.MODULE_ID = MODULE_ID;
-  SpellSchoolSettingsLauncher.MODULE_ID = MODULE_ID;
   game.settings.registerMenu(MODULE_ID, "spellSchoolSettingsConfig", {
-    name: "Spell School Color Configuration",
-    label: "Configure Spell School Colors",
+    name: "Spell School Colors",
+    label: "Configure spells",
+    hint: "Spell visuals by magic school, with optional school + level variants.",
     icon: "fas fa-book-sparkles",
     type: SpellSchoolSettingsLauncher,
     restricted: false,
-    hint: "Configure spell visuals by magic school, with optional school+level variants.",
   });
+
+  Hooks.on("renderSettingsConfig", (_app, html) => {
+    markMenuButtons(MODULE_ID, html);
+    CommunityLinks.inject(html);
+  });
+}
+
+function markMenuButtons(moduleId, html) {
+  const root = html?.jquery ? html[0] : html;
+  if (!root?.querySelectorAll) return;
+
+  for (const [menuKey, className] of Object.entries(MENU_BUTTON_CLASSES)) {
+    const key = `${moduleId}.${menuKey}`;
+    const candidates = root.querySelectorAll([
+      `[data-setting-id="${key}"]`,
+      `[data-menu-id="${key}"]`,
+      `[data-key="${key}"]`,
+      `[data-setting="${key}"]`,
+    ].join(","));
+
+    for (const candidate of candidates) {
+      const button = candidate instanceof HTMLButtonElement ? candidate : candidate.querySelector("button");
+      button?.classList.add(className);
+    }
+  }
 }

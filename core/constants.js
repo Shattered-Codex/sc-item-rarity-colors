@@ -8,6 +8,7 @@ export const SUPPORT_CARD_HIDE_SETTING_KEY = "hideSupportCardUntilNextUpdate";
 export const SUPPORT_CARD_VERSION_SETTING_KEY = "supportCardAcknowledgedVersion";
 export const DOCS_URL = "https://wiki.shattered-codex.com/modules/sc-item-rarity-colors";
 export const PATREON_URL = "https://www.patreon.com/c/shatteredcodex";
+export const DISCORD_URL = "https://discord.gg/6mWCQEJEwG";
 
 // Default colors
 export const DEFAULT_COLORS = {
@@ -37,8 +38,15 @@ export const SELECTORS = {
   INVENTORY_PREVIEW: ".inventory-preview-item",
   DND5E_ITEM: ".item",
   DND5E_ITEM_IMAGE: ".item-image.gold-icon",
-  TIDY5E_ITEM_CONTAINER: ".items-section .items-list .item-list-container",
-  TIDY5E_ITEM_ROW: ".item-table-row",
+  // Tidy 5e 13+: `.tidy-table-row-container` on the default sheets,
+  // `.item-table-row-container` on classic ones. The last selector covers
+  // releases from before Tidy 13.
+  TIDY5E_ITEM_CONTAINER: [
+    ".tidy-table-row-container[data-item-id]",
+    ".item-table-row-container[data-item-id]",
+    ".items-section .items-list .item-list-container",
+  ].join(", "),
+  TIDY5E_ITEM_ROW: ".tidy-table-row, .item-table-row",
   TIDY5E_ITEM_IMAGE: ".item-image",
   ITEM_NAME: ".item-name",
   ITEM_TITLE: ".title",

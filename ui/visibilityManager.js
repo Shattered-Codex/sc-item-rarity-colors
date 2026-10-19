@@ -7,11 +7,15 @@ function setGroupVisibility($group, visible) {
   $group.toggleClass("sc-item-rarity-colors__is-hidden", !visible);
 }
 
+const FIELD_INPUT_SELECTORS = {
+  color: 'input[type="color"]',
+  select: "select",
+  checkbox: 'input[type="checkbox"]',
+};
+
 function getFieldInput($form, rarityPrefix, field) {
-  const selector = field?.type === "color"
-    ? `input[type="color"][name="${rarityPrefix}-${field.key}"]`
-    : `input[type="checkbox"][name="${rarityPrefix}-${field.key}"]`;
-  return $form.find(selector);
+  const control = FIELD_INPUT_SELECTORS[field?.type] ?? FIELD_INPUT_SELECTORS.checkbox;
+  return $form.find(`${control}[name="${rarityPrefix}-${field.key}"]`);
 }
 
 function collectRarityPrefixes($form) {
@@ -40,7 +44,9 @@ function applyVisibilityForRarity($form, rarityPrefix) {
   for (const field of fields) {
     const $input = getFieldInput($form, rarityPrefix, field);
     if (!$input.length) continue;
-    setGroupVisibility($input.closest(".form-group"), isRarityFieldVisible(field, state));
+    // A row and the color nested inside it are separate groups, so an inline
+    // color can hide on its own while its checkbox stays visible.
+    setGroupVisibility($input.closest("[data-field-group]"), isRarityFieldVisible(field, state));
   }
 }
 
