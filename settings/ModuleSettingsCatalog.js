@@ -1,4 +1,3 @@
-import { SUPPORT_CARD_HIDE_SETTING_KEY } from "../core/constants.js";
 import { DEBUG_LOGS_SETTING_KEY } from "../core/debug.js";
 import { UNIDENTIFIED_VIEWERS, UNIDENTIFIED_VIEWERS_SETTING_KEY } from "../core/unidentifiedStyle.js";
 import { applyAnimatedEffectsPreference, DISABLE_EFFECTS_SETTING_KEY } from "../core/itemEffects.js";
@@ -77,23 +76,6 @@ const SECTIONS = Object.freeze([
         label: "Sync colors",
       }),
     ]),
-  }),
-  Object.freeze({
-    id: "interface",
-    scope: SETTING_SCOPES.CLIENT,
-    icon: "fas fa-comment-dots",
-    title: "Chat messages",
-    hint: "Applies to this browser only. Every user can change it, including players.",
-    fields: Object.freeze([
-      Object.freeze({
-        key: SUPPORT_CARD_HIDE_SETTING_KEY,
-        scope: SETTING_SCOPES.CLIENT,
-        default: false,
-        name: "Hide automatic support message until next update",
-        hint: "After the support card appears once for the current version, this option is checked automatically. Uncheck it if you want the card to appear whenever the world loads.",
-      }),
-    ]),
-    actions: Object.freeze([]),
   }),
   Object.freeze({
     id: "animations",

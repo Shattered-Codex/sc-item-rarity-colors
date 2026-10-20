@@ -13,7 +13,6 @@ import {
   invalidateSpellStyleCache,
   SPELL_SCHOOL_STYLES_SETTING_KEY,
 } from "../core/spellSchoolConfig.js";
-import { SUPPORT_CARD_VERSION_SETTING_KEY } from "../core/constants.js";
 import { ModuleSettingsCatalog } from "./ModuleSettingsCatalog.js";
 import {
   UNIDENTIFIED_STYLE_DEFAULTS,
@@ -65,16 +64,6 @@ function registerCatalogSettings(moduleId) {
     if (game.settings.settings.has(`${moduleId}.${field.key}`)) continue;
     game.settings.register(moduleId, field.key, ModuleSettingsCatalog.registration(field));
   }
-}
-
-function registerSupportCardVersionSetting(moduleId) {
-  if (game.settings.settings.has(`${moduleId}.${SUPPORT_CARD_VERSION_SETTING_KEY}`)) return;
-  game.settings.register(moduleId, SUPPORT_CARD_VERSION_SETTING_KEY, {
-    scope: "client",
-    config: false,
-    type: String,
-    default: "",
-  });
 }
 
 function registerRaritySettings(moduleId, rarityKey, rarityLabel, defaultOverrides = {}) {
@@ -163,5 +152,4 @@ export function registerModuleSettings(MODULE_ID) {
   );
 
   registerCatalogSettings(MODULE_ID);
-  registerSupportCardVersionSetting(MODULE_ID);
 }

@@ -27,6 +27,7 @@ import {
   getSpellThemePresetOptions,
 } from "../core/spellThemePresets.js";
 import { StyleEditorApp } from "./StyleEditorApp.js";
+import { getSpellPreviewSample } from "../core/spellPreviewSamples.js";
 
 const SPELL_SCHOOL_CONFIG_KIND = "spell-school-settings";
 
@@ -369,6 +370,9 @@ export class SpellSchoolSettingsApp extends StyleEditorApp {
       : "Choose a preset to apply school and level spell visuals. You can still adjust colors manually.";
 
     return {
+      // The preview shows a real spell of this school (and level, with level
+      // variants), so the style reads as it will on the spells it colors.
+      previewSpell: getSpellPreviewSample(this.selectedSchool, this.useLevelVariants ? this.selectedLevel : null, schoolLabel),
       railTitle: "Schools",
       entryTitle: this.useLevelVariants ? `${schoolLabel} · ${levelLabel}` : schoolLabel,
       entryHint: this.useLevelVariants

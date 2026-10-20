@@ -34,6 +34,8 @@ const LIVE_DIRECTORY_ROOT_SELECTOR = [
 const COMPENDIUM_INDEX_FIELDS = [
   "type",
   "system.rarity",
+  // D&D 5e 6.0 keeps a set of rarities instead of `system.rarity`.
+  "system.rarities",
   "system.details.rarity",
   "system.identified",
   // Picks the stand-in image of a hidden unidentified item.
@@ -124,6 +126,7 @@ function buildCompendiumIndexItemLike(entry, rowElement = null) {
 
   const rawRarity = getObjectValueByPath(entry, "system.rarity");
   const rawRarityValue = getObjectValueByPath(entry, "system.rarity.value");
+  const rawRarities = getObjectValueByPath(entry, "system.rarities");
   const detailsRarity = getObjectValueByPath(entry, "system.details.rarity");
   const identified = getObjectValueByPath(entry, "system.identified");
   const rawSchool = getObjectValueByPath(entry, "system.school");
@@ -146,6 +149,10 @@ function buildCompendiumIndexItemLike(entry, rowElement = null) {
     itemLike.system.rarity = { value: rawRarityValue };
   } else if (rawRarity !== undefined) {
     itemLike.system.rarity = rawRarity;
+  }
+
+  if (rawRarities !== undefined) {
+    itemLike.system.rarities = rawRarities;
   }
 
   if (detailsRarity !== undefined) {
@@ -178,7 +185,7 @@ function buildCompendiumIndexItemLike(entry, rowElement = null) {
   }
 
   const hasRarityData = rawRarityValue !== undefined || rawRarity !== undefined || detailsRarity !== undefined
-    || identified === false;
+    || (Array.isArray(rawRarities) && rawRarities.length > 0) || identified === false;
   const hasSpellData = type === "spell" || rawSchoolValue !== undefined || rawSchool !== undefined || rawLevel !== undefined || detailsLevel !== undefined;
   if (!hasRarityData && !hasSpellData) return null;
 

@@ -690,6 +690,17 @@
   border-top: 1px solid var(--color-border-light-tertiary, rgba(255, 255, 255, 0.1));
 }
 
+.scirc-community-note {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin: 0.6rem 0 0;
+  color: var(--color-text-secondary, rgba(255, 255, 255, 0.65));
+  font-size: var(--font-size-12, 12px);
+  line-height: 1.4;
+  text-align: center;
+}
+
 .scirc-community-links .scirc-community-link {
   display: inline-flex;
   flex: 1 1 0;

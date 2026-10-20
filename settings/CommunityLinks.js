@@ -31,6 +31,12 @@ const LINKS = Object.freeze([
   }),
 ]);
 
+// Shown under the links, one sentence per line.
+const NOTE_LINES = Object.freeze([
+  "Enjoying this module? Consider joining my Patreon for access to many more modules, and take a look at the wiki.",
+  "Have a suggestion or found a bug? Let me know on the Discord channel.",
+]);
+
 export class CommunityLinks {
   static links() {
     return LINKS;
@@ -60,8 +66,19 @@ export class CommunityLinks {
       strip.append(CommunityLinks.#button(link));
     }
 
-    section.append(strip);
+    section.append(strip, CommunityLinks.#note());
     return strip;
+  }
+
+  static #note() {
+    const note = document.createElement("p");
+    note.className = "scirc-community-note";
+    for (const text of NOTE_LINES) {
+      const line = document.createElement("span");
+      line.textContent = text;
+      note.append(line);
+    }
+    return note;
   }
 
   static #button(link) {

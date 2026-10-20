@@ -27,7 +27,7 @@ export function registerMenus(MODULE_ID) {
   game.settings.registerMenu(MODULE_ID, "moduleSettings", {
     name: "Module Settings",
     label: "Open settings",
-    hint: "Rarity list, unidentified items, Tidy 5e, animations, chat messages, and diagnostics in one window.",
+    hint: "Rarity list, unidentified items, Tidy 5e, animations, and diagnostics in one window.",
     icon: "fas fa-sliders",
     type: ModuleSettingsApp,
     // Players still get the client-only sections, so this is not GM-gated.

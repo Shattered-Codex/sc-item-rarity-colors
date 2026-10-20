@@ -20,7 +20,6 @@ import { applyActorInventoryEffects } from "./applyActorInventoryEffects.js";
 import { applyItemDirectoryEffects } from "./applyItemDirectoryEffects.js";
 import { applyItemRarityEffects } from "./applyItemRarityEffects.js";
 import { registerModulePartials } from "./partialsHelper.js";
-import { maybeShowSupportCard } from "./supportCard.js";
 
 export async function onInit() {
   debugLog("Lifecycle: init start");
@@ -65,7 +64,6 @@ export function onReady() {
   applyItemRarityEffects(MODULE_ID);
   applyActorInventoryEffects(MODULE_ID);
   applyItemDirectoryEffects(MODULE_ID);
-  void maybeShowSupportCard();
   void removeLegacyWorldSettings(MODULE_ID);
   applyAnimatedEffectsPreference(game.settings.get(MODULE_ID, DISABLE_EFFECTS_SETTING_KEY));
   debugLog("Lifecycle: ready complete");

@@ -60,9 +60,22 @@ function clearSheetBackgroundState($element) {
 export function extractRawItemRarity(item) {
   return item?.system?.rarity?.value
     ?? item?.system?.rarity
+    ?? firstRarity(item?.system?.rarities)
     ?? item?.system?.details?.rarity
     ?? item?.rarity
     ?? null;
+}
+
+/**
+ * D&D 5e 6.0 stores a set of rarities (`system.rarities`) instead of one
+ * string. On documents `system.rarity` still returns its first (lowest)
+ * entry, but raw data such as a compendium index only has the set, as an
+ * array; this reads the same first entry from either form.
+ */
+function firstRarity(rarities) {
+  if (Array.isArray(rarities)) return rarities[0] ?? null;
+  if (rarities instanceof Set) return rarities.values().next().value ?? null;
+  return null;
 }
 
 /**

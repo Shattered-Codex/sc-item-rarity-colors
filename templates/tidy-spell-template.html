@@ -6,30 +6,30 @@
       <div class="header-over-sidebar theme-dark">
         <span class="header-item-type-label truncate">Spell</span>
       </div>
-      <div class="item-header-start-document-name truncate">Fireball</div>
+      <div class="item-header-start-document-name truncate">{{previewSpell.name}}</div>
     </header>
     <section class="window-content">
       <aside class="sidebar theme-dark">
         <div>
           <div class="item-image-container">
-            <img class="item-image" src="icons/magic/fire/projectile-fireball-smoke-large-orange.webp" alt="Fireball">
+            <img class="item-image" src="{{previewSpell.img}}" alt="{{previewSpell.name}}">
           </div>
           <div class="spell-method-text">Prepared</div>
         </div>
       </aside>
       <main class="item-content">
         <div class="item-name-wrapper flex-row extra-small-gap align-items-center">
-          <div class="document-name">Fireball</div>
+          <div class="document-name">{{previewSpell.name}}</div>
         </div>
-        <div class="subtitle">3rd Level Evocation</div>
+        <div class="subtitle">{{previewSpell.subtitle}}</div>
         <div class="item-header-summary">
           <div class="item-weight">
             <i class="fas fa-clock item-weight-icon text-label-icon"></i>
-            <span class="item-weight-value text-data">Action</span>
+            <span class="item-weight-value text-data">{{previewSpell.activation}}</span>
           </div>
           <div class="item-quantity">
             <span class="item-quantity-label color-text-lighter">Range</span>
-            <span class="item-quantity-value">150 ft</span>
+            <span class="item-quantity-value">{{previewSpell.range}}</span>
           </div>
         </div>
         <div role="tablist" class="tidy-tabs item-tabs">
@@ -52,12 +52,12 @@
             <div class="item-table-body">
               <div class="tidy-table-row-container">
                 <div class="tidy-table-row tidy-table-row-v2" data-tidy-table-row>
-                  <a class="tidy-table-row-use-button"><img class="item-image" alt="Save" src="icons/magic/fire/projectile-fireball-smoke-large-orange.webp"></a>
+                  <a class="tidy-table-row-use-button"><img class="item-image" alt="Cast" src="{{previewSpell.img}}"></a>
                   <div class="tidy-table-cell item-label text-cell primary" data-tidy-sheet-part="table-cell">
                     <a class="item-name" role="button">
                       <span class="cell-text">
-                        <span class="cell-name">Save</span>
-                        <span class="cell-context">Action</span>
+                        <span class="cell-name">Cast</span>
+                        <span class="cell-context">{{previewSpell.activation}}</span>
                       </span>
                     </a>
                   </div>
@@ -78,7 +78,7 @@
     <section class="tidy-table" data-tidy-sheet-part="item-table">
       <header class="tidy-table-header-row theme-dark" data-tidy-sheet-part="table-header-row">
         <div class="tidy-table-header-cell header-label-cell primary" data-tidy-sheet-part="table-header-cell">
-          <h3>3rd Level</h3>
+          <h3>{{previewSpell.levelShort}}</h3>
           <span class="table-header-count">1</span>
         </div>
         <div class="tidy-table-header-cell" data-tidy-sheet-part="table-header-cell" style="--tidy-table-column-width: 4rem;">School</div>
@@ -89,21 +89,21 @@
         <div class="tidy-table-row-container" data-item-id="scirc-preview">
           <div class="tidy-table-row tidy-table-row-v2" data-tidy-table-row data-tidy-sheet-part="item-table-row">
             <a class="tidy-table-row-use-button">
-              <img class="item-image" alt="Fireball" src="icons/magic/fire/projectile-fireball-smoke-large-orange.webp">
+              <img class="item-image" alt="{{previewSpell.name}}" src="{{previewSpell.img}}">
               <span class="roll-prompt"><i class="fa-solid fa-dice-d20"></i></span>
             </a>
             <div class="tidy-table-cell item-label text-cell primary" data-tidy-sheet-part="table-cell">
               <a class="item-name" role="button">
                 <span class="cell-text">
-                  <span class="cell-name">Fireball</span>
-                  <span class="cell-context">Evocation</span>
+                  <span class="cell-name">{{previewSpell.name}}</span>
+                  <span class="cell-context">{{previewSpell.schoolLabel}}</span>
                 </span>
                 <span class="row-detail-expand-indicator"><i class="fa-solid fa-angle-right expand-indicator"></i></span>
               </a>
             </div>
-            <div class="tidy-table-cell" data-tidy-sheet-part="table-cell" style="--tidy-table-column-width: 4rem;"><span>Evo</span></div>
-            <div class="tidy-table-cell" data-tidy-sheet-part="table-cell" style="--tidy-table-column-width: 4rem;"><span>1A</span></div>
-            <div class="tidy-table-cell" data-tidy-sheet-part="table-cell" style="--tidy-table-column-width: 4rem;"><span>150 <span class="color-text-lighter">ft</span></span></div>
+            <div class="tidy-table-cell" data-tidy-sheet-part="table-cell" style="--tidy-table-column-width: 4rem;"><span>{{previewSpell.schoolShort}}</span></div>
+            <div class="tidy-table-cell" data-tidy-sheet-part="table-cell" style="--tidy-table-column-width: 4rem;"><span>{{previewSpell.activationShort}}</span></div>
+            <div class="tidy-table-cell" data-tidy-sheet-part="table-cell" style="--tidy-table-column-width: 4rem;"><span>{{previewSpell.range}}</span></div>
           </div>
         </div>
       </div>
