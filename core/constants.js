@@ -4,6 +4,9 @@
  */
 
 export const MODULE_ID = "sc-item-rarity-colors";
+
+// Class carrying a rarity's runtime CSS (see core/runtimeRarityStyles.js).
+export const RARITY_CLASS_PREFIX = "scirc-rarity-";
 export const SUPPORT_CARD_HIDE_SETTING_KEY = "hideSupportCardUntilNextUpdate";
 export const SUPPORT_CARD_VERSION_SETTING_KEY = "supportCardAcknowledgedVersion";
 export const DOCS_URL = "https://wiki.shattered-codex.com/modules/sc-item-rarity-colors";

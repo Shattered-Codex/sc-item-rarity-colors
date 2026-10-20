@@ -395,8 +395,8 @@ export class SpellSchoolSettingsApp extends StyleEditorApp {
           selected: level.value === this.selectedLevel,
         })),
       },
-      sections: profileKey
-        ? this._buildFieldSections(this._getFieldDefinitions(), this._draftProfiles?.[profileKey] ?? {}, profileKey)
+      panels: profileKey
+        ? this._buildFieldPanels(this._getFieldDefinitions(), this._draftProfiles?.[profileKey] ?? {}, profileKey)
         : [],
     };
   }
@@ -425,10 +425,12 @@ export class SpellSchoolSettingsApp extends StyleEditorApp {
     return false;
   }
 
-  _hasUnsavedChanges() {
+  _hasUnsavedChanges(knownEntryDirty) {
     if (!this._draftProfiles || !this._savedSetting) return false;
     if (this.useLevelVariants !== (this._savedSetting.useLevelVariants === true)) return true;
-    return this._getSchoolOptions().some((school) => this._isEntryDirty(school.key));
+    return this._getSchoolOptions().some((school) =>
+      knownEntryDirty?.get(school.key) ?? this._isEntryDirty(school.key)
+    );
   }
 
   _getEntryValues(school) {

@@ -1,13 +1,14 @@
-import { MODULE_ID } from "./constants.js";
+import { MODULE_ID, RARITY_CLASS_PREFIX } from "./constants.js";
+import { UNIDENTIFIED_STYLE_KEY } from "./unidentifiedStyle.js";
 import { normalizeColorWithFallback as normalizeColor } from "./colorUtils.js";
 import { getMergedRarityEntries, normalizeRarityKey } from "./rarityListConfig.js";
 import { buildRaritySettings } from "./settingsManager.js";
+import { resolveEffectColor } from "./itemEffects.js";
 import { ActorInventoryRuntimeStyleStrategy } from "./runtimeStyleStrategies/ActorInventoryRuntimeStyleStrategy.js";
 import { ItemDirectoryRuntimeStyleStrategy } from "./runtimeStyleStrategies/ItemDirectoryRuntimeStyleStrategy.js";
 import { ItemSheetRuntimeStyleStrategy } from "./runtimeStyleStrategies/ItemSheetRuntimeStyleStrategy.js";
 
 const STYLE_ELEMENT_ID = "scirc-runtime-rarity-styles";
-const RARITY_CLASS_PREFIX = "scirc-rarity-";
 let _cachedCssText = null;
 
 export function invalidateRuntimeStylesCache() {
@@ -63,7 +64,10 @@ export function applyRarityClass(elementOrCollection, rarity) {
 }
 
 function buildRuntimeStyleText(moduleId = MODULE_ID) {
-  const entries = getMergedRarityEntries(moduleId, { includeHidden: true });
+  const entries = [
+    ...getMergedRarityEntries(moduleId, { includeHidden: true }),
+    { key: UNIDENTIFIED_STYLE_KEY },
+  ];
   const blocks = [];
 
   for (const entry of entries) {
@@ -80,6 +84,8 @@ function buildRuntimeStyleText(moduleId = MODULE_ID) {
     const sheetGold = normalizeColor(settings.goldAccentColor, "#9f9275");
     const sheetTableHeader = normalizeColor(settings.tableHeaderColor, "#491d25");
     const sheetTableHeaderText = normalizeColor(settings.tableHeaderTextColor, "#ffffff");
+    const effect = normalizeColor(resolveEffectColor(settings), "#ffd27a");
+    const particle = settings.enableParticleColor ? normalizeColor(settings.particleColor, "#ffffff") : null;
     const dirText = normalizeColor(settings.foundryInterfaceTextColor, "#000000");
     const inventoryTitle = normalizeColor(settings.inventoryTitleColor, "#000000");
     const inventoryDetails = normalizeColor(settings.inventoryDetailsColor, "#000000");
@@ -93,6 +99,8 @@ function buildRuntimeStyleText(moduleId = MODULE_ID) {
       sheetGold,
       sheetTableHeader,
       sheetTableHeaderText,
+      effect,
+      particle,
       directoryText: dirText,
       inventoryTitle,
       inventoryDetails,

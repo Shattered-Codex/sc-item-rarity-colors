@@ -8,9 +8,18 @@ import {
   normalizeRarityKey,
 } from "../core/rarityListConfig.js";
 import { buildRarityFieldSettingName, getRarityFieldDefinitions } from "../core/rarityFieldSchema.js";
-import { getDefaultSpellSchoolStylesSetting, SPELL_SCHOOL_STYLES_SETTING_KEY } from "../core/spellSchoolConfig.js";
+import {
+  getDefaultSpellSchoolStylesSetting,
+  invalidateSpellStyleCache,
+  SPELL_SCHOOL_STYLES_SETTING_KEY,
+} from "../core/spellSchoolConfig.js";
 import { SUPPORT_CARD_VERSION_SETTING_KEY } from "../core/constants.js";
 import { ModuleSettingsCatalog } from "./ModuleSettingsCatalog.js";
+import {
+  UNIDENTIFIED_STYLE_DEFAULTS,
+  UNIDENTIFIED_STYLE_KEY,
+  UNIDENTIFIED_STYLE_LABEL,
+} from "../core/unidentifiedStyle.js";
 
 // Register settings for item rarity colors.
 function registerColorSetting(moduleId, key, name, defaultValue) {
@@ -37,7 +46,7 @@ function registerBooleanSetting(moduleId, key, name, defaultValue) {
 }
 
 // Register object settings.
-function registerObjectSetting(moduleId, key, name, defaultValue) {
+function registerObjectSetting(moduleId, key, name, defaultValue, onChange = undefined) {
   if (game.settings.settings.has(`${moduleId}.${key}`)) return;
   game.settings.register(moduleId, key, {
     name,
@@ -45,6 +54,7 @@ function registerObjectSetting(moduleId, key, name, defaultValue) {
     config: false,
     type: Object,
     default: defaultValue,
+    onChange,
   });
 }
 
@@ -67,13 +77,16 @@ function registerSupportCardVersionSetting(moduleId) {
   });
 }
 
-function registerRaritySettings(moduleId, rarityKey, rarityLabel) {
+function registerRaritySettings(moduleId, rarityKey, rarityLabel, defaultOverrides = {}) {
   const key = normalizeRarityKey(rarityKey);
   if (!key) return;
 
   const title = rarityLabel || humanizeRarityLabel(key);
 
-  for (const field of getRarityFieldDefinitions(key)) {
+  for (const baseField of getRarityFieldDefinitions(key)) {
+    const field = Object.hasOwn(defaultOverrides, baseField.key)
+      ? { ...baseField, defaultValue: defaultOverrides[baseField.key] }
+      : baseField;
     const settingKey = `${key}-${field.key}`;
     const settingName = buildRarityFieldSettingName(title, field);
 
@@ -96,7 +109,17 @@ function registerRaritySettings(moduleId, rarityKey, rarityLabel) {
 }
 
 export function ensureRaritySettingsRegistered(moduleId, rarityKey, rarityLabel = null) {
+  if (normalizeRarityKey(rarityKey) === UNIDENTIFIED_STYLE_KEY) {
+    registerUnidentifiedStyleSettings(moduleId);
+    return;
+  }
   registerRaritySettings(moduleId, rarityKey, rarityLabel);
+}
+
+// The unidentified style is stored like a rarity, under a reserved key, with
+// its own starting look instead of the field defaults.
+function registerUnidentifiedStyleSettings(moduleId) {
+  registerRaritySettings(moduleId, UNIDENTIFIED_STYLE_KEY, UNIDENTIFIED_STYLE_LABEL, UNIDENTIFIED_STYLE_DEFAULTS);
 }
 
 // Main function to register all module settings.
@@ -128,12 +151,15 @@ export function registerModuleSettings(MODULE_ID) {
   for (const entry of mergedRarities) {
     registerRaritySettings(MODULE_ID, entry.key, entry.label);
   }
+  registerUnidentifiedStyleSettings(MODULE_ID);
 
   registerObjectSetting(
     MODULE_ID,
     SPELL_SCHOOL_STYLES_SETTING_KEY,
     "Spell School Style Configuration",
-    getDefaultSpellSchoolStylesSetting()
+    getDefaultSpellSchoolStylesSetting(),
+    // Synchronous on every client, ahead of any re-render.
+    () => invalidateSpellStyleCache()
   );
 
   registerCatalogSettings(MODULE_ID);

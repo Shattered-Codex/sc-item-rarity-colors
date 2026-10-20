@@ -1,25 +1,37 @@
 /* Tidy 5e background area "sidebar" / "whole sheet" (per rarity): the item
-   sheet colors tint Tidy's sidebar. The color is a layer between the sidebar's
-   own textured background and its content, so the texture shows through. */
+   sheet colors tint Tidy's sidebar without hiding its texture. Two layers
+   between the sidebar's own background and its content: ::before takes only
+   the hue and saturation of the color (blend mode "color"), so the texture's
+   light and shade stay; ::after adds a light wash of the color itself. */
 .tidy5e-sheet.scirc-tidy-sidebar-bg .window-content aside.sidebar {
   position: relative;
   isolation: isolate;
+  --scirc-tidy-tint: var(--scirc-item-sheet-bg-primary, #ffffff);
 }
 
-.tidy5e-sheet.scirc-tidy-sidebar-bg .window-content aside.sidebar::before {
+.tidy5e-sheet.scirc-tidy-sidebar-bg.scirc-item-sheet-bg-gradient-enabled .window-content aside.sidebar {
+  --scirc-tidy-tint: linear-gradient(to bottom,
+      var(--scirc-item-sheet-bg-primary, #ffffff),
+      var(--scirc-item-sheet-bg-secondary, var(--scirc-item-sheet-bg-primary, #ffffff)));
+}
+
+.tidy5e-sheet.scirc-tidy-sidebar-bg .window-content aside.sidebar::before,
+.tidy5e-sheet.scirc-tidy-sidebar-bg .window-content aside.sidebar::after {
   content: "";
   position: absolute;
   inset: 0;
   z-index: -1;
-  background: var(--scirc-item-sheet-bg-primary, #ffffff);
-  opacity: 0.78;
+  background: var(--scirc-tidy-tint);
   pointer-events: none;
 }
 
-.tidy5e-sheet.scirc-tidy-sidebar-bg.scirc-item-sheet-bg-gradient-enabled .window-content aside.sidebar::before {
-  background: linear-gradient(to bottom,
-      var(--scirc-item-sheet-bg-primary, #ffffff),
-      var(--scirc-item-sheet-bg-secondary, var(--scirc-item-sheet-bg-primary, #ffffff)));
+.tidy5e-sheet.scirc-tidy-sidebar-bg .window-content aside.sidebar::before {
+  mix-blend-mode: color;
+  opacity: 0.75;
+}
+
+.tidy5e-sheet.scirc-tidy-sidebar-bg .window-content aside.sidebar::after {
+  opacity: 0.12;
 }
 
 /* Once the sheet scrolls, Tidy turns the window header into a solid bar: the
@@ -36,14 +48,18 @@
       var(--scirc-item-sheet-bg-secondary, var(--scirc-item-sheet-bg-primary, #ffffff))) !important;
 }
 
-/* The strip over the sidebar keeps Tidy's texture with the tint layered on
-   top, like the sidebar itself (top of a gradient = primary color). */
+/* The strip over the sidebar keeps Tidy's texture with the same tint as the
+   sidebar itself (top of a gradient = primary color). */
 .tidy5e-sheet.scirc-tidy-sidebar-bg > .window-header.scroll-marker-off-screen .header-over-sidebar {
   background:
     linear-gradient(
-      color-mix(in srgb, var(--scirc-item-sheet-bg-primary, #ffffff) 78%, transparent),
-      color-mix(in srgb, var(--scirc-item-sheet-bg-primary, #ffffff) 78%, transparent)),
+      color-mix(in srgb, var(--scirc-item-sheet-bg-primary, #ffffff) 12%, transparent),
+      color-mix(in srgb, var(--scirc-item-sheet-bg-primary, #ffffff) 12%, transparent)),
+    linear-gradient(
+      color-mix(in srgb, var(--scirc-item-sheet-bg-primary, #ffffff) 75%, transparent),
+      color-mix(in srgb, var(--scirc-item-sheet-bg-primary, #ffffff) 75%, transparent)),
     var(--sidebar-bg) !important;
+  background-blend-mode: normal, color, normal, normal !important;
 }
 
 /* Gold accent (per rarity / spell school): Tidy's gold palette, window

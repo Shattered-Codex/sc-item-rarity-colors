@@ -83,15 +83,23 @@
                   <span class="scirc-config-row__hint">{{ this.hint }}</span>
                 </span>
                 <span class="scirc-config-row__control">
-                  <span class="scirc-check">
-                    <input
-                      type="checkbox"
-                      name="{{ this.key }}"
-                      {{#if this.checked}}checked{{/if}}
-                      data-default-checked="{{ this.defaultChecked }}"
-                    />
-                    <span class="scirc-check__box"><i class="fas fa-check" aria-hidden="true"></i></span>
-                  </span>
+                  {{#if this.isSelect}}
+                    <select name="{{ this.key }}" class="scirc-select scirc-config-row__select" data-default-value="{{ this.defaultValue }}">
+                      {{#each this.options}}
+                        <option value="{{ this.value }}" {{#if this.selected}}selected{{/if}}>{{ this.label }}</option>
+                      {{/each}}
+                    </select>
+                  {{else}}
+                    <span class="scirc-check">
+                      <input
+                        type="checkbox"
+                        name="{{ this.key }}"
+                        {{#if this.checked}}checked{{/if}}
+                        data-default-checked="{{ this.defaultChecked }}"
+                      />
+                      <span class="scirc-check__box"><i class="fas fa-check" aria-hidden="true"></i></span>
+                    </span>
+                  {{/if}}
                 </span>
               </label>
             {{/each}}

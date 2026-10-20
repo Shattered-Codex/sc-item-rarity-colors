@@ -8,6 +8,24 @@ import { updateColorPickerVisibility } from "../ui/visibilityManager.js";
 const { ApplicationV2, HandlebarsApplicationMixin, DialogV2 } = foundry.applications.api;
 
 const SECTION_ORDER = Object.freeze(["item-sheet", "actor-sheet", "foundry-interface"]);
+// The Effects tab groups rows by what they do rather than where they show; a
+// field opts in with `section` (see rarityFieldSchema.js).
+const EFFECT_SECTIONS = Object.freeze([
+  Object.freeze({ id: "general", title: "Effects", hint: "Color, placement, intensity, and speed for every effect below." }),
+  Object.freeze({ id: "aura", title: "Light & aura", hint: "" }),
+  Object.freeze({ id: "particles", title: "Particles", hint: "" }),
+  Object.freeze({ id: "icons", title: "Inventory & sidebar icons", hint: "" }),
+]);
+// The form column is split into tabs; a row's `panel` comes from its schema.
+const FIELD_PANELS = Object.freeze([
+  Object.freeze({ id: "colors", label: "Colors", icon: "fas fa-palette", hint: "" }),
+  Object.freeze({
+    id: "effects",
+    label: "Effects",
+    icon: "fas fa-wand-sparkles",
+    hint: "Animated effects. Each user can turn them off in Module Settings → Animations, and they stop when the system asks to reduce motion.",
+  }),
+]);
 const TIDY_MODULE_ID = "tidy5e-sheet";
 const PREVIEW_VARIANTS = Object.freeze(["dnd5e", "tidy5e"]);
 const PREVIEW_VARIANT_STORAGE_KEY = `${MODULE_ID}.previewVariant`;
@@ -32,6 +50,7 @@ export class StyleEditorApp extends HandlebarsApplicationMixin(ApplicationV2) {
   #saved = false;
   #railScrollTop = 0;
   #previewVariant = null;
+  #fieldPanel = "colors";
   #previewObserver = null;
 
   /** Section headings, keyed by field group. */
@@ -73,6 +92,7 @@ export class StyleEditorApp extends HandlebarsApplicationMixin(ApplicationV2) {
       importConfig: StyleEditorApp.#onImportConfig,
       closeEditor: StyleEditorApp.#onCloseEditor,
       setPreviewVariant: StyleEditorApp.#onSetPreviewVariant,
+      setFieldPanel: StyleEditorApp.#onSetFieldPanel,
     },
   };
 
@@ -86,7 +106,10 @@ export class StyleEditorApp extends HandlebarsApplicationMixin(ApplicationV2) {
   // Subclass hooks
   // ---------------------------------------------------------------------------
 
-  /** @returns {{key: string, label: string}[]} rail entries, in display order */
+  /**
+   * @returns {{key: string, label: string, dividerBefore?: boolean}[]} rail
+   *   entries, in display order; `dividerBefore` draws a separator above one
+   */
   _getEntries() { return []; }
 
   _getSelectedEntryKey() { return null; }
@@ -95,7 +118,8 @@ export class StyleEditorApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
   /**
    * @returns {object} entryTitle, entryHint, railTitle, themeOptions,
-   *   themeTooltip, sections, and optionally levelControls
+   *   themeTooltip, panels (from _buildFieldPanels), and optionally
+   *   levelControls
    */
   _prepareEditorContext() { return {}; }
 
@@ -104,7 +128,11 @@ export class StyleEditorApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
   _isEntryDirty(_key) { return false; }
 
-  _hasUnsavedChanges() { return false; }
+  /**
+   * @param {Map<string, boolean>} [knownEntryDirty] per-entry results already
+   *   computed by the caller, so a refresh does not compare each entry twice.
+   */
+  _hasUnsavedChanges(_knownEntryDirty) { return false; }
 
   /** Field values used to paint an entry's rail swatch. */
   _getEntryValues(_key) { return null; }
@@ -150,6 +178,7 @@ export class StyleEditorApp extends HandlebarsApplicationMixin(ApplicationV2) {
     const entries = this._getEntries().map((entry) => ({
       key: entry.key,
       label: entry.label,
+      dividerBefore: entry.dividerBefore === true,
       active: entry.key === selected,
       dirty: this._isEntryDirty(entry.key),
       swatch: StyleEditorApp.swatchFor(this._getEntryValues(entry.key)),
@@ -226,7 +255,12 @@ export class StyleEditorApp extends HandlebarsApplicationMixin(ApplicationV2) {
    * Builds the form rows: one row per checkbox, with the color it enables
    * placed inline, grouped into the sections the template renders.
    */
-  _buildFieldSections(allFieldDefinitions, values, namePrefix) {
+  /**
+   * Builds the form: one panel per field tab (Colors, Effects), each split
+   * into the sheet / inventory / sidebar sections, with each color or style
+   * placed inline on the row of the checkbox that enables it.
+   */
+  _buildFieldPanels(allFieldDefinitions, values, namePrefix) {
     // Fields tied to a module (the Tidy 5e area) only show while it is active;
     // their stored values are left untouched either way.
     const fieldDefinitions = allFieldDefinitions.filter((field) =>
@@ -254,19 +288,37 @@ export class StyleEditorApp extends HandlebarsApplicationMixin(ApplicationV2) {
     };
 
     const titles = this.constructor.SECTION_TITLES;
-    return SECTION_ORDER.map((group) => ({
-      id: group,
-      title: titles[group] ?? group,
-      rows: fieldDefinitions
-        .filter((field) => (field.group || "item-sheet") === group)
-        .filter((field) => !(field.inlineWith && keys.has(field.inlineWith)))
-        .map((field) => ({
-          nested: field.nested === true,
-          hint: field.uiHint ?? "",
-          field: toContext(field),
-          inline: inlineByHost.has(field.key) ? toContext(inlineByHost.get(field.key)) : null,
-        })),
-    })).filter((section) => section.rows.length > 0);
+    const rowFields = fieldDefinitions.filter((field) => !(field.inlineWith && keys.has(field.inlineWith)));
+    const activePanel = this.#fieldPanel;
+
+    const toRow = (field) => ({
+      nested: field.nested === true,
+      hint: field.uiHint ?? "",
+      field: toContext(field),
+      inline: inlineByHost.has(field.key) ? toContext(inlineByHost.get(field.key)) : null,
+    });
+    // Sections come from the field's `section` when it has one, else from
+    // where it shows (item sheet / inventory / sidebar).
+    const sectionsFor = (panelFields) => {
+      const bySection = panelFields.some((field) => field.section)
+        ? EFFECT_SECTIONS.map((section) => ({
+          ...section,
+          rows: panelFields.filter((field) => field.section === section.id).map(toRow),
+        }))
+        : SECTION_ORDER.map((group) => ({
+          id: group,
+          title: titles[group] ?? group,
+          hint: "",
+          rows: panelFields.filter((field) => (field.group || "item-sheet") === group).map(toRow),
+        }));
+      return bySection.filter((section) => section.rows.length > 0);
+    };
+
+    return FIELD_PANELS.map((panel) => ({
+      ...panel,
+      active: panel.id === activePanel,
+      sections: sectionsFor(rowFields.filter((field) => (field.panel ?? "colors") === panel.id)),
+    }));
   }
 
   _normalizeFieldValue(field, value) {
@@ -370,10 +422,12 @@ export class StyleEditorApp extends HandlebarsApplicationMixin(ApplicationV2) {
     const root = this.element;
     if (!root) return;
 
+    const entryDirty = new Map();
     for (const item of root.querySelectorAll("[data-entry-key]")) {
       const key = item.dataset.entryKey;
+      entryDirty.set(key, this._isEntryDirty(key));
       const dot = item.querySelector("[data-entry-dot]");
-      if (dot) dot.hidden = !this._isEntryDirty(key);
+      if (dot) dot.hidden = !entryDirty.get(key);
 
       const swatch = item.querySelector("[data-entry-swatch]");
       if (swatch) {
@@ -383,7 +437,7 @@ export class StyleEditorApp extends HandlebarsApplicationMixin(ApplicationV2) {
       }
     }
 
-    const dirty = this._hasUnsavedChanges();
+    const dirty = this._hasUnsavedChanges(entryDirty);
     if (dirty) this.#saved = false;
     root.querySelector("[data-save-button]")?.classList.toggle("is-dirty", dirty);
 
@@ -578,6 +632,23 @@ export class StyleEditorApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
   static #onCloseEditor() {
     void this.close();
+  }
+
+  /** Switches the form tab in place; a re-render would lose the scroll. */
+  static #onSetFieldPanel(_event, target) {
+    const panel = target?.dataset?.panel;
+    if (!FIELD_PANELS.some((entry) => entry.id === panel)) return;
+    this.#fieldPanel = panel;
+    const root = this.element;
+    for (const element of root?.querySelectorAll?.("[data-field-panel]") ?? []) {
+      element.hidden = element.dataset.fieldPanel !== panel;
+    }
+    for (const button of root?.querySelectorAll?.('[data-action="setFieldPanel"]') ?? []) {
+      const active = button.dataset.panel === panel;
+      button.classList.toggle("is-active", active);
+      button.setAttribute("aria-selected", active ? "true" : "false");
+    }
+    root?.querySelector?.(".scirc-style-editor__fields")?.scrollTo?.({ top: 0 });
   }
 
   static #onSetPreviewVariant(_event, target) {

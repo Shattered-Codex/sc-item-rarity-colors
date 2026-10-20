@@ -480,6 +480,11 @@
   font-size: 11.5px;
 }
 
+.scirc-config .scirc-config-row__select {
+  width: 230px;
+  max-width: 100%;
+}
+
 /* === Checkbox ============================================================= */
 
 .scirc-config .scirc-check {

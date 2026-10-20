@@ -1,5 +1,6 @@
 import { RARITY_TIERS } from "./constants.js";
 import { getRarityFieldDefinitions } from "./rarityFieldSchema.js";
+import { buildThemeAccentFields } from "./themeAccents.js";
 
 export const CUSTOM_ITEM_RARITY_THEME_ID = "custom";
 
@@ -28,9 +29,14 @@ function deepClone(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
+// Layout choices, not colors: a theme neither sets nor compares them, so
+// applying one keeps e.g. the Tidy 5e area the GM picked.
+const NON_THEME_FIELD_KEYS = new Set(["tidy-background-area", "effect-placement"]);
+
 function buildBaseFieldValues(rarity) {
   const values = {};
   for (const field of getRarityFieldDefinitions(rarity)) {
+    if (NON_THEME_FIELD_KEYS.has(field.key)) continue;
     values[field.key] = field.defaultValue;
   }
   return values;
@@ -47,9 +53,14 @@ function buildThemeRarityValues(rarity, {
   inventoryTitleColor = text,
   inventoryDetailsColor = text,
   foundryTextColor = text,
+  accents = {},
 } = {}) {
   return {
     ...buildBaseFieldValues(rarity),
+    // Gold accent and table header colors derived from this tier's palette;
+    // `accents` overrides any of them for a hand-tuned tier.
+    ...buildThemeAccentFields({ primary, secondary, gradient }),
+    ...accents,
     "enable-item-color": true,
     "item-color": primary,
     "secondary-item-color": secondary,
@@ -69,12 +80,54 @@ function buildThemeRarityValues(rarity, {
   };
 }
 
+// Suggested effects: only the top tiers animate, in a style matching the
+// theme (particles for Legendary; runic circle, aura, and waves for Artifact).
+const PRESET_PARTICLE_STYLES = Object.freeze({
+  "eldritch-vault": "arcane",
+  "forged-in-fire": "embers",
+  "arcane-convergence": "arcane",
+  "verdant-alchemy": "arcane",
+  "chromatic-surge": "arcane",
+  "neon-royal": "arcane",
+});
+const PRESET_AURA_STYLES = Object.freeze({
+  "eldritch-vault": "halo",
+  "forged-in-fire": "pulse",
+  "celestial-bloom": "halo",
+});
+
+function withSuggestedEffects(presetId, rarities) {
+  const particlesStyle = PRESET_PARTICLE_STYLES[presetId] ?? "stardust";
+  const auraStyle = PRESET_AURA_STYLES[presetId] ?? "energy";
+  const result = { ...rarities };
+
+  if (result[RARITY_TIERS.LEGENDARY]) {
+    result[RARITY_TIERS.LEGENDARY] = {
+      ...result[RARITY_TIERS.LEGENDARY],
+      "shimmer-option": true,
+      "particles-option": true,
+      "particles-style": particlesStyle,
+    };
+  }
+  if (result[RARITY_TIERS.ARTIFACT]) {
+    result[RARITY_TIERS.ARTIFACT] = {
+      ...result[RARITY_TIERS.ARTIFACT],
+      "shimmer-option": true,
+      "runes-option": true,
+      "aura-option": true,
+      "aura-style": auraStyle,
+      "waves-option": true,
+    };
+  }
+  return result;
+}
+
 function definePreset(id, label, description, rarities) {
   return Object.freeze({
     id,
     label,
     description,
-    rarities: Object.freeze(rarities),
+    rarities: Object.freeze(withSuggestedEffects(id, rarities)),
   });
 }
 

@@ -21,6 +21,14 @@
   </span>
 {{/inline}}
 
+{{#*inline "selectControl"}}
+  <select id="{{field.name}}" name="{{field.name}}" class="scirc-select scirc-select--compact" aria-label="{{field.label}}">
+    {{#each field.options}}
+      <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
+    {{/each}}
+  </select>
+{{/inline}}
+
 <section class="scirc-config scirc-style-editor" data-application-part="body">
   <div class="scirc-config__body scirc-style-editor__body">
     <aside class="scirc-config__rail scirc-style-rail">
@@ -49,6 +57,7 @@
       <h3 class="scirc-style-rail__title">{{railTitle}}</h3>
       <nav class="scirc-style-rail__list" data-style-rail aria-label="{{railTitle}}">
         {{#each entries}}
+          {{#if this.dividerBefore}}<span class="scirc-style-rail__divider" aria-hidden="true"></span>{{/if}}
           <button
             type="button"
             class="scirc-config__tab scirc-style-rail__item{{#if this.active}} is-active{{/if}}"
@@ -112,35 +121,58 @@
         </section>
 
         <section class="scirc-style-editor__fields">
-          {{#each sections}}
-            <h3 class="scirc-config__section-title">{{this.title}}</h3>
-            <div class="scirc-style-rows">
-              {{#each this.rows}}
-                <div class="scirc-style-row{{#if this.nested}} is-nested{{/if}}" data-field-group>
-                  {{#if this.field.isCheckbox}}
-                    <label class="scirc-style-row__toggle" {{#if this.hint}}data-tooltip="{{this.hint}}"{{/if}}>
-                      <span class="scirc-check">
-                        <input type="checkbox" id="{{this.field.name}}" name="{{this.field.name}}" {{#if this.field.value}}checked{{/if}} />
-                        <span class="scirc-check__box"><i class="fas fa-check" aria-hidden="true"></i></span>
-                      </span>
-                      <span class="scirc-style-row__label">{{this.field.label}}</span>
-                    </label>
-                  {{else if this.field.isSelect}}
-                    <label class="scirc-style-row__label" for="{{this.field.name}}" {{#if this.hint}}data-tooltip="{{this.hint}}"{{/if}}>{{this.field.label}}</label>
-                    <select id="{{this.field.name}}" name="{{this.field.name}}" class="scirc-select scirc-select--compact">
-                      {{#each this.field.options}}
-                        <option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>
-                      {{/each}}
-                    </select>
-                  {{else}}
-                    <span class="scirc-style-row__label">{{this.field.label}}</span>
-                    {{> colorControl field=this.field}}
-                  {{/if}}
-                  {{#if this.inline}}
-                    <span class="scirc-style-row__inline" data-field-group>
-                      {{> colorControl field=this.inline}}
-                    </span>
-                  {{/if}}
+          <div class="scirc-style-editor__panel-tabs">
+            <div class="scirc-segmented" role="tablist" aria-label="Settings group">
+              {{#each panels}}
+                <button
+                  type="button"
+                  role="tab"
+                  class="scirc-segmented__option{{#if this.active}} is-active{{/if}}"
+                  data-action="setFieldPanel"
+                  data-panel="{{this.id}}"
+                  aria-selected="{{#if this.active}}true{{else}}false{{/if}}"
+                >
+                  <i class="{{this.icon}}" aria-hidden="true"></i> {{this.label}}
+                </button>
+              {{/each}}
+            </div>
+          </div>
+
+          {{#each panels}}
+            <div class="scirc-style-editor__panel" data-field-panel="{{this.id}}" role="tabpanel" {{#unless this.active}}hidden{{/unless}}>
+              {{#if this.hint}}<p class="scirc-style-editor__panel-hint">{{this.hint}}</p>{{/if}}
+              {{#each this.sections}}
+                <h3 class="scirc-config__section-title">{{this.title}}</h3>
+                {{#if this.hint}}<p class="scirc-style-editor__section-hint">{{this.hint}}</p>{{/if}}
+                <div class="scirc-style-rows">
+                  {{#each this.rows}}
+                    <div class="scirc-style-row{{#if this.nested}} is-nested{{/if}}" data-field-group>
+                      {{#if this.field.isCheckbox}}
+                        <label class="scirc-style-row__toggle" {{#if this.hint}}data-tooltip="{{this.hint}}"{{/if}}>
+                          <span class="scirc-check">
+                            <input type="checkbox" id="{{this.field.name}}" name="{{this.field.name}}" {{#if this.field.value}}checked{{/if}} />
+                            <span class="scirc-check__box"><i class="fas fa-check" aria-hidden="true"></i></span>
+                          </span>
+                          <span class="scirc-style-row__label">{{this.field.label}}</span>
+                        </label>
+                      {{else if this.field.isSelect}}
+                        <label class="scirc-style-row__label" for="{{this.field.name}}" {{#if this.hint}}data-tooltip="{{this.hint}}"{{/if}}>{{this.field.label}}</label>
+                        {{> selectControl field=this.field}}
+                      {{else}}
+                        <span class="scirc-style-row__label">{{this.field.label}}</span>
+                        {{> colorControl field=this.field}}
+                      {{/if}}
+                      {{#if this.inline}}
+                        <span class="scirc-style-row__inline" data-field-group>
+                          {{#if this.inline.isSelect}}
+                            {{> selectControl field=this.inline}}
+                          {{else}}
+                            {{> colorControl field=this.inline}}
+                          {{/if}}
+                        </span>
+                      {{/if}}
+                    </div>
+                  {{/each}}
                 </div>
               {{/each}}
             </div>

@@ -13,8 +13,9 @@ import {
 } from "../../core/styleAppliers.js";
 import { raritySupportsBorderGlow, raritySupportsBorderGradient } from "../../core/rarityConfig.js";
 import { buildRaritySettings } from "../../core/settingsManager.js";
-import { getItemRarity } from "../../scripts/itemRarityHelper.js";
+import { getDisplayRarity } from "../../scripts/itemRarityHelper.js";
 import { getActiveSpellStyleForItem } from "../../scripts/spellSchoolHelper.js";
+import { applyIconEmanation, applyIconPulse, clearIconEmanation } from "../../core/itemEffects.js";
 
 /**
  * Base Sheet Strategy
@@ -153,6 +154,11 @@ export class BaseSheetStrategy {
       clearInventoryBorder($borderElement);
     }
 
+    // Icon pulse (Effects tab). The rarity class carries its color at runtime.
+    if (settings.enableInventoryIconPulse && rarity) applyRarityClass($borderElement, rarity);
+    applyIconPulse($borderElement, settings, { preview });
+    applyIconEmanation($borderElement.get(), settings.enableInventoryIconEmanation === true, settings);
+
     if (settings.enableInventoryTitleColor && settings.inventoryTitleColor) {
       applyTitleColor($itemElement, settings.inventoryTitleColor, titleSelectors, { preview });
     } else {
@@ -189,7 +195,10 @@ export class BaseSheetStrategy {
 
     const spellStyle = getActiveSpellStyleForItem(item, moduleId);
     if (spellStyle) {
+      // Spell styles color the row inline; drop any rarity class left on the
+      // row or its icon by an earlier render.
       clearRarityClasses($itemElement);
+      clearRarityClasses($borderElement);
       $itemElement.addClass("scirc-managed-item-row");
 
       const summary = this._applyResolvedStyles(
@@ -215,13 +224,18 @@ export class BaseSheetStrategy {
       return;
     }
 
-    const rarity = getItemRarity(item);
+    const rarity = getDisplayRarity(item);
     if (!rarity) {
       clearRarityClasses($itemElement);
       clearInventoryGradient($gradientElement);
       clearInventoryBorder($borderElement);
       clearTitleColor($itemElement, titleSelectors);
       clearDetailsColor($itemElement, detailsSelectors);
+      clearIconEmanation($itemElement[0]);
+      // The icon keeps its element across renders: stop its pulse and drop the
+      // rarity class that colored it (and its border).
+      applyIconPulse($borderElement, {});
+      clearRarityClasses($borderElement);
       $itemElement.removeClass("scirc-managed-item-row");
       debugLog("Actor item styles cleared (no rarity)", {
         strategy: this.constructor.name,

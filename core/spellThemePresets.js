@@ -1,4 +1,5 @@
 import { getRarityFieldDefinitions } from "./rarityFieldSchema.js";
+import { buildThemeAccentFields } from "./themeAccents.js";
 import {
   buildSpellProfileKey,
   getSpellLevelEntries,
@@ -59,9 +60,13 @@ function mixColors(colorA, colorB, ratio = 0.5) {
   });
 }
 
+// Layout choices, not colors: a theme neither sets nor compares them.
+const NON_THEME_FIELD_KEYS = new Set(["tidy-background-area", "effect-placement"]);
+
 function buildBaseSpellFieldValues() {
   const values = {};
   for (const field of getRarityFieldDefinitions("spell")) {
+    if (NON_THEME_FIELD_KEYS.has(field.key)) continue;
     values[field.key] = field.defaultValue;
   }
   return values;
@@ -83,6 +88,7 @@ function buildSpellThemeFieldValues({
   const defaults = buildBaseSpellFieldValues();
   return {
     ...defaults,
+    ...buildThemeAccentFields({ primary, secondary, gradient }),
     "enable-item-color": true,
     "item-color": primary,
     "secondary-item-color": secondary,
@@ -145,7 +151,33 @@ function resolveSpellTextColor(palette, level, config) {
   return mixColors(baseText, textTarget, textMixRatio);
 }
 
-function buildProfileFromPalette(palette, level) {
+// Suggested effects grow with spell level: shimmer from 5th, particles in
+// the school's style from 7th, an energy aura and waves at 9th. Cantrips to
+// 4th stay still.
+const SCHOOL_PARTICLE_STYLES = Object.freeze({
+  abj: "frost",
+  con: "arcane",
+  div: "stardust",
+  enc: "arcane",
+  evo: "embers",
+  ill: "stardust",
+  nec: "shadow",
+  trs: "arcane",
+});
+
+function suggestedSpellEffects(schoolKey, level) {
+  const numeric = Number(level) || 0;
+  return {
+    "shimmer-option": numeric >= 5,
+    "particles-option": numeric >= 7,
+    "particles-style": SCHOOL_PARTICLE_STYLES[schoolKey] ?? "arcane",
+    "aura-option": numeric >= 9,
+    "aura-style": "energy",
+    "waves-option": numeric >= 9,
+  };
+}
+
+function buildProfileFromPalette(palette, level, schoolKey = null) {
   const config = levelVisualConfig(level);
   const primary = mixColors(palette.primary, "#0B0F18", config.darkMix);
   const secondary = mixColors(palette.secondary, "#FFFFFF", config.lightMix);
@@ -154,7 +186,7 @@ function buildProfileFromPalette(palette, level) {
   const inventoryTitle = String(palette.inventoryTitle || text).toUpperCase();
   const inventoryDetails = String(palette.inventoryDetails || text).toUpperCase();
 
-  return buildSpellThemeFieldValues({
+  const values = buildSpellThemeFieldValues({
     primary,
     secondary,
     text,
@@ -167,6 +199,7 @@ function buildProfileFromPalette(palette, level) {
     foundryGradient: true,
     details: true,
   });
+  return { ...values, ...suggestedSpellEffects(schoolKey, level) };
 }
 
 function defineSpellPreset(id, label, description, schools) {
@@ -391,13 +424,13 @@ function buildPresetProfiles(preset, schools = getSpellSchoolEntries(), levels =
 
     const schoolProfileKey = buildSpellProfileKey(school.key, null, false);
     if (schoolProfileKey) {
-      profiles[schoolProfileKey] = buildProfileFromPalette(palette, 3);
+      profiles[schoolProfileKey] = buildProfileFromPalette(palette, 3, school.key);
     }
 
     for (const level of levels) {
       const levelProfileKey = buildSpellProfileKey(school.key, level, true);
       if (!levelProfileKey) continue;
-      profiles[levelProfileKey] = buildProfileFromPalette(palette, level);
+      profiles[levelProfileKey] = buildProfileFromPalette(palette, level, school.key);
     }
   }
 
@@ -483,6 +516,7 @@ export function doesDraftMatchSpellThemePreset(draftProfiles, themeId, {
     if (!draftFields || typeof draftFields !== "object") return false;
 
     for (const field of fields) {
+      if (!(field.key in expectedFields)) continue;
       const expectedValue = normalizeSpellThemeFieldValue(field, expectedFields[field.key]);
       const draftValue = normalizeSpellThemeFieldValue(field, draftFields[field.key]);
       if (expectedValue !== draftValue) {

@@ -1,4 +1,6 @@
 import { normalizeRarityKey } from "../core/rarityListConfig.js";
+import { shouldUseUnidentifiedStyle, UNIDENTIFIED_STYLE_KEY } from "../core/unidentifiedStyle.js";
+import { applySheetEffects, clearSheetEffects, resolveEffectColor } from "../core/itemEffects.js";
 import { applyInventoryBorder, clearInventoryBorder } from "../core/styleAppliers.js";
 import { getItemSheetTextStyleStrategyForElement } from "../sheets/itemSheetTextStrategies.js";
 import { applyRarityClass, clearRarityClasses } from "../core/runtimeRarityStyles.js";
@@ -74,6 +76,19 @@ export function getItemRarity(item) {
 }
 
 /**
+ * The rarity whose style this user should see on `item`: the unidentified
+ * style when the item is unidentified for them (see Module Settings), else
+ * the item's own rarity.
+ *
+ * @param {object} item - Item document or plain item-like object.
+ * @returns {string|null}
+ */
+export function getDisplayRarity(item) {
+  if (shouldUseUnidentifiedStyle(item)) return UNIDENTIFIED_STYLE_KEY;
+  return getItemRarity(item);
+}
+
+/**
  * Apply rarity styles (background, gradient, glow, and text color) to an HTML element.
  *
  * @param {HTMLElement|JQuery} element - Target element or jQuery wrapper.
@@ -145,11 +160,13 @@ export function applyRarityStyles(element, settings, options = {}) {
     $element.css(accent.variable, color && preview ? color : "");
   }
 
-  // Glow
-  if (settings.enableItemColor !== false && settings.glowEnabled) {
+  // Glow: independent of the background. Without a background it pulses in
+  // the effect color.
+  if (settings.glowEnabled) {
     $element.addClass(SHEET_GLOW_CLASS);
     if (preview) {
-      $element.css("--glow-primary", settings.backgroundColor);
+      const glowPrimary = settings.enableItemColor !== false ? settings.backgroundColor : resolveEffectColor(settings);
+      $element.css("--glow-primary", glowPrimary);
       $element.css("--glow-secondary", settings.gradientEnabled ? settings.gradientColor : "#000000");
     } else {
       $element.css("--glow-primary", "");
@@ -162,6 +179,9 @@ export function applyRarityStyles(element, settings, options = {}) {
     // Remove any glow animation classes
     $element.removeClass((_, className) => (className.match(BORDER_GLOW_CLASS_REGEX) || []).join(" "));
   }
+
+  // Animated effects (shimmer, particles, aura, runes).
+  $element.each((_, node) => applySheetEffects(node, settings, { preview }));
 }
 
 /**
@@ -189,6 +209,8 @@ export function removeRarityStyles(element, options = {}) {
     $element.removeClass(accent.className);
     $element.css(accent.variable, "");
   }
+
+  $element.each((_, node) => clearSheetEffects(node));
 
   // Remove glow class and related CSS variables
   $element.removeClass(SHEET_GLOW_CLASS);

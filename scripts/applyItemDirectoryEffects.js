@@ -3,7 +3,8 @@
  * Applies rarity-based visual effects to item rows in the world Items sidebar and item compendium listings.
  */
 
-import { getItemRarity } from "./itemRarityHelper.js";
+import { getDisplayRarity } from "./itemRarityHelper.js";
+import { applyIconEmanation } from "../core/itemEffects.js";
 import { getActiveSpellStyleForItem } from "./spellSchoolHelper.js";
 import { buildRaritySettings } from "../core/settingsManager.js";
 import { isModuleSettingChange, registerSettingChangeHooks } from "../core/settingChangeHelper.js";
@@ -33,6 +34,7 @@ const COMPENDIUM_INDEX_FIELDS = [
   "type",
   "system.rarity",
   "system.details.rarity",
+  "system.identified",
   "system.school",
   "system.level",
   "system.details.level",
@@ -110,6 +112,7 @@ function buildCompendiumIndexItemLike(entry, rowElement = null) {
   const rawRarity = getObjectValueByPath(entry, "system.rarity");
   const rawRarityValue = getObjectValueByPath(entry, "system.rarity.value");
   const detailsRarity = getObjectValueByPath(entry, "system.details.rarity");
+  const identified = getObjectValueByPath(entry, "system.identified");
   const rawSchool = getObjectValueByPath(entry, "system.school");
   const rawSchoolValue = getObjectValueByPath(entry, "system.school.value");
   const rawLevel = getObjectValueByPath(entry, "system.level");
@@ -135,6 +138,11 @@ function buildCompendiumIndexItemLike(entry, rowElement = null) {
     itemLike.system.details.rarity = detailsRarity;
   }
 
+  // Unidentified compendium entries get the unidentified style like any other.
+  if (identified === false) {
+    itemLike.system.identified = false;
+  }
+
   if (rawSchoolValue !== undefined) {
     itemLike.system.school = { value: rawSchoolValue };
   } else if (rawSchool !== undefined) {
@@ -150,7 +158,8 @@ function buildCompendiumIndexItemLike(entry, rowElement = null) {
     itemLike.system.details.level = detailsLevel;
   }
 
-  const hasRarityData = rawRarityValue !== undefined || rawRarity !== undefined || detailsRarity !== undefined;
+  const hasRarityData = rawRarityValue !== undefined || rawRarity !== undefined || detailsRarity !== undefined
+    || identified === false;
   const hasSpellData = type === "spell" || rawSchoolValue !== undefined || rawSchool !== undefined || rawLevel !== undefined || detailsLevel !== undefined;
   if (!hasRarityData && !hasSpellData) return null;
 
@@ -461,6 +470,16 @@ export function applyItemDirectoryEffects(moduleId) {
     return settings;
   };
 
+  // Icon emanation is reused across refreshes (re-creating it would restart
+  // its animation on every item update), so each path states whether it is on.
+  const syncThumbnailEmanation = (rowElement, settings) => {
+    applyIconEmanation(
+      rowElement.querySelectorAll("img.thumbnail"),
+      settings?.enableFoundryInterfaceIconEmanation === true,
+      settings ?? {}
+    );
+  };
+
   const applyStylesToDirectoryRow = (item, rowElement) => {
     if (!rowElement) return { applied: false, reason: "missing-row" };
 
@@ -487,6 +506,7 @@ export function applyItemDirectoryEffects(moduleId) {
         rowElement.classList.add("scirc-dir-text-enabled");
         rowElement.style.setProperty("--scirc-dir-text-color", spellSettings.foundryInterfaceTextColor);
       }
+      syncThumbnailEmanation(rowElement, spellSettings);
 
       return {
         applied: true,
@@ -497,8 +517,9 @@ export function applyItemDirectoryEffects(moduleId) {
       };
     }
 
-    const rarity = getItemRarity(item);
+    const rarity = getDisplayRarity(item);
     if (!rarity) {
+      syncThumbnailEmanation(rowElement, null);
       return {
         applied: false,
         reason: "missing-rarity",
@@ -507,6 +528,7 @@ export function applyItemDirectoryEffects(moduleId) {
 
     const settings = getCachedRaritySettings(rarity);
     if (!settings) {
+      syncThumbnailEmanation(rowElement, null);
       return {
         applied: false,
         reason: "missing-settings",
@@ -523,6 +545,8 @@ export function applyItemDirectoryEffects(moduleId) {
     if (settings.enableFoundryInterfaceTextColor && settings.foundryInterfaceTextColor) {
       rowElement.classList.add("scirc-dir-text-enabled");
     }
+
+    syncThumbnailEmanation(rowElement, settings);
 
     return {
       applied: true,
@@ -604,6 +628,7 @@ export function applyItemDirectoryEffects(moduleId) {
       const item = items[index];
       if (!item) {
         clearRowVisuals(rowElement);
+        syncThumbnailEmanation(rowElement, null);
         unresolvedCount += 1;
         return;
       }
@@ -715,11 +740,15 @@ export function applyItemDirectoryEffects(moduleId) {
       observeDirectoryRoot(root, app, { allowLooseRoot: true });
       runNowAndOnNextAnimationFrame(() => void applyStylesToItemDirectoryRoot(root, app));
     }
-    // Extra pass to catch delayed DOM injections in sidebar render cycle.
-    setTimeout(
-      () => requestRefresh("delayed-sidebar-dom-injection"),
-      REFRESH_DELAYS_MS.SIDEBAR_DOM_INJECTION
-    );
+    // When no directory list exists yet, the sidebar may still be injecting
+    // it, so look again shortly. Found roots are observed above, which
+    // already covers rows added later without repainting every directory.
+    if (!directoryRoots.length && !shouldUseLooseCompendiumRoot) {
+      setTimeout(
+        () => requestRefresh("delayed-sidebar-dom-injection"),
+        REFRESH_DELAYS_MS.SIDEBAR_DOM_INJECTION
+      );
+    }
   };
 
   Hooks.on("renderItemDirectory", (app, html) => {
@@ -792,18 +821,17 @@ export function applyItemDirectoryEffects(moduleId) {
     requestRefresh("settings-transaction-complete", REFRESH_DELAYS_MS.SETTINGS_CHANGE);
   });
 
-  Hooks.on("createItem", () => {
+  // Items owned by an actor never appear in the Items directory or a
+  // compendium list, and they change constantly in play (uses, quantities),
+  // so their events must not repaint every directory row.
+  const onDirectoryItemChange = (reason) => (item) => {
+    if (item?.parent) return;
     resolvedDocumentCache.clear();
-    requestRefresh("createItem");
-  });
-  Hooks.on("updateItem", () => {
-    resolvedDocumentCache.clear();
-    requestRefresh("updateItem");
-  });
-  Hooks.on("deleteItem", () => {
-    resolvedDocumentCache.clear();
-    requestRefresh("deleteItem");
-  });
+    requestRefresh(reason);
+  };
+  Hooks.on("createItem", onDirectoryItemChange("createItem"));
+  Hooks.on("updateItem", onDirectoryItemChange("updateItem"));
+  Hooks.on("deleteItem", onDirectoryItemChange("deleteItem"));
 
   debugLog("Item directory rarity hooks registered");
   requestRefresh("initialization");

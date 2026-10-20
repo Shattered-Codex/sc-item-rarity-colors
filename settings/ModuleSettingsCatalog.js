@@ -1,5 +1,7 @@
 import { SUPPORT_CARD_HIDE_SETTING_KEY } from "../core/constants.js";
 import { DEBUG_LOGS_SETTING_KEY } from "../core/debug.js";
+import { UNIDENTIFIED_VIEWERS, UNIDENTIFIED_VIEWERS_SETTING_KEY } from "../core/unidentifiedStyle.js";
+import { applyAnimatedEffectsPreference, DISABLE_EFFECTS_SETTING_KEY } from "../core/itemEffects.js";
 
 export const SETTING_SCOPES = Object.freeze({
   WORLD: "world",
@@ -19,8 +21,8 @@ export const SECTION_KINDS = Object.freeze({
  * Every option the module shows in its own settings window, grouped the way
  * the window renders them.
  *
- * Sections hold two kinds of rows: `fields` are boolean settings the window
- * reads and saves, and `actions` are tools that run immediately when clicked
+ * Sections hold two kinds of rows: `fields` are settings the window reads and
+ * saves (a checkbox, or a select when the field lists `choices`), and `actions` are tools that run immediately when clicked
  * (they write elsewhere), so they never mark a tab as dirty. A section of kind
  * `rarityList` hosts the rarity list editor instead, which the window renders
  * and saves itself. Item and spell colors are not here: they have their own
@@ -35,6 +37,28 @@ const SECTIONS = Object.freeze([
     title: "Rarity list",
     hint: "Add, rename, reorder, or hide rarities. Changes are synced with Custom DND5E when it is active.",
     fields: Object.freeze([]),
+    actions: Object.freeze([]),
+  }),
+  Object.freeze({
+    id: "unidentified",
+    scope: SETTING_SCOPES.WORLD,
+    icon: "fas fa-eye-slash",
+    title: "Unidentified items",
+    hint: "The system hides the rarity of unidentified items from players. Their colors follow the Unidentified style from Configure items instead, so they do not give the rarity away.",
+    fields: Object.freeze([
+      Object.freeze({
+        key: UNIDENTIFIED_VIEWERS_SETTING_KEY,
+        scope: SETTING_SCOPES.WORLD,
+        default: UNIDENTIFIED_VIEWERS.PLAYERS,
+        choices: Object.freeze({
+          [UNIDENTIFIED_VIEWERS.PLAYERS]: "Players only",
+          [UNIDENTIFIED_VIEWERS.EVERYONE]: "Everyone, including the GM",
+          [UNIDENTIFIED_VIEWERS.NOBODY]: "Nobody (show the real rarity)",
+        }),
+        name: "Who sees the Unidentified style",
+        hint: "Players only matches the system: the GM keeps seeing the real rarity. Everyone is handy to check what players see. Nobody colors unidentified items by their real rarity.",
+      }),
+    ]),
     actions: Object.freeze([]),
   }),
   Object.freeze({
@@ -67,6 +91,24 @@ const SECTIONS = Object.freeze([
         default: false,
         name: "Hide automatic support message until next update",
         hint: "After the support card appears once for the current version, this option is checked automatically. Uncheck it if you want the card to appear whenever the world loads.",
+      }),
+    ]),
+    actions: Object.freeze([]),
+  }),
+  Object.freeze({
+    id: "animations",
+    scope: SETTING_SCOPES.CLIENT,
+    icon: "fas fa-wand-sparkles",
+    title: "Animations",
+    hint: "Applies to this browser only. Every user can change it, including players.",
+    fields: Object.freeze([
+      Object.freeze({
+        key: DISABLE_EFFECTS_SETTING_KEY,
+        scope: SETTING_SCOPES.CLIENT,
+        default: false,
+        name: "Disable animated effects",
+        hint: "Hide particles, auras, runic circles, and shimmer, and hold glows still, on this browser. Effects also stop automatically when the system asks to reduce motion.",
+        onChange: (value) => applyAnimatedEffectsPreference(value),
       }),
     ]),
     actions: Object.freeze([]),
@@ -111,9 +153,13 @@ export class ModuleSettingsCatalog {
     return SECTIONS.filter((section) => isGM === true || section.scope === SETTING_SCOPES.CLIENT);
   }
 
+  static isSelect(field) {
+    return Boolean(field?.choices);
+  }
+
   /** The Foundry registration for a field, minus the module id and key. */
   static registration(field) {
-    return {
+    const registration = {
       name: field.name,
       hint: field.hint,
       scope: field.scope,
@@ -121,9 +167,12 @@ export class ModuleSettingsCatalog {
       // Foundry settings list.
       config: false,
       restricted: field.scope === SETTING_SCOPES.WORLD,
-      type: Boolean,
+      type: ModuleSettingsCatalog.isSelect(field) ? String : Boolean,
       default: field.default,
     };
+    if (ModuleSettingsCatalog.isSelect(field)) registration.choices = { ...field.choices };
+    if (typeof field.onChange === "function") registration.onChange = field.onChange;
+    return registration;
   }
 
   static tabIds(isGM) {
@@ -163,15 +212,21 @@ export class ModuleSettingsCatalog {
       active: section.id === currentTab,
       isRarityList: section.kind === SECTION_KINDS.RARITY_LIST,
       fields: section.fields.map((field) => {
-        const checked = ModuleSettingsCatalog.normalize(field, readSetting(field.key));
+        const value = ModuleSettingsCatalog.normalize(field, readSetting(field.key));
+        const isSelect = ModuleSettingsCatalog.isSelect(field);
         return {
           key: field.key,
           name: field.name,
           hint: field.hint,
-          checked,
+          isSelect,
+          checked: !isSelect && value === true,
+          options: isSelect
+            ? Object.entries(field.choices).map(([choice, label]) => ({ value: choice, label, selected: choice === value }))
+            : null,
           // Mirrored onto the control so "Reset defaults" can restore it
           // without a re-render, keeping the reset cancellable.
           defaultChecked: field.default === true ? "true" : "false",
+          defaultValue: String(field.default),
         };
       }),
       actions: section.actions.map((action) => {
@@ -226,6 +281,9 @@ export class ModuleSettingsCatalog {
 
   static normalize(field, raw) {
     if (!field) return undefined;
+    if (ModuleSettingsCatalog.isSelect(field)) {
+      return Object.hasOwn(field.choices, raw) ? raw : field.default;
+    }
     if (typeof raw === "string") return raw === "true" || raw === "on";
     return raw === undefined || raw === null ? field.default : Boolean(raw);
   }

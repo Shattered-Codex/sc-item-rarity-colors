@@ -6,6 +6,7 @@
 import { MODULE_ID } from "./constants.js";
 import { raritySupportsGradient, raritySupportsGlow, raritySupportsBorderGradient, raritySupportsBorderGlow } from "./rarityConfig.js";
 import { normalizeRarityKey } from "./rarityListConfig.js";
+import { readEffectSettings } from "./effectSettingFields.js";
 
 const _raritySettingsCache = new Map();
 
@@ -110,6 +111,9 @@ export function buildRaritySettings(rarity) {
     tableHeaderColor: getRaritySetting(MODULE_ID, rarity, "table-header-color", "#491d25"),
     enableTableHeaderTextColor: getRaritySetting(MODULE_ID, rarity, "enable-table-header-text-color", false),
     tableHeaderTextColor: getRaritySetting(MODULE_ID, rarity, "table-header-text-color", "#ffffff"),
+
+    // Animated effects (Effects tab)
+    ...readEffectSettings((fieldKey, field) => getRaritySetting(MODULE_ID, rarity, fieldKey, field.defaultValue ?? null)),
 
     // Where the background goes on Tidy 5e sheets: content, sidebar, or sheet.
     tidyBackgroundArea: getRaritySetting(MODULE_ID, rarity, "tidy-background-area", "content"),

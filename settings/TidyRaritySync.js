@@ -67,26 +67,12 @@ export class TidyRaritySync {
       <p>Do you want to continue?</p>
     `;
 
-    const dialogV2 = foundry?.applications?.api?.DialogV2;
-    if (dialogV2?.confirm) {
-      return dialogV2.confirm({
-        window: { title: "Confirm Tidy Rarity Sync" },
-        content,
-        modal: true,
-        rejectClose: false,
-      });
-    }
-
-    if (typeof Dialog !== "undefined" && typeof Dialog.confirm === "function") {
-      return Dialog.confirm({
-        title: "Confirm Tidy Rarity Sync",
-        content,
-        yes: () => true,
-        no: () => false,
-      });
-    }
-
-    return window.confirm("This will change Tidy 5e rarity colors. Continue?");
+    return foundry.applications.api.DialogV2.confirm({
+      window: { title: "Confirm Tidy Rarity Sync" },
+      content,
+      modal: true,
+      rejectClose: false,
+    });
   }
 
   static async run() {

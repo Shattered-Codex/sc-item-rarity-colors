@@ -13,6 +13,8 @@ import { runSettingsTransaction } from "../core/settingsTransaction.js";
 import { ModuleSettingsCatalog, SECTION_KINDS, SETTINGS_ACTIONS } from "../settings/ModuleSettingsCatalog.js";
 import { ensureRaritySettingsRegistered } from "../settings/settingsRegistration.js";
 import { TidyRaritySync } from "../settings/TidyRaritySync.js";
+import { UNIDENTIFIED_STYLE_KEY } from "../core/unidentifiedStyle.js";
+import { toRarityClassKey } from "../core/runtimeRarityStyles.js";
 
 const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
 
@@ -240,6 +242,9 @@ export class ModuleSettingsApp extends HandlebarsApplicationMixin(ApplicationV2)
       for (const input of panel.querySelectorAll("input[type='checkbox'][data-default-checked]")) {
         input.checked = input.dataset.defaultChecked === "true";
       }
+      for (const select of panel.querySelectorAll("select[data-default-value]")) {
+        select.value = select.dataset.defaultValue;
+      }
     }
     this.#refreshDirtyUI();
   }
@@ -249,7 +254,7 @@ export class ModuleSettingsApp extends HandlebarsApplicationMixin(ApplicationV2)
     const rarityDirty = isGM && this.#isTabDirty("rarities", this.#readForm());
 
     if (rarityDirty && !this.#validateRarityKeys()) {
-      ui.notifications?.warn?.("Fix the highlighted rarity keys before saving: each rarity needs a unique key.");
+      ui.notifications?.warn?.("Fix the highlighted rarity keys before saving: each rarity needs a unique key, and \"unidentified\" is reserved.");
       this.selectTab("rarities");
       return;
     }
@@ -384,7 +389,10 @@ export class ModuleSettingsApp extends HandlebarsApplicationMixin(ApplicationV2)
       const raw = String(keyInput?.value ?? "").trim();
       const key = normalizeRarityKey(raw);
       const blank = !raw && !label;
-      const invalid = !blank && (!key || seen.has(key));
+      // The Unidentified style's internal key (and anything sharing its CSS
+      // class) is reserved.
+      const reserved = key && toRarityClassKey(key) === toRarityClassKey(UNIDENTIFIED_STYLE_KEY);
+      const invalid = !blank && (!key || seen.has(key) || reserved);
       if (key) seen.add(key);
       keyInput?.classList.toggle("is-invalid", invalid);
       if (invalid) valid = false;
@@ -452,7 +460,7 @@ export class ModuleSettingsApp extends HandlebarsApplicationMixin(ApplicationV2)
     const values = {};
     for (const field of ModuleSettingsCatalog.fields()) {
       const control = this.#root?.querySelector?.(`[name="${field.key}"]`);
-      if (control) values[field.key] = control.checked;
+      if (control) values[field.key] = ModuleSettingsCatalog.isSelect(field) ? control.value : control.checked;
     }
     return values;
   }

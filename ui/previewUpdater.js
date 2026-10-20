@@ -21,6 +21,8 @@ import { raritySupportsBorderGradient, raritySupportsBorderGlow } from "../core/
 import { DEFAULT_COLORS, DEFAULT_GLOW_INTENSITY } from "../core/constants.js";
 import { scheduleOnNextAnimationFrame } from "../core/refreshScheduler.js";
 import { Tidy5eSheetStrategy } from "../sheets/strategies/Tidy5eSheetStrategy.js";
+import { applyIconEmanation, applyIconPulse } from "../core/itemEffects.js";
+import { readEffectSettings } from "../core/effectSettingFields.js";
 
 const tidyStrategy = new Tidy5eSheetStrategy();
 
@@ -51,6 +53,8 @@ export function updateMiniSheetPreview(formElement, rarity, options = {}) {
   const tableHeaderColor = $form.find(`input[type="color"][name="${rarity}-table-header-color"]`).val();
   const enableTableHeaderTextColor = $form.find(`input[type="checkbox"][name="${rarity}-enable-table-header-text-color"]`).is(":checked");
   const tableHeaderTextColor = $form.find(`input[type="color"][name="${rarity}-table-header-text-color"]`).val();
+  const isOn = (key) => $form.find(`input[type="checkbox"][name="${rarity}-${key}"]`).is(":checked");
+  const valueOf = (key) => $form.find(`[name="${rarity}-${key}"]`).val();
 
   const settings = {
     enableItemColor,
@@ -67,6 +71,7 @@ export function updateMiniSheetPreview(formElement, rarity, options = {}) {
     tableHeaderColor,
     enableTableHeaderTextColor,
     tableHeaderTextColor,
+    ...readEffectSettings((fieldKey, field) => (field.type === "checkbox" ? isOn(fieldKey) : valueOf(fieldKey))),
   };
 
   // One call per sheet: the D&D 5e and Tidy previews need different text
@@ -174,6 +179,8 @@ function updateInventoryPreview(formElement, rarity, itemSheetSettings) {
   }
 
   const $inventoryImage = $inventoryPreview.find(".item-image");
+  applyIconPulse($inventoryImage, itemSheetSettings, { preview: true });
+  applyIconEmanation($inventoryImage.get(), itemSheetSettings.enableInventoryIconEmanation === true, itemSheetSettings);
   
   if (!enableInventoryBorders) {
     clearInventoryBorder($inventoryImage);
@@ -275,6 +282,7 @@ function updateFoundryInterfacePreview(formElement, rarity, itemSheetSettings) {
 
   const $directoryItem = $foundryPreview.find(".directory-item.is-target");
   if (!$directoryItem.length) return;
+  applyIconEmanation($directoryItem.find("img.thumbnail").get(), itemSheetSettings.enableFoundryInterfaceIconEmanation === true, itemSheetSettings);
   const $otherDirectoryItems = $foundryPreview.find(".directory-item").not($directoryItem);
 
   const clearDirectoryPreviewRow = ($rows) => {

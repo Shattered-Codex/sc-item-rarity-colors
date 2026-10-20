@@ -19,6 +19,7 @@ import { getRaritySetting } from "../core/settingsManager.js";
 import { runSettingsTransaction } from "../core/settingsTransaction.js";
 import { ensureRaritySettingsRegistered } from "../settings/settingsRegistration.js";
 import { StyleEditorApp } from "./StyleEditorApp.js";
+import { UNIDENTIFIED_STYLE_KEY, UNIDENTIFIED_STYLE_LABEL } from "../core/unidentifiedStyle.js";
 
 const ITEM_RARITY_CONFIG_KIND = "item-rarity-settings";
 
@@ -115,6 +116,7 @@ export class ItemRaritySettingsApp extends StyleEditorApp {
     const managedRarities = new Set([
       ...rarityOptions.map((option) => option.key),
       ...this._getManagedThemeRarities(),
+      UNIDENTIFIED_STYLE_KEY,
     ]);
 
     for (const rarity of managedRarities) {
@@ -151,8 +153,10 @@ export class ItemRaritySettingsApp extends StyleEditorApp {
     return this.selectedThemeId;
   }
 
-  _hasUnsavedChanges() {
-    return Object.keys(this._draftSettings ?? {}).some((rarity) => this._isEntryDirty(rarity));
+  _hasUnsavedChanges(knownEntryDirty) {
+    return Object.keys(this._draftSettings ?? {}).some((rarity) =>
+      knownEntryDirty?.get(rarity) ?? this._isEntryDirty(rarity)
+    );
   }
 
   _applySelectedThemePreset() {
@@ -272,9 +276,9 @@ export class ItemRaritySettingsApp extends StyleEditorApp {
   // ---------------------------------------------------------------------------
 
   async _prepareContext(options) {
-    const rarityOptions = this._getRarityOptions();
-    if (!this.selectedRarity || !rarityOptions.some((option) => option.key === this.selectedRarity)) {
-      this.selectedRarity = rarityOptions[0]?.key ?? null;
+    const entries = this._getEntries();
+    if (!this.selectedRarity || !entries.some((entry) => entry.key === this.selectedRarity)) {
+      this.selectedRarity = entries[0]?.key ?? null;
     }
 
     this._ensureDraftSettings();
@@ -282,8 +286,12 @@ export class ItemRaritySettingsApp extends StyleEditorApp {
     return super._prepareContext(options);
   }
 
+  /** The rarities, then the style unidentified items use in their place. */
   _getEntries() {
-    return this._getRarityOptions();
+    return [
+      ...this._getRarityOptions(),
+      { key: UNIDENTIFIED_STYLE_KEY, label: UNIDENTIFIED_STYLE_LABEL, dividerBefore: true },
+    ];
   }
 
   _getSelectedEntryKey() {
@@ -295,8 +303,9 @@ export class ItemRaritySettingsApp extends StyleEditorApp {
   }
 
   _prepareEditorContext() {
+    const isUnidentifiedStyle = this.selectedRarity === UNIDENTIFIED_STYLE_KEY;
     const selectedRarityLabel =
-      this._getRarityOptions().find((option) => option.key === this.selectedRarity)?.label
+      this._getEntries().find((entry) => entry.key === this.selectedRarity)?.label
       || RARITY_CONFIG[this.selectedRarity]?.label
       || humanizeRarityLabel(this.selectedRarity);
 
@@ -308,7 +317,9 @@ export class ItemRaritySettingsApp extends StyleEditorApp {
     return {
       railTitle: "Rarities",
       entryTitle: selectedRarityLabel,
-      entryHint: "Colors for item sheets, inventory rows, and the sidebar. The preview updates as you edit.",
+      entryHint: isUnidentifiedStyle
+        ? "Used instead of the real rarity on unidentified items, so their colors do not give it away. Who sees it is set in Module Settings → Unidentified items."
+        : "Colors for item sheets, inventory rows, and the sidebar. The preview updates as you edit.",
       themeTooltip,
       themeOptions: [
         ...getItemRarityThemePresetOptions().map((option) => ({
@@ -322,7 +333,7 @@ export class ItemRaritySettingsApp extends StyleEditorApp {
           disabled: true,
         },
       ],
-      sections: this._buildFieldSections(
+      panels: this._buildFieldPanels(
         this._getFieldDefinitionsForRarity(this.selectedRarity),
         this._draftSettings?.[this.selectedRarity] ?? {},
         this.selectedRarity
@@ -365,7 +376,7 @@ export class ItemRaritySettingsApp extends StyleEditorApp {
     const moduleId = this._getEffectiveModuleId();
     this.moduleId = moduleId;
 
-    const rarityLabelMap = new Map(this._getRarityOptions().map((option) => [option.key, option.label]));
+    const rarityLabelMap = new Map(this._getEntries().map((entry) => [entry.key, entry.label]));
     for (const rarity of Object.keys(this._draftSettings || {})) {
       ensureRaritySettingsRegistered(moduleId, rarity, rarityLabelMap.get(rarity));
     }

@@ -1,6 +1,7 @@
 import { MODULE_ID } from "./constants.js";
 import { normalizeHexColor } from "./colorUtils.js";
 import { getRarityFieldDefinitions, normalizeSelectFieldValue } from "./rarityFieldSchema.js";
+import { readEffectSettings } from "./effectSettingFields.js";
 
 export const SPELL_SCHOOL_STYLES_SETTING_KEY = "spell-school-styles";
 
@@ -247,6 +248,8 @@ export function buildSpellStyleSettingsFromFields(fields = {}) {
     enableTableHeaderTextColor: values["enable-table-header-text-color"],
     tableHeaderTextColor: values["table-header-text-color"],
 
+    ...readEffectSettings((fieldKey) => values[fieldKey]),
+
     enableInventoryGradientEffects: values["enable-inventory-gradient-effects"],
     enableInventoryBorders: values["enable-inventory-borders"],
 
@@ -274,6 +277,15 @@ export function isSpellStyleSettingsActive(settings = {}) {
       || settings.enableGoldAccentColor
       || settings.enableTableHeaderColor
       || settings.enableTableHeaderTextColor
+      || settings.glowEnabled
+      || settings.shimmerEnabled
+      || settings.particlesEnabled
+      || settings.auraEnabled
+      || settings.runesEnabled
+      || settings.enableInventoryIconPulse
+      || settings.wavesEnabled
+      || settings.enableInventoryIconEmanation
+      || settings.enableFoundryInterfaceIconEmanation
       || settings.enableInventoryGradientEffects
       || settings.enableInventoryBorders
       || settings.enableInventoryTitleColor
@@ -348,13 +360,37 @@ export function ensureSpellProfileInSetting(setting, schoolKey, level = null, us
   return normalizedSetting;
 }
 
+// Runtime cache. Every rendered spell row asks for its profile, and reading
+// plus normalizing the whole setting (up to 88 profiles with level variants)
+// for each row dominated render time. Cleared whenever a module setting
+// changes (see lifecycle handlers).
+let _runtimeSetting = null;
+const _runtimeProfileFields = new Map();
+
+export function invalidateSpellStyleCache() {
+  _runtimeSetting = null;
+  _runtimeProfileFields.clear();
+}
+
+function getRuntimeSpellSchoolStylesSetting(moduleId) {
+  if (_runtimeSetting?.moduleId !== moduleId) {
+    _runtimeSetting = { moduleId, value: getSpellSchoolStylesSetting(moduleId) };
+    _runtimeProfileFields.clear();
+  }
+  return _runtimeSetting.value;
+}
+
+/**
+ * The style profile that applies to a spell item. The returned `fields`
+ * object is shared between calls for the same profile; treat it as read-only.
+ */
 export function getSpellStyleProfileForItem(item, moduleId = MODULE_ID) {
   if (!isSpellItem(item)) return null;
 
   const school = normalizeSpellSchoolKey(extractRawSpellSchoolFromItem(item));
   if (!school) return null;
 
-  const setting = getSpellSchoolStylesSetting(moduleId);
+  const setting = getRuntimeSpellSchoolStylesSetting(moduleId);
   const useLevelVariants = setting.useLevelVariants === true;
   const level = normalizeSpellLevel(extractRawSpellLevelFromItem(item));
 
@@ -364,14 +400,19 @@ export function getSpellStyleProfileForItem(item, moduleId = MODULE_ID) {
   const profileKey = levelProfileKey || schoolProfileKey;
   if (!profileKey) return null;
 
-  const fallbackFields = schoolProfileKey ? setting.profiles[schoolProfileKey] : null;
-  const rawFields = setting.profiles[profileKey] || fallbackFields || getDefaultSpellStyleFieldValues();
+  let fields = _runtimeProfileFields.get(profileKey);
+  if (!fields) {
+    const fallbackFields = schoolProfileKey ? setting.profiles[schoolProfileKey] : null;
+    const rawFields = setting.profiles[profileKey] || fallbackFields || getDefaultSpellStyleFieldValues();
+    fields = Object.freeze(normalizeSpellStyleFieldValues(rawFields, fallbackFields || undefined));
+    _runtimeProfileFields.set(profileKey, fields);
+  }
 
   return {
     school,
     level,
     profileKey,
     useLevelVariants,
-    fields: normalizeSpellStyleFieldValues(rawFields, fallbackFields || undefined),
+    fields,
   };
 }

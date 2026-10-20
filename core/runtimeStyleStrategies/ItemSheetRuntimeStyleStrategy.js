@@ -1,4 +1,5 @@
 import { BaseRuntimeStyleStrategy } from "./BaseRuntimeStyleStrategy.js";
+import { settingsUseEffectColor } from "../itemEffects.js";
 
 /**
  * Runtime CSS strategy for item sheet visuals.
@@ -51,12 +52,23 @@ export class ItemSheetRuntimeStyleStrategy extends BaseRuntimeStyleStrategy {
 }`);
     }
 
-    if (settings.enableItemColor && settings.glowEnabled) {
+    // Glow is independent of the background: without one it pulses in the
+    // effect color.
+    if (settings.glowEnabled) {
+      const glowPrimary = settings.enableItemColor ? colors.sheetPrimary : colors.effect;
       const glowSecondary = settings.gradientEnabled ? colors.sheetSecondary : "#000000";
       rules.push(`
 .application.sheet.item.scirc-glow.${rarityClass} {
-  --glow-primary: ${colors.sheetPrimary};
+  --glow-primary: ${glowPrimary};
   --glow-secondary: ${glowSecondary};
+}`);
+    }
+
+    if (settingsUseEffectColor(settings)) {
+      rules.push(`
+:is(.scirc-fx-enabled, .scirc-inv-icon-pulse).${rarityClass} {
+  --scirc-fx-color: ${colors.effect};${colors.particle ? `
+  --scirc-fx-pcolor: ${colors.particle};` : ""}
 }`);
     }
 

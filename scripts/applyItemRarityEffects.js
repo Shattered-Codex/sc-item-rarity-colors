@@ -1,4 +1,4 @@
-import { applyRarityStyles, getItemRarity, removeRarityStyles } from "./itemRarityHelper.js";
+import { applyRarityStyles, getDisplayRarity, removeRarityStyles } from "./itemRarityHelper.js";
 import { getActiveSpellStyleForItem } from "./spellSchoolHelper.js";
 import { buildRaritySettings } from "../core/settingsManager.js";
 import { isModuleSettingChange, registerSettingChangeHooks } from "../core/settingChangeHelper.js";
@@ -55,7 +55,7 @@ export function applyItemRarityEffects(moduleId) {
     const itemName = item.name ?? "(unnamed item)";
 
     // Normalize rarity value (handles both new and legacy system fields)
-    const rarity = getItemRarity(item);
+    const rarity = getDisplayRarity(item);
     debugLog("Item sheet render detected", {
       itemId,
       itemName,
