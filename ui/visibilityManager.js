@@ -11,6 +11,7 @@ const FIELD_INPUT_SELECTORS = {
   color: 'input[type="color"]',
   select: "select",
   checkbox: 'input[type="checkbox"]',
+  image: "input[data-image-path]",
 };
 
 function getFieldInput($form, rarityPrefix, field) {
@@ -28,11 +29,12 @@ function collectRarityPrefixes($form) {
   return Array.from(prefixes);
 }
 
+// Checkboxes report whether they are on; selects their value (for `equals`).
 function buildFieldState($form, rarityPrefix, fields) {
   const state = {};
   for (const field of fields) {
-    if (field.type !== "checkbox") continue;
-    state[field.key] = getFieldInput($form, rarityPrefix, field).is(":checked");
+    if (field.type === "checkbox") state[field.key] = getFieldInput($form, rarityPrefix, field).is(":checked");
+    else if (field.type === "select") state[field.key] = getFieldInput($form, rarityPrefix, field).val();
   }
   return state;
 }
@@ -50,6 +52,14 @@ function applyVisibilityForRarity($form, rarityPrefix) {
   }
 }
 
+// A section whose rows are all hidden hides its heading too.
+function applySectionVisibility($form) {
+  $form.find("[data-style-section]").each((_, section) => {
+    const hasVisibleRow = $(section).find(".scirc-style-row").not(".sc-item-rarity-colors__is-hidden").length > 0;
+    setGroupVisibility($(section), hasVisibleRow);
+  });
+}
+
 /**
  * Update field visibility based on declarative schema rules.
  * @param {HTMLElement} formElement
@@ -61,4 +71,5 @@ export function updateColorPickerVisibility(formElement) {
   for (const rarityPrefix of collectRarityPrefixes($form)) {
     applyVisibilityForRarity($form, rarityPrefix);
   }
+  applySectionVisibility($form);
 }

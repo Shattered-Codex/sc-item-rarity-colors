@@ -19,8 +19,9 @@
  * (see item-effects.css).
  */
 
-import { RARITY_CLASS_PREFIX } from "./constants.js";
+import { IMAGE_COVER_CLASS, RARITY_CLASS_PREFIX } from "./constants.js";
 import { ensureFrameOverlay, FRAME_MARGIN as FRAME_EDGE, removeFrameOverlay } from "./frameOverlay.js";
+import { followIconSize, unfollowIconSize } from "./iconSizeObserver.js";
 import {
   buildParticles,
   PARTICLE_MOTIONS,
@@ -380,11 +381,12 @@ export function clearSheetEffects(root) {
 
 // --- Icons (inventory rows, Items sidebar) ------------------------------------
 
-// Icon companions (pulse, emanation) sit right before their icon.
-const ICON_COMPANION_CLASSES = [ICON_PULSE_CLASS, FX_ICON_CLASS];
+// Icon companions (pulse, emanation, the unidentified image cover) sit right
+// before their icon.
+const ICON_COMPANION_CLASSES = [ICON_PULSE_CLASS, FX_ICON_CLASS, IMAGE_COVER_CLASS];
 const isIconCompanion = (node) => ICON_COMPANION_CLASSES.some((name) => node?.classList?.contains(name));
 
-function findIconCompanion(icon, className) {
+export function findIconCompanion(icon, className) {
   for (let node = icon.previousElementSibling; isIconCompanion(node); node = node.previousElementSibling) {
     if (node.classList.contains(className)) return node;
   }
@@ -404,6 +406,7 @@ export function applyIconPulse($icons, settings, { preview = false } = {}) {
     if (!icon?.parentElement) return;
     const existing = findIconCompanion(icon, ICON_PULSE_CLASS);
     if (!enabled) {
+      if (existing) unfollowIconSize(icon, existing);
       existing?.remove();
       releaseIconHost(icon);
       return;
@@ -418,8 +421,7 @@ export function applyIconPulse($icons, settings, { preview = false } = {}) {
     }
     const rarityClasses = [...icon.classList].filter((name) => name.startsWith(RARITY_CLASS_PREFIX));
     pulse.className = [ICON_PULSE_CLASS, ...rarityClasses].join(" ");
-    const size = icon.offsetWidth || icon.width || 0;
-    if (size) pulse.style.setProperty("--fx-size", `${size}px`);
+    followIconSize(icon, pulse);
     if (preview) pulse.style.setProperty(FX_COLOR_VAR, color);
     else pulse.style.removeProperty(FX_COLOR_VAR);
     icon.parentElement.classList.add(FX_ICON_HOST_CLASS);
@@ -444,6 +446,7 @@ export function applyIconEmanation(icons, enabled, settings = {}) {
     const existing = findIconCompanion(icon, FX_ICON_CLASS);
 
     if (!enabled) {
+      if (existing) unfollowIconSize(icon, existing);
       existing?.remove();
       releaseIconHost(icon);
       continue;
@@ -459,8 +462,7 @@ export function applyIconEmanation(icons, enabled, settings = {}) {
       emanation.style.setProperty("--fx-turn", `${random(0, 360).toFixed(0)}deg`);
       icon.before(emanation);
     }
-    const size = icon.offsetWidth || icon.width || 0;
-    if (size) emanation.style.setProperty("--fx-size", `${size}px`);
+    followIconSize(icon, emanation);
     emanation.style.setProperty(FX_COLOR_VAR, color);
     icon.parentElement.classList.add(FX_ICON_HOST_CLASS);
   }

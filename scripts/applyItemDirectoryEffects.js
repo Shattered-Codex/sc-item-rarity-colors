@@ -5,6 +5,7 @@
 
 import { getDisplayRarity } from "./itemRarityHelper.js";
 import { applyIconEmanation } from "../core/itemEffects.js";
+import { syncImageConceal } from "../core/unidentifiedImageConceal.js";
 import { getActiveSpellStyleForItem } from "./spellSchoolHelper.js";
 import { buildRaritySettings } from "../core/settingsManager.js";
 import { isModuleSettingChange, registerSettingChangeHooks } from "../core/settingChangeHelper.js";
@@ -35,10 +36,22 @@ const COMPENDIUM_INDEX_FIELDS = [
   "system.rarity",
   "system.details.rarity",
   "system.identified",
+  // Picks the stand-in image of a hidden unidentified item.
+  "system.type.value",
+  "system.type.baseItem",
   "system.school",
   "system.level",
   "system.details.level",
 ];
+
+const isModuleOwnedNode = (node) =>
+  node?.nodeType === Node.ELEMENT_NODE && [...node.classList].some((className) => className.startsWith("scirc-"));
+
+/** A change that only added or removed elements this module draws. */
+function isModuleOwnedMutation(record) {
+  const nodes = [...record.addedNodes, ...record.removedNodes];
+  return nodes.length > 0 && nodes.every(isModuleOwnedNode);
+}
 
 function getCompendiumApplicationClass() {
   return foundry?.applications?.sidebar?.apps?.Compendium ?? null;
@@ -117,6 +130,8 @@ function buildCompendiumIndexItemLike(entry, rowElement = null) {
   const rawSchoolValue = getObjectValueByPath(entry, "system.school.value");
   const rawLevel = getObjectValueByPath(entry, "system.level");
   const detailsLevel = getObjectValueByPath(entry, "system.details.level");
+  const subtype = getObjectValueByPath(entry, "system.type.value");
+  const baseItem = getObjectValueByPath(entry, "system.type.baseItem");
   const type = entry.type ?? null;
 
   const itemLike = {
@@ -141,6 +156,10 @@ function buildCompendiumIndexItemLike(entry, rowElement = null) {
   // Unidentified compendium entries get the unidentified style like any other.
   if (identified === false) {
     itemLike.system.identified = false;
+  }
+
+  if (subtype !== undefined || baseItem !== undefined) {
+    itemLike.system.type = { value: subtype, baseItem };
   }
 
   if (rawSchoolValue !== undefined) {
@@ -480,10 +499,15 @@ export function applyItemDirectoryEffects(moduleId) {
     );
   };
 
+  const syncThumbnailConceal = (rowElement, item) => {
+    syncImageConceal(rowElement.querySelectorAll("img.thumbnail"), item, item ? getDisplayRarity(item) : null, "sidebar");
+  };
+
   const applyStylesToDirectoryRow = (item, rowElement) => {
     if (!rowElement) return { applied: false, reason: "missing-row" };
 
     clearRowVisuals(rowElement);
+    syncThumbnailConceal(rowElement, item);
 
     const spellStyle = getActiveSpellStyleForItem(item, moduleId);
     if (spellStyle) {
@@ -629,6 +653,7 @@ export function applyItemDirectoryEffects(moduleId) {
       if (!item) {
         clearRowVisuals(rowElement);
         syncThumbnailEmanation(rowElement, null);
+        syncThumbnailConceal(rowElement, null);
         unresolvedCount += 1;
         return;
       }
@@ -686,12 +711,15 @@ export function applyItemDirectoryEffects(moduleId) {
     const isObservableRoot = allowLooseRoot ? !isPreviewRoot(root) : isItemDirectoryRoot(root);
     if (!root || observedRoots.has(root) || typeof MutationObserver !== "function" || !isObservableRoot) return;
 
-    const observer = new MutationObserver(() => {
+    const observer = new MutationObserver((records) => {
       if (!root.isConnected) {
         observer.disconnect();
         observedRoots.delete(root);
         return;
       }
+      // Our own icon companions (effects, the unidentified image cover) are
+      // added here too; repainting for them would only add them again.
+      if (records.every(isModuleOwnedMutation)) return;
       requestRefresh("item-directory-mutation");
     });
 

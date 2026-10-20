@@ -100,8 +100,8 @@ function registerRaritySettings(moduleId, rarityKey, rarityLabel, defaultOverrid
       continue;
     }
 
-    if (field.type === "select") {
-      // Stored as a plain string, like colors.
+    if (field.type === "select" || field.type === "image") {
+      // Stored as a plain string (choice or file path), like colors.
       registerColorSetting(moduleId, settingKey, settingName, String(field.defaultValue ?? ""));
       continue;
     }

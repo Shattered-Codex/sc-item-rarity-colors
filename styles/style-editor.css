@@ -208,8 +208,8 @@
   display: none;
 }
 
-.scirc-style-editor__panel > .scirc-config__section-title:first-child,
-.scirc-style-editor__panel-hint + .scirc-config__section-title {
+.scirc-style-editor__panel > .scirc-style-section:first-child > .scirc-config__section-title,
+.scirc-style-editor__panel-hint + .scirc-style-section > .scirc-config__section-title {
   margin-top: 10px;
 }
 
@@ -452,6 +452,50 @@
 .scirc-style-row__inline {
   display: inline-flex;
   flex: 0 0 auto;
+}
+
+/* === Image control (unidentified Image tab) =============================== */
+/* The thumbnail is the button: it opens the file picker, and its tooltip
+   shows the path. */
+
+.scirc-style-editor .scirc-image-control {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 4px;
+}
+
+.scirc-style-editor .scirc-image-control__thumb {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  padding: 2px;
+  background: var(--scirc-cfg-bg-3);
+  border: 1px solid var(--scirc-cfg-border);
+  border-radius: var(--scirc-cfg-radius);
+  cursor: pointer;
+}
+
+.scirc-style-editor .scirc-image-control__thumb:hover,
+.scirc-style-editor .scirc-image-control__thumb:focus-visible {
+  outline: none;
+  border-color: var(--scirc-cfg-accent);
+}
+
+.scirc-style-editor .scirc-image-control__thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border: 0;
+}
+
+.scirc-style-editor .scirc-image-control__button {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  justify-content: center;
 }
 
 /* === Color control ======================================================== */

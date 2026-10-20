@@ -1,6 +1,7 @@
 import { MODULE_ID } from "../core/constants.js";
 import { normalizeHexColor } from "../core/colorUtils.js";
 import { normalizeSelectFieldValue } from "../core/rarityFieldSchema.js";
+import { CONCEAL_IMAGE_SECTIONS } from "../core/unidentifiedImageConfig.js";
 import { createAnimationFrameScheduler } from "../core/refreshScheduler.js";
 import { updateMiniSheetPreview } from "../ui/previewUpdater.js";
 import { updateColorPickerVisibility } from "../ui/visibilityManager.js";
@@ -16,7 +17,15 @@ const EFFECT_SECTIONS = Object.freeze([
   Object.freeze({ id: "particles", title: "Particles", hint: "" }),
   Object.freeze({ id: "icons", title: "Inventory & sidebar icons", hint: "" }),
 ]);
+// The unidentified style's Image tab: how the image is hidden, where, and the
+// stand-in image of each kind of item.
+const UNIDENTIFIED_SECTIONS = Object.freeze([
+  Object.freeze({ id: "conceal-image", title: "Unidentified image", hint: "What players see instead of the item's image. The image itself is untouched; it is only covered on screen." }),
+  Object.freeze({ id: "conceal-where", title: "Where", hint: "" }),
+  ...CONCEAL_IMAGE_SECTIONS.map((section) => Object.freeze({ ...section, hint: "" })),
+]);
 // The form column is split into tabs; a row's `panel` comes from its schema.
+// A tab with no rows for the selected entry is not shown.
 const FIELD_PANELS = Object.freeze([
   Object.freeze({ id: "colors", label: "Colors", icon: "fas fa-palette", hint: "" }),
   Object.freeze({
@@ -24,6 +33,14 @@ const FIELD_PANELS = Object.freeze([
     label: "Effects",
     icon: "fas fa-wand-sparkles",
     hint: "Animated effects. Each user can turn them off in Module Settings → Animations, and they stop when the system asks to reduce motion.",
+    sections: EFFECT_SECTIONS,
+  }),
+  Object.freeze({
+    id: "unidentified",
+    label: "Image",
+    icon: "fas fa-question",
+    hint: "",
+    sections: UNIDENTIFIED_SECTIONS,
   }),
 ]);
 const TIDY_MODULE_ID = "tidy5e-sheet";
@@ -93,6 +110,8 @@ export class StyleEditorApp extends HandlebarsApplicationMixin(ApplicationV2) {
       closeEditor: StyleEditorApp.#onCloseEditor,
       setPreviewVariant: StyleEditorApp.#onSetPreviewVariant,
       setFieldPanel: StyleEditorApp.#onSetFieldPanel,
+      pickImage: StyleEditorApp.#onPickImage,
+      resetImage: StyleEditorApp.#onResetImage,
     },
   };
 
@@ -252,13 +271,9 @@ export class StyleEditorApp extends HandlebarsApplicationMixin(ApplicationV2) {
   }
 
   /**
-   * Builds the form rows: one row per checkbox, with the color it enables
-   * placed inline, grouped into the sections the template renders.
-   */
-  /**
-   * Builds the form: one panel per field tab (Colors, Effects), each split
-   * into the sheet / inventory / sidebar sections, with each color or style
-   * placed inline on the row of the checkbox that enables it.
+   * Builds the form: one panel per field tab (Colors, Effects, and Image on
+   * the unidentified style), each split into sections, with each color or
+   * style placed inline on the row of the checkbox that enables it.
    */
   _buildFieldPanels(allFieldDefinitions, values, namePrefix) {
     // Fields tied to a module (the Tidy 5e area) only show while it is active;
@@ -280,6 +295,8 @@ export class StyleEditorApp extends HandlebarsApplicationMixin(ApplicationV2) {
         type: field.type,
         isCheckbox: field.type === "checkbox",
         isSelect: field.type === "select",
+        isImage: field.type === "image",
+        defaultValue: field.defaultValue,
         value,
         options: field.type === "select"
           ? Object.entries(field.choices ?? {}).map(([choice, label]) => ({ value: choice, label, selected: choice === value }))
@@ -289,7 +306,6 @@ export class StyleEditorApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
     const titles = this.constructor.SECTION_TITLES;
     const rowFields = fieldDefinitions.filter((field) => !(field.inlineWith && keys.has(field.inlineWith)));
-    const activePanel = this.#fieldPanel;
 
     const toRow = (field) => ({
       nested: field.nested === true,
@@ -297,11 +313,11 @@ export class StyleEditorApp extends HandlebarsApplicationMixin(ApplicationV2) {
       field: toContext(field),
       inline: inlineByHost.has(field.key) ? toContext(inlineByHost.get(field.key)) : null,
     });
-    // Sections come from the field's `section` when it has one, else from
-    // where it shows (item sheet / inventory / sidebar).
-    const sectionsFor = (panelFields) => {
-      const bySection = panelFields.some((field) => field.section)
-        ? EFFECT_SECTIONS.map((section) => ({
+    // A tab lists its own sections, matched by the field's `section`; the
+    // Colors tab groups by where a field shows (item sheet / inventory / sidebar).
+    const sectionsFor = (panel, panelFields) => {
+      const bySection = panel.sections
+        ? panel.sections.map((section) => ({
           ...section,
           rows: panelFields.filter((field) => field.section === section.id).map(toRow),
         }))
@@ -314,11 +330,19 @@ export class StyleEditorApp extends HandlebarsApplicationMixin(ApplicationV2) {
       return bySection.filter((section) => section.rows.length > 0);
     };
 
-    return FIELD_PANELS.map((panel) => ({
-      ...panel,
-      active: panel.id === activePanel,
-      sections: sectionsFor(rowFields.filter((field) => (field.panel ?? "colors") === panel.id)),
-    }));
+    const panels = FIELD_PANELS
+      .map((panel) => ({
+        id: panel.id,
+        label: panel.label,
+        icon: panel.icon,
+        hint: panel.hint,
+        sections: sectionsFor(panel, rowFields.filter((field) => (field.panel ?? "colors") === panel.id)),
+      }))
+      .filter((panel) => panel.sections.length > 0);
+    // The Image tab exists only on the unidentified style: moving to another
+    // entry falls back to the first tab.
+    if (!panels.some((panel) => panel.id === this.#fieldPanel)) this.#fieldPanel = panels[0]?.id ?? "colors";
+    return panels.map((panel) => ({ ...panel, active: panel.id === this.#fieldPanel }));
   }
 
   _normalizeFieldValue(field, value) {
@@ -330,6 +354,9 @@ export class StyleEditorApp extends HandlebarsApplicationMixin(ApplicationV2) {
     }
     if (field.type === "select") {
       return normalizeSelectFieldValue(field, value);
+    }
+    if (field.type === "image") {
+      return typeof value === "string" && value.trim() ? value.trim() : field.defaultValue;
     }
     return value;
   }
@@ -651,6 +678,38 @@ export class StyleEditorApp extends HandlebarsApplicationMixin(ApplicationV2) {
     root?.querySelector?.(".scirc-style-editor__fields")?.scrollTo?.({ top: 0 });
   }
 
+  /** Stores a picked image path and shows it on the thumbnail button. */
+  #setImagePath(name, path) {
+    const input = this.element?.querySelector(`[data-image-path][name="${name}"]`);
+    if (!input) return;
+    input.value = path;
+    const button = input.closest("[data-image-control]")?.querySelector('[data-action="pickImage"]');
+    // Plain text: a path is never rendered as HTML.
+    button?.setAttribute("data-tooltip-text", path);
+    const thumb = button?.querySelector("[data-image-thumb]");
+    if (thumb) thumb.src = path;
+    this.#refresh();
+  }
+
+  static async #onPickImage(_event, target) {
+    const name = target?.dataset?.target;
+    const input = name ? this.element?.querySelector(`[data-image-path][name="${name}"]`) : null;
+    if (!input) return;
+    const FilePicker = foundry.applications.apps.FilePicker.implementation;
+    const picker = new FilePicker({
+      type: "image",
+      current: input.value,
+      callback: (path) => this.#setImagePath(name, path),
+    });
+    await picker.render({ force: true });
+  }
+
+  static #onResetImage(_event, target) {
+    const name = target?.dataset?.target;
+    const input = name ? this.element?.querySelector(`[data-image-path][name="${name}"]`) : null;
+    if (input) this.#setImagePath(name, input.dataset.defaultValue ?? "");
+  }
+
   static #onSetPreviewVariant(_event, target) {
     const variant = target?.dataset?.variant;
     if (!PREVIEW_VARIANTS.includes(variant)) return;
@@ -661,6 +720,9 @@ export class StyleEditorApp extends HandlebarsApplicationMixin(ApplicationV2) {
       // Without storage the choice still applies to this window.
     }
     this.#applyPreviewVariant();
+    // The sheet just shown was hidden, so anything sized to its images (the
+    // unidentified image cover) is measured again.
+    this.#refresh();
     this.#fitPreview();
   }
 }

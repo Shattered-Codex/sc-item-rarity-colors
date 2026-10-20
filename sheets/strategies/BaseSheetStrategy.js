@@ -16,6 +16,7 @@ import { buildRaritySettings } from "../../core/settingsManager.js";
 import { getDisplayRarity } from "../../scripts/itemRarityHelper.js";
 import { getActiveSpellStyleForItem } from "../../scripts/spellSchoolHelper.js";
 import { applyIconEmanation, applyIconPulse, clearIconEmanation } from "../../core/itemEffects.js";
+import { syncImageConceal } from "../../core/unidentifiedImageConceal.js";
 
 /**
  * Base Sheet Strategy
@@ -192,6 +193,8 @@ export class BaseSheetStrategy {
     const detailsSelectors = this.getDetailsSelectors();
     const itemId = item?.id ?? item?._id ?? null;
     const itemName = item?.name ?? null;
+    const rarity = getDisplayRarity(item);
+    syncImageConceal($borderElement.get(), item, rarity, "inventory");
 
     const spellStyle = getActiveSpellStyleForItem(item, moduleId);
     if (spellStyle) {
@@ -224,7 +227,6 @@ export class BaseSheetStrategy {
       return;
     }
 
-    const rarity = getDisplayRarity(item);
     if (!rarity) {
       clearRarityClasses($itemElement);
       clearInventoryGradient($gradientElement);

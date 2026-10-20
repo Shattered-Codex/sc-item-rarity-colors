@@ -6,6 +6,7 @@ import { debugLog, debugWarn } from "../core/debug.js";
 import { getSheetType } from "./sheetDetectionHelper.js";
 import { getItemSheetTextStyleStrategy } from "../sheets/itemSheetTextStrategies.js";
 import { ensureRuntimeRarityStyles } from "../core/runtimeRarityStyles.js";
+import { SHEET_IMAGE_SELECTOR, syncImageConceal } from "../core/unidentifiedImageConceal.js";
 import { createDebouncedRefreshRequester, REFRESH_DELAYS_MS } from "../core/refreshScheduler.js";
 import {
   isSettingsTransactionActive,
@@ -69,6 +70,8 @@ export function applyItemRarityEffects(moduleId) {
       debugWarn("Unable to resolve item sheet root element", { itemId, itemName, sheetId: app?.id ?? null });
       return;
     }
+    syncImageConceal(sheetEl.querySelectorAll(SHEET_IMAGE_SELECTOR), item, rarity, "sheet");
+
     const sheetType = getSheetType(app) || getSheetType(html);
     const textStyleStrategy = getItemSheetTextStyleStrategy(sheetType);
     const spellStyle = getActiveSpellStyleForItem(item, moduleId);

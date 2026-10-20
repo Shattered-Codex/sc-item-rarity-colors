@@ -7,6 +7,8 @@ import { MODULE_ID } from "./constants.js";
 import { raritySupportsGradient, raritySupportsGlow, raritySupportsBorderGradient, raritySupportsBorderGlow } from "./rarityConfig.js";
 import { normalizeRarityKey } from "./rarityListConfig.js";
 import { readEffectSettings } from "./effectSettingFields.js";
+import { UNIDENTIFIED_STYLE_KEY } from "./unidentifiedStyle.js";
+import { readConcealSettings } from "./unidentifiedImageConfig.js";
 
 const _raritySettingsCache = new Map();
 
@@ -162,6 +164,11 @@ export function buildRaritySettings(rarity) {
     );
   } else {
     settings.enableInventoryBorderGlow = false;
+  }
+
+  // How unidentified items hide their image (Image tab).
+  if (cacheKey === UNIDENTIFIED_STYLE_KEY) {
+    settings.conceal = readConcealSettings((fieldKey, defaultValue) => getRaritySetting(MODULE_ID, rarity, fieldKey, defaultValue));
   }
 
   _raritySettingsCache.set(cacheKey, settings);

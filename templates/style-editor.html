@@ -29,6 +29,18 @@
   </select>
 {{/inline}}
 
+{{#*inline "imageControl"}}
+  <span class="scirc-image-control" data-image-control>
+    <input type="hidden" id="{{field.name}}" name="{{field.name}}" value="{{field.value}}" data-image-path data-default-value="{{field.defaultValue}}" />
+    <button type="button" class="scirc-image-control__thumb" data-action="pickImage" data-target="{{field.name}}" data-tooltip-text="{{field.value}}" aria-label="Choose the {{field.label}} image">
+      <img src="{{field.value}}" alt="" loading="lazy" data-image-thumb />
+    </button>
+    <button type="button" class="scirc-btn scirc-btn--ghost scirc-image-control__button" data-action="resetImage" data-target="{{field.name}}" data-tooltip="Restore the default image" aria-label="Restore the default {{field.label}} image">
+      <i class="fas fa-rotate-left" aria-hidden="true"></i>
+    </button>
+  </span>
+{{/inline}}
+
 <section class="scirc-config scirc-style-editor" data-application-part="body">
   <div class="scirc-config__body scirc-style-editor__body">
     <aside class="scirc-config__rail scirc-style-rail">
@@ -142,6 +154,7 @@
             <div class="scirc-style-editor__panel" data-field-panel="{{this.id}}" role="tabpanel" {{#unless this.active}}hidden{{/unless}}>
               {{#if this.hint}}<p class="scirc-style-editor__panel-hint">{{this.hint}}</p>{{/if}}
               {{#each this.sections}}
+                <div class="scirc-style-section" data-style-section>
                 <h3 class="scirc-config__section-title">{{this.title}}</h3>
                 {{#if this.hint}}<p class="scirc-style-editor__section-hint">{{this.hint}}</p>{{/if}}
                 <div class="scirc-style-rows">
@@ -158,6 +171,9 @@
                       {{else if this.field.isSelect}}
                         <label class="scirc-style-row__label" for="{{this.field.name}}" {{#if this.hint}}data-tooltip="{{this.hint}}"{{/if}}>{{this.field.label}}</label>
                         {{> selectControl field=this.field}}
+                      {{else if this.field.isImage}}
+                        <span class="scirc-style-row__label">{{this.field.label}}</span>
+                        {{> imageControl field=this.field}}
                       {{else}}
                         <span class="scirc-style-row__label">{{this.field.label}}</span>
                         {{> colorControl field=this.field}}
@@ -173,6 +189,7 @@
                       {{/if}}
                     </div>
                   {{/each}}
+                </div>
                 </div>
               {{/each}}
             </div>

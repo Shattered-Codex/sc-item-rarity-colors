@@ -21,8 +21,11 @@ import { raritySupportsBorderGradient, raritySupportsBorderGlow } from "../core/
 import { DEFAULT_COLORS, DEFAULT_GLOW_INTENSITY } from "../core/constants.js";
 import { scheduleOnNextAnimationFrame } from "../core/refreshScheduler.js";
 import { Tidy5eSheetStrategy } from "../sheets/strategies/Tidy5eSheetStrategy.js";
-import { applyIconEmanation, applyIconPulse } from "../core/itemEffects.js";
+import { applyIconEmanation, applyIconPulse, resolveEffectColor } from "../core/itemEffects.js";
 import { readEffectSettings } from "../core/effectSettingFields.js";
+import { UNIDENTIFIED_STYLE_KEY } from "../core/unidentifiedStyle.js";
+import { readConcealSettings } from "../core/unidentifiedImageConfig.js";
+import { previewImageConceal, SHEET_IMAGE_SELECTOR } from "../core/unidentifiedImageConceal.js";
 
 const tidyStrategy = new Tidy5eSheetStrategy();
 
@@ -83,6 +86,36 @@ export function updateMiniSheetPreview(formElement, rarity, options = {}) {
   updateInventoryPreview($form, rarity, settings);
   updateTidyInventoryPreview($form, rarity, settings, options);
   updateFoundryInterfacePreview($form, rarity, settings);
+  updateUnidentifiedImagePreview($form, rarity, settings);
+}
+
+// The preview item is a mace.
+const PREVIEW_IMAGE_KIND = "bludgeon";
+
+/**
+ * Hides the preview images as unidentified items would be, while the
+ * unidentified style is selected; shows the real ones otherwise.
+ */
+function updateUnidentifiedImagePreview($form, rarity, settings) {
+  const conceal = rarity === UNIDENTIFIED_STYLE_KEY
+    ? readConcealSettings((fieldKey, defaultValue) => {
+      const $input = $form.find(`[name="${rarity}-${fieldKey}"]`);
+      if (!$input.length) return defaultValue;
+      return $input.is(":checkbox") ? $input.is(":checked") : ($input.val() || defaultValue);
+    })
+    : null;
+  const effectColor = resolveEffectColor(settings);
+  const $preview = $form.find(".sc-item-rarity-colors__preview");
+
+  previewImageConceal($preview.find(".mini-item-sheet").find(SHEET_IMAGE_SELECTOR), conceal, PREVIEW_IMAGE_KIND, "sheet", effectColor);
+  previewImageConceal(
+    $preview.find(".inventory-preview-item .item-image, .tidy-inventory-preview .tidy-table-row-container .item-image"),
+    conceal,
+    PREVIEW_IMAGE_KIND,
+    "inventory",
+    effectColor
+  );
+  previewImageConceal($preview.find(".foundry-interface-preview .directory-item.is-target img.thumbnail"), conceal, PREVIEW_IMAGE_KIND, "sidebar", effectColor);
 }
 
 /**

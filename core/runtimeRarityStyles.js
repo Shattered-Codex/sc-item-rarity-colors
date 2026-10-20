@@ -7,6 +7,7 @@ import { resolveEffectColor } from "./itemEffects.js";
 import { ActorInventoryRuntimeStyleStrategy } from "./runtimeStyleStrategies/ActorInventoryRuntimeStyleStrategy.js";
 import { ItemDirectoryRuntimeStyleStrategy } from "./runtimeStyleStrategies/ItemDirectoryRuntimeStyleStrategy.js";
 import { ItemSheetRuntimeStyleStrategy } from "./runtimeStyleStrategies/ItemSheetRuntimeStyleStrategy.js";
+import { UnidentifiedImageRuntimeStyleStrategy } from "./runtimeStyleStrategies/UnidentifiedImageRuntimeStyleStrategy.js";
 
 const STYLE_ELEMENT_ID = "scirc-runtime-rarity-styles";
 let _cachedCssText = null;
@@ -19,6 +20,7 @@ const runtimeStrategies = [
   new ItemSheetRuntimeStyleStrategy(),
   new ActorInventoryRuntimeStyleStrategy(),
   new ItemDirectoryRuntimeStyleStrategy(),
+  new UnidentifiedImageRuntimeStyleStrategy(),
 ];
 
 export function toRarityClassKey(rarity) {

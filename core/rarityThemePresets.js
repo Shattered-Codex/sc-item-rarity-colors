@@ -34,13 +34,14 @@ function deepClone(value) {
 }
 
 // Layout choices, not colors: a theme neither sets nor compares them, so
-// applying one keeps e.g. the Tidy 5e area the GM picked.
+// applying one keeps e.g. the Tidy 5e area the GM picked. The same goes for
+// fields marked `themeable: false` (how unidentified items hide their image).
 const NON_THEME_FIELD_KEYS = new Set(["tidy-background-area", "effect-placement"]);
 
 function buildBaseFieldValues(rarity) {
   const values = {};
   for (const field of getRarityFieldDefinitions(rarity)) {
-    if (NON_THEME_FIELD_KEYS.has(field.key)) continue;
+    if (NON_THEME_FIELD_KEYS.has(field.key) || field.themeable === false) continue;
     values[field.key] = field.defaultValue;
   }
   return values;

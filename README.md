@@ -24,6 +24,7 @@ Compatible with **Foundry VTT v13 and v14**.
 - Includes a rarity list manager (add, remove, rename, reorder, show/hide).
 - Plays nicely with Custom DND5E rarity data when both modules are active.
 - Includes Spell School color configuration for spells, built-in spell theme presets, and optional per-level variants.
+- Gives unidentified items their own style, so their colors do not reveal the real rarity, and can hide their image too: shadowed, as a silhouette, blurred, or swapped for a stand-in image per kind of item (swords, axes, armor, rings, potions, and so on), with an optional question mark over it.
 
 ---
 
@@ -56,6 +57,10 @@ The module shows three buttons there — **Open settings**, **Configure items**,
 Choose from multiple built-in rarity theme presets to quickly apply a full visual style across the core rarity tiers, then fine-tune any field manually if you want a custom setup.
 
 ![Rarity theme presets preview](https://i.imgur.com/L9RaGcX.png)
+
+### Unidentified Items
+
+Select **Unidentified** at the bottom of the rarity list to style items that are not identified yet. Its **Image** tab chooses how their image is hidden from the players who see that style: shadowed (the default), as a silhouette, blurred, or replaced by a stand-in image for each kind of item, which you can change with the file picker. A question mark can be drawn over it, and each surface (item sheet, inventory, sidebar and compendiums) can be turned on or off. The image is only covered on screen; the item itself is never changed.
 
 ### Spell School Color Configuration
 

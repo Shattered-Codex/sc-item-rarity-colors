@@ -1,4 +1,12 @@
 import { RARITY_CONFIG } from "./rarityConfig.js";
+import { UNIDENTIFIED_STYLE_KEY } from "./unidentifiedStyle.js";
+import {
+  buildImageKindFieldKey,
+  CONCEAL_IMAGE_MODES,
+  CONCEAL_MARK_SIZES,
+  DEFAULT_CONCEAL_IMAGE_MODE,
+  ITEM_IMAGE_KINDS,
+} from "./unidentifiedImageConfig.js";
 
 /**
  * Field definitions shared by the item rarity and spell school editors.
@@ -12,6 +20,10 @@ import { RARITY_CONFIG } from "./rarityConfig.js";
  * puts a row on the editor's Effects tab instead of Colors, where `section`
  * groups it (general, aura, particles, icons); a row's inline field follows
  * its host.
+ *
+ * A field with `entry: "unidentified"` exists only on the unidentified style
+ * (its Image tab), and one with `themeable: false` is never set or compared by
+ * a theme preset. An `image` field stores a file path.
  */
 export const RARITY_FIELD_DEFINITIONS = Object.freeze([
   {
@@ -640,13 +652,121 @@ export const RARITY_FIELD_DEFINITIONS = Object.freeze([
     group: "actor-sheet",
     defaultValue: false,
   },
+  // --- Unidentified image (Image tab, unidentified style only) -------------
+  ...buildUnidentifiedImageFields(),
 ]);
 
-export function getRarityFieldDefinitions(rarity) {
-  const rarityConfig = RARITY_CONFIG[rarity] || {};
-  if (!Object.keys(rarityConfig).length) return RARITY_FIELD_DEFINITIONS;
+function buildUnidentifiedImageFields() {
+  const field = (definition) => ({
+    panel: "unidentified",
+    entry: "unidentified",
+    themeable: false,
+    group: "item-sheet",
+    ...definition,
+  });
+  const showsTypeImages = { equals: { "conceal-image-mode": "type" } };
 
-  return RARITY_FIELD_DEFINITIONS.filter((field) => {
+  return [
+    field({
+      key: "conceal-image-mode",
+      section: "conceal-image",
+      label: "Unidentified Image",
+      uiLabel: "Image",
+      uiHint: "Shadowed: the item's own image darkened and tinted in the effect color, so its shape shows but not its colors. Silhouette: the item's shape as a flat shade of the effect color (outlined on the item sheet), cut from the image's lit parts (very dark or deep red parts can drop out). Blurred: the image out of focus. By item type: a stand-in picked below for each kind of item. Real image: only the question mark, if on.",
+      settingName: ": Unidentified Image",
+      type: "select",
+      choices: CONCEAL_IMAGE_MODES,
+      defaultValue: DEFAULT_CONCEAL_IMAGE_MODE,
+    }),
+    field({
+      key: "conceal-mark-option",
+      section: "conceal-image",
+      label: "Question Mark Over the Image",
+      uiLabel: "Question mark",
+      uiHint: "A question mark drawn over the image.",
+      settingName: ": Question Mark Over the Image",
+      type: "checkbox",
+      defaultValue: true,
+    }),
+    field({
+      key: "conceal-mark-color",
+      label: "Question Mark Color",
+      uiLabel: "Question mark",
+      inlineWith: "conceal-mark-option",
+      settingName: ": Question Mark Color",
+      type: "color",
+      defaultValue: "#f4efff",
+      visibleWhen: { all: ["conceal-mark-option"] },
+    }),
+    field({
+      key: "conceal-mark-size",
+      section: "conceal-image",
+      label: "Question Mark Size",
+      uiLabel: "Size",
+      nested: true,
+      settingName: ": Question Mark Size",
+      type: "select",
+      choices: CONCEAL_MARK_SIZES,
+      defaultValue: "medium",
+      visibleWhen: { all: ["conceal-mark-option"] },
+    }),
+    field({
+      key: "conceal-on-sheet",
+      section: "conceal-where",
+      label: "Hide the Image on Item Sheets",
+      uiLabel: "Item sheet",
+      uiHint: "The image at the top of the item sheet. It also stops a click on it from opening the real image.",
+      settingName: ": Hide the Image on Item Sheets",
+      type: "checkbox",
+      defaultValue: true,
+    }),
+    field({
+      key: "conceal-in-inventory",
+      section: "conceal-where",
+      label: "Hide the Image in Inventories",
+      uiLabel: "Inventory",
+      uiHint: "The item icon in actor inventories.",
+      settingName: ": Hide the Image in Inventories",
+      type: "checkbox",
+      group: "actor-sheet",
+      defaultValue: true,
+    }),
+    field({
+      key: "conceal-in-sidebar",
+      section: "conceal-where",
+      label: "Hide the Image in the Sidebar",
+      uiLabel: "Sidebar and compendiums",
+      uiHint: "The item thumbnail in the Items sidebar and in compendiums.",
+      settingName: ": Hide the Image in the Sidebar",
+      type: "checkbox",
+      group: "foundry-interface",
+      defaultValue: true,
+    }),
+    ...ITEM_IMAGE_KINDS.map((kind) => field({
+      key: buildImageKindFieldKey(kind.key),
+      section: kind.section,
+      label: `Unidentified Image: ${kind.label}`,
+      uiLabel: kind.label,
+      settingName: `: Unidentified Image (${kind.label})`,
+      type: "image",
+      defaultValue: kind.defaultImage,
+      visibleWhen: showsTypeImages,
+    })),
+  ];
+}
+
+const isUnidentifiedStyle = (rarity) => rarity === UNIDENTIFIED_STYLE_KEY;
+
+const SHARED_FIELD_DEFINITIONS = Object.freeze(RARITY_FIELD_DEFINITIONS.filter((field) => field.entry !== "unidentified"));
+
+export function getRarityFieldDefinitions(rarity) {
+  // The unidentified style has no tier config: every field, plus its own.
+  if (isUnidentifiedStyle(rarity)) return RARITY_FIELD_DEFINITIONS;
+
+  const rarityConfig = RARITY_CONFIG[rarity] || {};
+  if (!Object.keys(rarityConfig).length) return SHARED_FIELD_DEFINITIONS;
+
+  return SHARED_FIELD_DEFINITIONS.filter((field) => {
     if (!field.requiredFlag) return true;
     return Boolean(rarityConfig[field.requiredFlag]);
   });
@@ -674,6 +794,11 @@ export function isRarityFieldVisible(field, state = {}) {
   }
 
   if (Array.isArray(rule.not) && rule.not.some((key) => isEnabled(key))) {
+    return false;
+  }
+
+  // `equals` compares a select field's value: { "field-key": "value" }.
+  if (rule.equals && Object.entries(rule.equals).some(([key, value]) => state?.[key] !== value)) {
     return false;
   }
 
