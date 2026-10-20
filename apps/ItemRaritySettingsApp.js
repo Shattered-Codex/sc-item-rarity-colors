@@ -311,8 +311,8 @@ export class ItemRaritySettingsApp extends StyleEditorApp {
 
     const selectedThemePreset = getItemRarityThemePreset(this.selectedThemeId);
     const themeTooltip = selectedThemePreset
-      ? `Choose a preset to apply a visual base to built-in rarities. You can still adjust colors manually. Current preset: ${selectedThemePreset.label}. ${selectedThemePreset.description}`
-      : "Choose a preset to apply a visual base to built-in rarities. You can still adjust colors manually.";
+      ? `Choose a preset to apply a visual base to built-in rarities (and to the unidentified style, for themes that include one). You can still adjust colors manually. Current preset: ${selectedThemePreset.label}. ${selectedThemePreset.description}`
+      : "Choose a preset to apply a visual base to built-in rarities (and to the unidentified style, for themes that include one). You can still adjust colors manually.";
 
     return {
       railTitle: "Rarities",

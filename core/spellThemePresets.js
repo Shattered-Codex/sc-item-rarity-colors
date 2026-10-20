@@ -151,33 +151,7 @@ function resolveSpellTextColor(palette, level, config) {
   return mixColors(baseText, textTarget, textMixRatio);
 }
 
-// Suggested effects grow with spell level: shimmer from 5th, particles in
-// the school's style from 7th, an energy aura and waves at 9th. Cantrips to
-// 4th stay still.
-const SCHOOL_PARTICLE_STYLES = Object.freeze({
-  abj: "frost",
-  con: "arcane",
-  div: "stardust",
-  enc: "arcane",
-  evo: "embers",
-  ill: "stardust",
-  nec: "shadow",
-  trs: "arcane",
-});
-
-function suggestedSpellEffects(schoolKey, level) {
-  const numeric = Number(level) || 0;
-  return {
-    "shimmer-option": numeric >= 5,
-    "particles-option": numeric >= 7,
-    "particles-style": SCHOOL_PARTICLE_STYLES[schoolKey] ?? "arcane",
-    "aura-option": numeric >= 9,
-    "aura-style": "energy",
-    "waves-option": numeric >= 9,
-  };
-}
-
-function buildProfileFromPalette(palette, level, schoolKey = null) {
+function buildProfileFromPalette(palette, level) {
   const config = levelVisualConfig(level);
   const primary = mixColors(palette.primary, "#0B0F18", config.darkMix);
   const secondary = mixColors(palette.secondary, "#FFFFFF", config.lightMix);
@@ -186,7 +160,7 @@ function buildProfileFromPalette(palette, level, schoolKey = null) {
   const inventoryTitle = String(palette.inventoryTitle || text).toUpperCase();
   const inventoryDetails = String(palette.inventoryDetails || text).toUpperCase();
 
-  const values = buildSpellThemeFieldValues({
+  return buildSpellThemeFieldValues({
     primary,
     secondary,
     text,
@@ -199,7 +173,6 @@ function buildProfileFromPalette(palette, level, schoolKey = null) {
     foundryGradient: true,
     details: true,
   });
-  return { ...values, ...suggestedSpellEffects(schoolKey, level) };
 }
 
 function defineSpellPreset(id, label, description, schools) {
@@ -424,13 +397,13 @@ function buildPresetProfiles(preset, schools = getSpellSchoolEntries(), levels =
 
     const schoolProfileKey = buildSpellProfileKey(school.key, null, false);
     if (schoolProfileKey) {
-      profiles[schoolProfileKey] = buildProfileFromPalette(palette, 3, school.key);
+      profiles[schoolProfileKey] = buildProfileFromPalette(palette, 3);
     }
 
     for (const level of levels) {
       const levelProfileKey = buildSpellProfileKey(school.key, level, true);
       if (!levelProfileKey) continue;
-      profiles[levelProfileKey] = buildProfileFromPalette(palette, level, school.key);
+      profiles[levelProfileKey] = buildProfileFromPalette(palette, level);
     }
   }
 
