@@ -1,5 +1,7 @@
 import { RARITY_TIERS } from "./constants.js";
 import { getRarityFieldDefinitions } from "./rarityFieldSchema.js";
+import { buildThemeAccentFields } from "./themeAccents.js";
+import { UNIDENTIFIED_STYLE_KEY } from "./unidentifiedStyle.js";
 
 export const CUSTOM_ITEM_RARITY_THEME_ID = "custom";
 
@@ -10,6 +12,9 @@ export const ITEM_RARITY_THEME_RARITIES = Object.freeze([
   RARITY_TIERS.VERY_RARE,
   RARITY_TIERS.LEGENDARY,
   RARITY_TIERS.ARTIFACT,
+  // Only themes that define an unidentified style touch it; the others skip
+  // it when applied and when matched.
+  UNIDENTIFIED_STYLE_KEY,
 ]);
 
 const DARK_TEXT_COOL = "#1A2230";
@@ -28,9 +33,15 @@ function deepClone(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
+// Layout choices, not colors: a theme neither sets nor compares them, so
+// applying one keeps e.g. the Tidy 5e area the GM picked. The same goes for
+// fields marked `themeable: false` (how unidentified items hide their image).
+const NON_THEME_FIELD_KEYS = new Set(["tidy-background-area", "effect-placement"]);
+
 function buildBaseFieldValues(rarity) {
   const values = {};
   for (const field of getRarityFieldDefinitions(rarity)) {
+    if (NON_THEME_FIELD_KEYS.has(field.key) || field.themeable === false) continue;
     values[field.key] = field.defaultValue;
   }
   return values;
@@ -47,9 +58,15 @@ function buildThemeRarityValues(rarity, {
   inventoryTitleColor = text,
   inventoryDetailsColor = text,
   foundryTextColor = text,
+  accents = {},
+  effects = {},
 } = {}) {
   return {
     ...buildBaseFieldValues(rarity),
+    // Gold accent and table header colors derived from this tier's palette;
+    // `accents` overrides any of them for a hand-tuned tier.
+    ...buildThemeAccentFields({ primary, secondary, gradient }),
+    ...accents,
     "enable-item-color": true,
     "item-color": primary,
     "secondary-item-color": secondary,
@@ -66,7 +83,23 @@ function buildThemeRarityValues(rarity, {
     "enable-foundry-interface-gradient-effects": true,
     "enable-foundry-interface-text-color": true,
     "foundry-interface-text-color": foundryTextColor,
+    ...effects,
   };
+}
+
+// A theme's unidentified style: its colors like any tier, plus an animated
+// effect of its own so an unknown item feels charged with something it is not
+// telling yet.
+function buildThemeUnidentifiedValues(colors, effects) {
+  return buildThemeRarityValues(UNIDENTIFIED_STYLE_KEY, {
+    ...colors,
+    effects: {
+      "enable-effect-color": true,
+      "enable-inventory-icon-emanation": true,
+      "enable-foundry-interface-icon-emanation": true,
+      ...effects,
+    },
+  });
 }
 
 function definePreset(id, label, description, rarities) {
@@ -691,6 +724,473 @@ export const ITEM_RARITY_THEME_PRESETS = Object.freeze([
         inventoryTitleColor: LIGHT_TEXT_ROSE,
         inventoryDetailsColor: DARK_TEXT_ROSE,
         foundryTextColor: "#FFF8FC",
+      }),
+    }
+  ),
+  definePreset(
+    "abyssal-tides",
+    "Abyssal Tides",
+    "Deep-sea blues rising to bioluminescent light, with sunken gold at Legendary. Unidentified items lie under murky water, bubbles drifting up through a dark current.",
+    {
+      [RARITY_TIERS.COMMON]: buildThemeRarityValues(RARITY_TIERS.COMMON, {
+        primary: "#3B4A55",
+        secondary: "#6E8593",
+        text: "#EEF5F8",
+        gradient: true,
+      }),
+      [RARITY_TIERS.UNCOMMON]: buildThemeRarityValues(RARITY_TIERS.UNCOMMON, {
+        primary: "#1E5A55",
+        secondary: "#4FA898",
+        text: "#EFFFFB",
+        gradient: true,
+      }),
+      [RARITY_TIERS.RARE]: buildThemeRarityValues(RARITY_TIERS.RARE, {
+        primary: "#12406E",
+        secondary: "#2F8FC9",
+        text: "#F0F8FF",
+        gradient: true,
+        effects: {
+          "shimmer-option": true,
+        },
+      }),
+      [RARITY_TIERS.VERY_RARE]: buildThemeRarityValues(RARITY_TIERS.VERY_RARE, {
+        primary: "#1E2A6B",
+        secondary: "#3FD0D8",
+        text: "#F2FDFF",
+        gradient: true,
+        effects: {
+          "shimmer-option": true,
+          "particles-option": true,
+          "particles-style": "bubbles",
+          "particle-amount": "few",
+        },
+      }),
+      [RARITY_TIERS.LEGENDARY]: buildThemeRarityValues(RARITY_TIERS.LEGENDARY, {
+        primary: "#0F5C6E",
+        secondary: "#F2C38B",
+        text: "#FFF8EE",
+        gradient: true,
+        glow: true,
+        effects: {
+          "shimmer-option": true,
+          "particles-option": true,
+          "particles-style": "fireflies",
+          "aura-option": true,
+          "aura-style": "pulse",
+          "enable-inventory-icon-pulse": true,
+        },
+      }),
+      [RARITY_TIERS.ARTIFACT]: buildThemeRarityValues(RARITY_TIERS.ARTIFACT, {
+        primary: "#2A0F4F",
+        secondary: "#3DF5C8",
+        text: "#F4FFFB",
+        gradient: true,
+        glow: true,
+        effects: {
+          "shimmer-option": true,
+          "particles-option": true,
+          "particles-style": "fireflies",
+          "particle-amount": "many",
+          "aura-option": true,
+          "aura-style": "energy",
+          "waves-option": true,
+          "waves-style": "ripples",
+          "enable-inventory-icon-emanation": true,
+          "enable-foundry-interface-icon-emanation": true,
+        },
+      }),
+      [UNIDENTIFIED_STYLE_KEY]: buildThemeUnidentifiedValues({
+        primary: "#101C26",
+        secondary: "#24414F",
+        text: "#CFE3EA",
+        gradient: true,
+      }, {
+        "effect-color": "#4FD1C5",
+        "effect-intensity": "subtle",
+        "effect-speed": "slow",
+        "aura-option": true,
+        "aura-style": "void",
+        "particles-option": true,
+        "particles-style": "bubbles",
+        "particle-amount": "few",
+        "waves-option": true,
+        "waves-style": "mist",
+        "waves-shape": "organic",
+      }),
+    }
+  ),
+  definePreset(
+    "frostbound-runes",
+    "Frostbound Runes",
+    "Northern iron, glacier ice and aurora light, with silver turning to pale gold at Legendary. Unidentified items are sealed in frost, snow swirling around them under a pale halo.",
+    {
+      [RARITY_TIERS.COMMON]: buildThemeRarityValues(RARITY_TIERS.COMMON, {
+        primary: "#4A5260",
+        secondary: "#8C96A5",
+        text: "#F3F6FA",
+        gradient: true,
+      }),
+      [RARITY_TIERS.UNCOMMON]: buildThemeRarityValues(RARITY_TIERS.UNCOMMON, {
+        primary: "#2E4F48",
+        secondary: "#8FC2B4",
+        text: "#F1FBF8",
+        gradient: true,
+      }),
+      [RARITY_TIERS.RARE]: buildThemeRarityValues(RARITY_TIERS.RARE, {
+        primary: "#2B5C8A",
+        secondary: "#A9D8F5",
+        text: "#F2F9FF",
+        gradient: true,
+        effects: {
+          "shimmer-option": true,
+        },
+      }),
+      [RARITY_TIERS.VERY_RARE]: buildThemeRarityValues(RARITY_TIERS.VERY_RARE, {
+        primary: "#3B3F7A",
+        secondary: "#9FB4F0",
+        text: "#F4F6FF",
+        gradient: true,
+        effects: {
+          "shimmer-option": true,
+          "particles-option": true,
+          "particles-style": "frost",
+          "particle-amount": "few",
+        },
+      }),
+      [RARITY_TIERS.LEGENDARY]: buildThemeRarityValues(RARITY_TIERS.LEGENDARY, {
+        primary: "#4F5866",
+        secondary: "#E9D79A",
+        text: "#FFFBEF",
+        gradient: true,
+        glow: true,
+        effects: {
+          "shimmer-option": true,
+          "particles-option": true,
+          "particles-style": "frost",
+          "aura-option": true,
+          "aura-style": "halo",
+          "enable-inventory-icon-pulse": true,
+        },
+      }),
+      [RARITY_TIERS.ARTIFACT]: buildThemeRarityValues(RARITY_TIERS.ARTIFACT, {
+        primary: "#133A4A",
+        secondary: "#7CF2B8",
+        text: "#F2FFF8",
+        gradient: true,
+        glow: true,
+        effects: {
+          "shimmer-option": true,
+          "particles-option": true,
+          "particles-style": "stardust",
+          "particle-amount": "many",
+          "aura-option": true,
+          "aura-style": "corona",
+          "waves-option": true,
+          "waves-style": "prism",
+          "runes-option": true,
+          "enable-inventory-icon-emanation": true,
+          "enable-foundry-interface-icon-emanation": true,
+        },
+      }),
+      [UNIDENTIFIED_STYLE_KEY]: buildThemeUnidentifiedValues({
+        primary: "#1F2733",
+        secondary: "#5D6E82",
+        text: "#E6EEF6",
+        gradient: true,
+      }, {
+        "effect-color": "#A8DCFF",
+        "effect-intensity": "subtle",
+        "effect-speed": "slow",
+        "aura-option": true,
+        "aura-style": "halo",
+        "particles-option": true,
+        "particles-style": "frost",
+        "particle-motion": "swirl",
+      }),
+    }
+  ),
+  definePreset(
+    "sunscorched-dunes",
+    "Sunscorched Dunes",
+    "Sun-bleached sandstone and sage giving way to turquoise, lapis, gold and carnelian, the treasures of buried kings. Unidentified items carry a tomb's curse: glyphs circle them under a slow corona.",
+    {
+      [RARITY_TIERS.COMMON]: buildThemeRarityValues(RARITY_TIERS.COMMON, {
+        primary: "#C2A878",
+        secondary: "#EFE2C2",
+        text: DARK_TEXT_WARM,
+        gradient: true,
+        inventoryTitleColor: LIGHT_TEXT_WARM,
+        inventoryDetailsColor: DARK_TEXT_WARM,
+        foundryTextColor: "#FFF8EC",
+      }),
+      [RARITY_TIERS.UNCOMMON]: buildThemeRarityValues(RARITY_TIERS.UNCOMMON, {
+        primary: "#9DA86A",
+        secondary: "#E2E8B8",
+        text: DARK_TEXT_WARM,
+        gradient: true,
+        inventoryTitleColor: LIGHT_TEXT_WARM,
+        inventoryDetailsColor: DARK_TEXT_WARM,
+        foundryTextColor: "#FBFFEE",
+      }),
+      [RARITY_TIERS.RARE]: buildThemeRarityValues(RARITY_TIERS.RARE, {
+        primary: "#1A6E75",
+        secondary: "#7FD6CF",
+        text: "#F2FFFD",
+        gradient: true,
+        effects: {
+          "shimmer-option": true,
+        },
+      }),
+      [RARITY_TIERS.VERY_RARE]: buildThemeRarityValues(RARITY_TIERS.VERY_RARE, {
+        primary: "#233F86",
+        secondary: "#5C86D6",
+        text: "#F2F6FF",
+        gradient: true,
+        effects: {
+          "shimmer-option": true,
+          "particles-option": true,
+          "particles-style": "stardust",
+          "particle-amount": "few",
+        },
+      }),
+      [RARITY_TIERS.LEGENDARY]: buildThemeRarityValues(RARITY_TIERS.LEGENDARY, {
+        primary: "#8C5A12",
+        secondary: "#F2C14E",
+        text: "#FFF8EA",
+        gradient: true,
+        glow: true,
+        effects: {
+          "shimmer-option": true,
+          "particles-option": true,
+          "particles-style": "stardust",
+          "aura-option": true,
+          "aura-style": "halo",
+          "enable-inventory-icon-pulse": true,
+        },
+      }),
+      [RARITY_TIERS.ARTIFACT]: buildThemeRarityValues(RARITY_TIERS.ARTIFACT, {
+        primary: "#7A1E14",
+        secondary: "#E0743A",
+        text: "#FFF4EC",
+        gradient: true,
+        glow: true,
+        effects: {
+          "shimmer-option": true,
+          "particles-option": true,
+          "particles-style": "embers",
+          "particle-amount": "many",
+          "aura-option": true,
+          "aura-style": "fire",
+          "waves-option": true,
+          "waves-style": "shockwave",
+          "enable-inventory-icon-emanation": true,
+          "enable-foundry-interface-icon-emanation": true,
+        },
+      }),
+      [UNIDENTIFIED_STYLE_KEY]: buildThemeUnidentifiedValues({
+        primary: "#2E2418",
+        secondary: "#6B5636",
+        text: "#EADFC8",
+        gradient: true,
+      }, {
+        "effect-color": "#E8C36A",
+        "effect-intensity": "subtle",
+        "effect-speed": "slow",
+        "aura-option": true,
+        "aura-style": "corona",
+        "particles-option": true,
+        "particles-style": "glyphs",
+        "particle-motion": "orbit",
+        "particle-amount": "few",
+      }),
+    }
+  ),
+  definePreset(
+    "grim-ossuary",
+    "Grim Ossuary",
+    "Gothic ash, bone and tarnished steel, nearly colorless until blood red at Artifact. Unidentified items are shrouded in shadow: dark wisps and a slow void swallowing the light.",
+    {
+      [RARITY_TIERS.COMMON]: buildThemeRarityValues(RARITY_TIERS.COMMON, {
+        primary: "#2E2E30",
+        secondary: "#5A5A5E",
+        text: "#E8E6E1",
+      }),
+      [RARITY_TIERS.UNCOMMON]: buildThemeRarityValues(RARITY_TIERS.UNCOMMON, {
+        primary: "#4A4236",
+        secondary: "#A39882",
+        text: "#F5F0E6",
+        gradient: true,
+      }),
+      [RARITY_TIERS.RARE]: buildThemeRarityValues(RARITY_TIERS.RARE, {
+        primary: "#2E3A46",
+        secondary: "#7A8C9C",
+        text: "#EEF3F7",
+        gradient: true,
+        effects: {
+          "shimmer-option": true,
+        },
+      }),
+      [RARITY_TIERS.VERY_RARE]: buildThemeRarityValues(RARITY_TIERS.VERY_RARE, {
+        primary: "#3A2238",
+        secondary: "#8A5A86",
+        text: "#F8F0F7",
+        gradient: true,
+        effects: {
+          "shimmer-option": true,
+          "particles-option": true,
+          "particles-style": "shadow",
+          "particle-amount": "few",
+        },
+      }),
+      [RARITY_TIERS.LEGENDARY]: buildThemeRarityValues(RARITY_TIERS.LEGENDARY, {
+        primary: "#4A3A1E",
+        secondary: "#B89A5A",
+        text: "#FFF6E6",
+        gradient: true,
+        glow: true,
+        effects: {
+          "shimmer-option": true,
+          "particles-option": true,
+          "particles-style": "fireflies",
+          "aura-option": true,
+          "aura-style": "pulse",
+          "enable-inventory-icon-pulse": true,
+        },
+      }),
+      [RARITY_TIERS.ARTIFACT]: buildThemeRarityValues(RARITY_TIERS.ARTIFACT, {
+        primary: "#3A0A0E",
+        secondary: "#B3122A",
+        text: "#FFF0F0",
+        gradient: true,
+        glow: true,
+        effects: {
+          "shimmer-option": true,
+          "particles-option": true,
+          "particles-style": "embers",
+          "particle-amount": "many",
+          "aura-option": true,
+          "aura-style": "fire",
+          "waves-option": true,
+          "waves-style": "burst",
+          "enable-inventory-icon-emanation": true,
+          "enable-foundry-interface-icon-emanation": true,
+        },
+      }),
+      [UNIDENTIFIED_STYLE_KEY]: buildThemeUnidentifiedValues({
+        primary: "#0E0E12",
+        secondary: "#2C2A33",
+        text: "#D8D4CC",
+        gradient: true,
+      }, {
+        "effect-color": "#9D8CC9",
+        "effect-speed": "slow",
+        "aura-option": true,
+        "aura-style": "void",
+        "particles-option": true,
+        "particles-style": "shadow",
+        "waves-option": true,
+        "waves-style": "ripples",
+      }),
+    }
+  ),
+  definePreset(
+    "sakura-shrine",
+    "Sakura Shrine",
+    "Washi paper, matcha, indigo and wisteria, then kintsugi gold on black lacquer and torii vermilion, with cherry blossom petals drifting over the rarest items. Unidentified items are haunted by onibi, pale spirit flames wandering through the shrine mist.",
+    {
+      [RARITY_TIERS.COMMON]: buildThemeRarityValues(RARITY_TIERS.COMMON, {
+        primary: "#D9CDB8",
+        secondary: "#F3ECDF",
+        text: "#2B2420",
+        gradient: true,
+        inventoryTitleColor: LIGHT_TEXT_WARM,
+        inventoryDetailsColor: "#2B2420",
+        foundryTextColor: "#FFF8EE",
+      }),
+      [RARITY_TIERS.UNCOMMON]: buildThemeRarityValues(RARITY_TIERS.UNCOMMON, {
+        primary: "#4F6B3A",
+        secondary: "#A9C27A",
+        text: "#F6FBEF",
+        gradient: true,
+      }),
+      [RARITY_TIERS.RARE]: buildThemeRarityValues(RARITY_TIERS.RARE, {
+        primary: "#1F3A68",
+        secondary: "#5A7FB8",
+        text: "#F2F6FF",
+        gradient: true,
+        effects: {
+          "shimmer-option": true,
+        },
+      }),
+      [RARITY_TIERS.VERY_RARE]: buildThemeRarityValues(RARITY_TIERS.VERY_RARE, {
+        primary: "#4E3A7A",
+        secondary: "#B79ED9",
+        text: "#FAF6FF",
+        gradient: true,
+        effects: {
+          "shimmer-option": true,
+          "particles-option": true,
+          "particles-style": "petals",
+          "particle-amount": "few",
+          "enable-particle-color": true,
+          "particle-color": "#F7C6D3",
+        },
+      }),
+      [RARITY_TIERS.LEGENDARY]: buildThemeRarityValues(RARITY_TIERS.LEGENDARY, {
+        primary: "#2A1F1A",
+        secondary: "#D9A93E",
+        text: "#FFF8EA",
+        gradient: true,
+        glow: true,
+        effects: {
+          "shimmer-option": true,
+          "particles-option": true,
+          "particles-style": "petals",
+          "enable-particle-color": true,
+          "particle-color": "#F7C6D3",
+          "aura-option": true,
+          "aura-style": "halo",
+          "enable-inventory-icon-pulse": true,
+        },
+      }),
+      [RARITY_TIERS.ARTIFACT]: buildThemeRarityValues(RARITY_TIERS.ARTIFACT, {
+        primary: "#A3201E",
+        secondary: "#F6B8C8",
+        text: "#FFF5F7",
+        gradient: true,
+        glow: true,
+        effects: {
+          "shimmer-option": true,
+          "particles-option": true,
+          "particles-style": "petals",
+          "particle-amount": "many",
+          "particle-distance": "far",
+          "aura-option": true,
+          "aura-style": "energy",
+          "waves-option": true,
+          "waves-style": "ripples",
+          "enable-inventory-icon-emanation": true,
+          "enable-foundry-interface-icon-emanation": true,
+        },
+      }),
+      [UNIDENTIFIED_STYLE_KEY]: buildThemeUnidentifiedValues({
+        primary: "#14121C",
+        secondary: "#3A2F45",
+        text: "#E8E0EA",
+        gradient: true,
+      }, {
+        "effect-color": "#9FB8FF",
+        "effect-intensity": "subtle",
+        "effect-speed": "slow",
+        "aura-option": true,
+        "aura-style": "pulse",
+        "particles-option": true,
+        "particles-style": "fireflies",
+        "particle-motion": "wander",
+        "particle-amount": "few",
+        "waves-option": true,
+        "waves-style": "mist",
+        "waves-shape": "organic",
       }),
     }
   ),

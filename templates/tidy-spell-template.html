@@ -1,0 +1,113 @@
+<div class="scirc-preview-variant" data-preview-variant="tidy5e" hidden>
+<div class="sc-item-rarity-colors__preview-label">Spell Sheet</div>
+<div class="mini-item-sheet mini-item-sheet--tidy">
+  <div class="application sheet item tidy5e-sheet quadrone spell themed" data-scirc-tidy-root>
+    <header class="window-header">
+      <div class="header-over-sidebar theme-dark">
+        <span class="header-item-type-label truncate">Spell</span>
+      </div>
+      <div class="item-header-start-document-name truncate">{{previewSpell.name}}</div>
+    </header>
+    <section class="window-content">
+      <aside class="sidebar theme-dark">
+        <div>
+          <div class="item-image-container">
+            <img class="item-image" src="{{previewSpell.img}}" alt="{{previewSpell.name}}">
+          </div>
+          <div class="spell-method-text">Prepared</div>
+        </div>
+      </aside>
+      <main class="item-content">
+        <div class="item-name-wrapper flex-row extra-small-gap align-items-center">
+          <div class="document-name">{{previewSpell.name}}</div>
+        </div>
+        <div class="subtitle">{{previewSpell.subtitle}}</div>
+        <div class="item-header-summary">
+          <div class="item-weight">
+            <i class="fas fa-clock item-weight-icon text-label-icon"></i>
+            <span class="item-weight-value text-data">{{previewSpell.activation}}</span>
+          </div>
+          <div class="item-quantity">
+            <span class="item-quantity-label color-text-lighter">Range</span>
+            <span class="item-quantity-value">{{previewSpell.range}}</span>
+          </div>
+        </div>
+        <div role="tablist" class="tidy-tabs item-tabs">
+          <a class="tab-option active first-tab" role="tab" aria-selected="true"><span class="tab-title">Description</span></a>
+          <a class="tab-option" role="tab" aria-selected="false"><span class="tab-title">Details</span></a>
+          <a class="tab-option" role="tab" aria-selected="false"><span class="tab-title">Activities</span></a>
+          <a class="tab-option no-border-on-last-tab" role="tab" aria-selected="false"><span class="tab-title">Effects</span></a>
+        </div>
+        <hr class="golden-fade">
+        <div class="tidy-tab description active" data-tab-contents-for="description" role="tabpanel" data-tidy-sheet-part="tab-content">
+          <p>A bright streak flashes from your pointing finger and blossoms into a roar of flame.</p>
+          <section class="tidy-table" data-tidy-sheet-part="item-table">
+            <header class="tidy-table-header-row theme-dark" data-tidy-sheet-part="table-header-row">
+              <div class="tidy-table-header-cell header-label-cell primary" data-tidy-sheet-part="table-header-cell">
+                <h3>Activities</h3>
+                <span class="table-header-count">1</span>
+              </div>
+              <div class="tidy-table-header-cell" data-tidy-sheet-part="table-header-cell" style="--tidy-table-column-width: 5rem;">Uses</div>
+            </header>
+            <div class="item-table-body">
+              <div class="tidy-table-row-container">
+                <div class="tidy-table-row tidy-table-row-v2" data-tidy-table-row>
+                  <a class="tidy-table-row-use-button"><img class="item-image" alt="Cast" src="{{previewSpell.img}}"></a>
+                  <div class="tidy-table-cell item-label text-cell primary" data-tidy-sheet-part="table-cell">
+                    <a class="item-name" role="button">
+                      <span class="cell-text">
+                        <span class="cell-name">Cast</span>
+                        <span class="cell-context">{{previewSpell.activation}}</span>
+                      </span>
+                    </a>
+                  </div>
+                  <div class="tidy-table-cell" data-tidy-sheet-part="table-cell" style="--tidy-table-column-width: 5rem;"><span class="color-text-disabled">&mdash;</span></div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </section>
+  </div>
+</div>
+
+<div class="sc-item-rarity-colors__preview-label">Inventory</div>
+<div class="tidy-inventory-preview">
+  <div class="application sheet actor character tidy5e-sheet quadrone themed" data-scirc-tidy-root>
+    <section class="tidy-table" data-tidy-sheet-part="item-table">
+      <header class="tidy-table-header-row theme-dark" data-tidy-sheet-part="table-header-row">
+        <div class="tidy-table-header-cell header-label-cell primary" data-tidy-sheet-part="table-header-cell">
+          <h3>{{previewSpell.levelShort}}</h3>
+          <span class="table-header-count">1</span>
+        </div>
+        <div class="tidy-table-header-cell" data-tidy-sheet-part="table-header-cell" style="--tidy-table-column-width: 4rem;">School</div>
+        <div class="tidy-table-header-cell" data-tidy-sheet-part="table-header-cell" style="--tidy-table-column-width: 4rem;">Time</div>
+        <div class="tidy-table-header-cell" data-tidy-sheet-part="table-header-cell" style="--tidy-table-column-width: 4rem;">Range</div>
+      </header>
+      <div class="item-table-body">
+        <div class="tidy-table-row-container" data-item-id="scirc-preview">
+          <div class="tidy-table-row tidy-table-row-v2" data-tidy-table-row data-tidy-sheet-part="item-table-row">
+            <a class="tidy-table-row-use-button">
+              <img class="item-image" alt="{{previewSpell.name}}" src="{{previewSpell.img}}">
+              <span class="roll-prompt"><i class="fa-solid fa-dice-d20"></i></span>
+            </a>
+            <div class="tidy-table-cell item-label text-cell primary" data-tidy-sheet-part="table-cell">
+              <a class="item-name" role="button">
+                <span class="cell-text">
+                  <span class="cell-name">{{previewSpell.name}}</span>
+                  <span class="cell-context">{{previewSpell.schoolLabel}}</span>
+                </span>
+                <span class="row-detail-expand-indicator"><i class="fa-solid fa-angle-right expand-indicator"></i></span>
+              </a>
+            </div>
+            <div class="tidy-table-cell" data-tidy-sheet-part="table-cell" style="--tidy-table-column-width: 4rem;"><span>{{previewSpell.schoolShort}}</span></div>
+            <div class="tidy-table-cell" data-tidy-sheet-part="table-cell" style="--tidy-table-column-width: 4rem;"><span>{{previewSpell.activationShort}}</span></div>
+            <div class="tidy-table-cell" data-tidy-sheet-part="table-cell" style="--tidy-table-column-width: 4rem;"><span>{{previewSpell.range}}</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+</div>

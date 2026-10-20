@@ -4,5 +4,6 @@
 .gitattributes
 .gitignore
 .zipignore
+AGENTS.md
 LICENSE
 README.md

@@ -1,0 +1,137 @@
+/* === Unidentified item images ============================================
+   The real image hidden: darkened, as a silhouette, blurred, or behind a
+   stand-in image per item kind, with an optional question mark
+   (core/unidentifiedImageConceal.js).
+   Architectural exception to avoiding filters on repeated rows: these static
+   filters implement the selected image concealment mode. They never animate;
+   glow is restricted to item sheets. Large inventories still require visual
+   performance checks because filtering adds rendering work.
+
+   - .scirc-concealed-image on the image: its pixels move out of its box, so
+     its border, background, and clicks stay as they are;
+   - .scirc-conceal, a cover placed right before it (like the icon effects),
+     over the image's box. Its ::before draws, inside the image's border,
+     the hidden image or the stand-in; its child SVG the
+     question mark.
+
+   Colors and stand-in images come from the runtime CSS (global variables, as
+   there is one unidentified style); the editor preview writes them inline. */
+
+img.scirc-concealed-image {
+  object-position: -100000px 0 !important;
+}
+
+/* D&D 5e draws SVG icons as <dnd5e-icon>, which has no object-position. */
+.scirc-concealed-image:not(img) {
+  opacity: 0 !important;
+}
+
+.scirc-conceal {
+  position: absolute;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--scirc-cover-w, 32px);
+  height: var(--scirc-cover-h, var(--scirc-cover-w, 32px));
+  pointer-events: none;
+  --glow: var(--scirc-conceal-glow, #a77bff);
+}
+
+/* Inside the image's border, which stays visible around the cover. */
+.scirc-conceal::before {
+  content: "";
+  position: absolute;
+  inset: var(--scirc-cover-y, 0) var(--scirc-cover-x, 0);
+  background: center / contain no-repeat;
+}
+
+/* Shadowed and Silhouette: one SVG color matrix each (written into the page
+   by core/unidentifiedImageConceal.js, tinted in the effect color), a single
+   cheap pass per hidden icon. Only the item sheet, a single element, adds a
+   glow; rows in long lists stay a plain filtered image. The editor preview
+   uses its own filters so its color picker never touches live icons. */
+.scirc-conceal--shadow::before {
+  background-image: var(--scirc-conceal-source, none);
+  filter: url(#scirc-conceal-shadow);
+}
+
+.scirc-conceal--sheet.scirc-conceal--shadow::before {
+  filter: url(#scirc-conceal-shadow) blur(1px) drop-shadow(0 0 3px var(--glow));
+}
+
+.scirc-conceal--silhouette::before {
+  background-image: var(--scirc-conceal-source, none);
+  filter: url(#scirc-conceal-silhouette);
+}
+
+.scirc-conceal--sheet.scirc-conceal--silhouette {
+  filter:
+    drop-shadow(0 0 2px var(--glow))
+    drop-shadow(0 0 6px color-mix(in srgb, var(--glow) 70%, transparent));
+}
+
+.sc-item-rarity-colors__preview .scirc-conceal--shadow::before {
+  filter: url(#scirc-conceal-shadow-preview);
+}
+
+.sc-item-rarity-colors__preview .scirc-conceal--sheet.scirc-conceal--shadow::before {
+  filter: url(#scirc-conceal-shadow-preview) blur(1px) drop-shadow(0 0 3px var(--glow));
+}
+
+.sc-item-rarity-colors__preview .scirc-conceal--silhouette::before {
+  filter: url(#scirc-conceal-silhouette-preview);
+}
+
+.scirc-conceal--blur {
+  overflow: hidden;
+}
+
+.scirc-conceal--blur::before {
+  background-image: var(--scirc-conceal-source, none);
+  filter: blur(2px) saturate(0.6);
+}
+
+.scirc-conceal--sheet.scirc-conceal--blur::before {
+  filter: blur(6px) saturate(0.6);
+}
+
+.scirc-conceal--type::before {
+  background-image: var(--scirc-conceal-image, none);
+}
+
+/* On the sheet the cover takes the click, so it cannot open the real image. */
+.scirc-conceal--sheet {
+  pointer-events: auto;
+  cursor: default;
+}
+
+.scirc-conceal__mark {
+  position: relative;
+  z-index: 1;
+  width: 62%;
+  height: 62%;
+  overflow: visible;
+}
+
+.scirc-conceal--mark-small .scirc-conceal__mark {
+  width: 42%;
+  height: 42%;
+}
+
+.scirc-conceal--mark-large .scirc-conceal__mark {
+  width: 86%;
+  height: 86%;
+}
+
+.scirc-conceal__mark text {
+  font-family: var(--dnd5e-font-roboto-slab, "Roboto Slab"), Georgia, serif;
+  font-size: 92px;
+  font-weight: 700;
+  fill: var(--scirc-conceal-mark, #f4efff);
+  stroke: rgb(0 0 0 / 0.7);
+  stroke-width: 7px;
+  paint-order: stroke;
+  text-anchor: middle;
+  dominant-baseline: central;
+}

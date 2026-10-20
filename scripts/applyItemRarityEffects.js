@@ -1,4 +1,4 @@
-import { applyRarityStyles, getItemRarity, removeRarityStyles } from "./itemRarityHelper.js";
+import { applyRarityStyles, getDisplayRarity, removeRarityStyles } from "./itemRarityHelper.js";
 import { getActiveSpellStyleForItem } from "./spellSchoolHelper.js";
 import { buildRaritySettings } from "../core/settingsManager.js";
 import { isModuleSettingChange, registerSettingChangeHooks } from "../core/settingChangeHelper.js";
@@ -6,6 +6,7 @@ import { debugLog, debugWarn } from "../core/debug.js";
 import { getSheetType } from "./sheetDetectionHelper.js";
 import { getItemSheetTextStyleStrategy } from "../sheets/itemSheetTextStrategies.js";
 import { ensureRuntimeRarityStyles } from "../core/runtimeRarityStyles.js";
+import { SHEET_IMAGE_SELECTOR, syncImageConceal } from "../core/unidentifiedImageConceal.js";
 import { createDebouncedRefreshRequester, REFRESH_DELAYS_MS } from "../core/refreshScheduler.js";
 import {
   isSettingsTransactionActive,
@@ -55,7 +56,7 @@ export function applyItemRarityEffects(moduleId) {
     const itemName = item.name ?? "(unnamed item)";
 
     // Normalize rarity value (handles both new and legacy system fields)
-    const rarity = getItemRarity(item);
+    const rarity = getDisplayRarity(item);
     debugLog("Item sheet render detected", {
       itemId,
       itemName,
@@ -69,6 +70,8 @@ export function applyItemRarityEffects(moduleId) {
       debugWarn("Unable to resolve item sheet root element", { itemId, itemName, sheetId: app?.id ?? null });
       return;
     }
+    syncImageConceal(sheetEl.querySelectorAll(SHEET_IMAGE_SELECTOR), item, rarity, "sheet");
+
     const sheetType = getSheetType(app) || getSheetType(html);
     const textStyleStrategy = getItemSheetTextStyleStrategy(sheetType);
     const spellStyle = getActiveSpellStyleForItem(item, moduleId);
@@ -185,13 +188,12 @@ export function applyItemRarityEffects(moduleId) {
   }
 
   // Hook registrations
-  Hooks.on("renderItemSheet", applyStylesToSheet);
+  // D&D 5e item sheets (ItemSheet5e) and Tidy 5e item sheets (ItemSheetV2).
   Hooks.on("renderItemSheet5e", applyStylesToSheet);
   Hooks.on("renderItemSheetV2", applyStylesToSheet);
-  Hooks.on("renderItemSheet5e2", applyStylesToSheet);
 
-  registerSettingChangeHooks((moduleOrSetting, maybeKey) => {
-    if (!isModuleSettingChange(moduleOrSetting, maybeKey, moduleId)) return;
+  registerSettingChangeHooks((settingKey) => {
+    if (!isModuleSettingChange(settingKey, moduleId)) return;
     if (isSettingsTransactionActive(moduleId)) return;
     debugLog("setting change matched module for item sheets; queued refresh");
     itemSheetRefresh.request("setting-change");

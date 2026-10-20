@@ -1,5 +1,6 @@
 import { MODULE_ID } from "../core/constants.js";
 import { debugLog } from "../core/debug.js";
+import { applyAnimatedEffectsPreference, DISABLE_EFFECTS_SETTING_KEY } from "../core/itemEffects.js";
 import { ensureRuntimeRarityStyles } from "../core/runtimeRarityStyles.js";
 import {
   applyMergedRarityConfigToDnd5e,
@@ -9,7 +10,8 @@ import {
   RARITY_LIST_SETTING_KEY,
 } from "../core/rarityListConfig.js";
 import { invalidateRaritySettingsCache } from "../core/settingsManager.js";
-import { getSettingKeyFromHookPayload, isModuleSettingChange } from "../core/settingChangeHelper.js";
+import { invalidateSpellStyleCache } from "../core/spellSchoolConfig.js";
+import { isModuleSettingChange } from "../core/settingChangeHelper.js";
 import { isSettingsTransactionActive } from "../core/settingsTransaction.js";
 import { registerMenus } from "../settings/settingsMenus.js";
 import { registerModuleSettings } from "../settings/settingsRegistration.js";
@@ -17,23 +19,10 @@ import { applyActorInventoryEffects } from "./applyActorInventoryEffects.js";
 import { applyItemDirectoryEffects } from "./applyItemDirectoryEffects.js";
 import { applyItemRarityEffects } from "./applyItemRarityEffects.js";
 import { registerModulePartials } from "./partialsHelper.js";
-import { maybeShowSupportCard } from "./supportCard.js";
 
 export async function onInit() {
   debugLog("Lifecycle: init start");
   initializeSystemRarityBaseline();
-
-  Handlebars.registerHelper("eq", function(a, b) {
-    return a === b;
-  });
-
-  Handlebars.registerHelper("gt", function(a, b) {
-    return a > b;
-  });
-
-  Handlebars.registerHelper("length", function(array) {
-    return array ? array.length : 0;
-  });
 
   registerModuleSettings(MODULE_ID);
   registerMenus(MODULE_ID);
@@ -42,6 +31,8 @@ export async function onInit() {
   await registerModulePartials(MODULE_ID, [
     "item-template.html",
     "spell-template.html",
+    "tidy-item-template.html",
+    "tidy-spell-template.html",
   ]);
 
   debugLog("Lifecycle: init complete");
@@ -60,30 +51,31 @@ export function onReady() {
   applyItemRarityEffects(MODULE_ID);
   applyActorInventoryEffects(MODULE_ID);
   applyItemDirectoryEffects(MODULE_ID);
-  void maybeShowSupportCard();
+  applyAnimatedEffectsPreference(game.settings.get(MODULE_ID, DISABLE_EFFECTS_SETTING_KEY));
   debugLog("Lifecycle: ready complete");
 }
 
-export function onSettingChange(moduleOrSetting, maybeKey) {
-  if (!isModuleSettingChange(moduleOrSetting, maybeKey, MODULE_ID)) return;
+export function onSettingChange(settingKey) {
+  if (!isModuleSettingChange(settingKey, MODULE_ID)) return;
   if (isSettingsTransactionActive(MODULE_ID)) return;
 
   invalidateRaritySettingsCache();
+  invalidateSpellStyleCache();
   ensureRuntimeRarityStyles(MODULE_ID);
 
-  const fullSettingKey = getSettingKeyFromHookPayload(moduleOrSetting, maybeKey);
-  const isRarityListChange = fullSettingKey === `${MODULE_ID}.${RARITY_LIST_SETTING_KEY}`
-    || fullSettingKey === `${MODULE_ID}.${RARITY_LIST_ENABLED_SETTING_KEY}`;
+  const isRarityListChange = settingKey === `${MODULE_ID}.${RARITY_LIST_SETTING_KEY}`
+    || settingKey === `${MODULE_ID}.${RARITY_LIST_ENABLED_SETTING_KEY}`;
   if (!isRarityListChange) return;
 
   clearNormalizeRarityKeyCache();
-  debugLog("Lifecycle: setting change detected", { fullSettingKey });
+  debugLog("Lifecycle: setting change detected", { settingKey });
   applyMergedRarityConfigToDnd5e(MODULE_ID);
 }
 
 export function onSettingsTransactionComplete(context = {}) {
   debugLog("Lifecycle: settings transaction complete", context);
   invalidateRaritySettingsCache();
+  invalidateSpellStyleCache();
   applyMergedRarityConfigToDnd5e(MODULE_ID);
   ensureRuntimeRarityStyles(MODULE_ID);
 }
@@ -92,6 +84,7 @@ export function onCustomDnd5eRarityConfig() {
   debugLog("Lifecycle: customDnd5e rarity config hook fired");
   clearNormalizeRarityKeyCache();
   invalidateRaritySettingsCache();
+  invalidateSpellStyleCache();
   applyMergedRarityConfigToDnd5e(MODULE_ID);
   ensureRuntimeRarityStyles(MODULE_ID);
 }

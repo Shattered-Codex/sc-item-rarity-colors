@@ -1,3 +1,4 @@
+<div class="scirc-preview-variant" data-preview-variant="dnd5e">
 <div class="sc-item-rarity-colors__preview-label">Spell Sheet</div>
 <div class="mini-item-sheet mini-item-sheet--spell"
      style="
@@ -10,36 +11,36 @@
   <div class="application sheet dnd5e2 standard-form item tab-description editable" autocomplete="off">
     <header class="window-header">
       <i class="window-icon fa-fw hidden"></i>
-      <h1 class="window-title">Spell: Fireball</h1>
+      <h1 class="window-title">Spell: {{previewSpell.name}}</h1>
       <h2 class="window-subtitle"></h2>
       <div class="header-elements"></div>
     </header>
 
     <section class="sheet-header" data-application-part="header">
       <div class="left">
-        <img class="document-image item-image profile" src="icons/magic/fire/projectile-fireball-smoke-large-orange.webp" alt="Fireball" data-action="editImage">
+        <img class="document-image item-image profile" src="{{previewSpell.img}}" alt="{{previewSpell.name}}" data-action="editImage">
       </div>
 
       <div class="middle identity-info">
-        <input type="text" id="item-name" name="name" value="Fireball" class="document-name uninput">
+        <input type="text" id="item-name" name="name" value="{{previewSpell.name}}" class="document-name uninput">
         <ul class="subtitles unlist">
           <li class="item-rarity">
             <select name="system.level">
-              <option value="3" selected>3rd-level Spell</option>
+              <option value="{{previewSpell.level}}" selected>{{previewSpell.levelLabel}}</option>
             </select>
           </li>
           <li class="full-width">
-            <span>Evocation</span>
+            <span>{{previewSpell.schoolLabel}}</span>
           </li>
         </ul>
       </div>
 
       <div class="right common-fields">
         <div class="quantity">
-          <span class="value">Action</span>
+          <span class="value">{{previewSpell.activation}}</span>
         </div>
         <div class="weight">
-          <span class="value">150 ft</span>
+          <span class="value">{{previewSpell.range}}</span>
         </div>
       </div>
     </section>
@@ -57,6 +58,33 @@
         </a>
       </nav>
     </div>
+
+    <section class="items-list activities-list scirc-preview-activities">
+      <div class="items-section card">
+        <div class="items-header header">
+          <h3 class="item-name activity-name">Activities</h3>
+          <div class="item-header item-uses">Uses</div>
+          <div class="item-header item-controls activity-controls"></div>
+        </div>
+        <ol class="item-list unlist">
+          <li class="item activity">
+            <div class="item-row">
+              <div class="item-name activity-name">
+                <img class="item-image gold-icon" src="{{previewSpell.img}}" alt="Cast">
+                <div class="name name-stacked">
+                  <span class="title">Cast</span>
+                  <span class="subtitle">{{previewSpell.activation}}</span>
+                </div>
+              </div>
+              <div class="item-detail item-uses empty"></div>
+              <div class="item-detail item-controls activity-controls always-visible">
+                <span class="unbutton config-button item-control"><i class="fa-solid fa-ellipsis-vertical" inert></i></span>
+              </div>
+            </div>
+          </li>
+        </ol>
+      </div>
+    </section>
   </div>
 </div>
 
@@ -80,31 +108,31 @@
       <div class="item-header item-controls" data-column-id="controls" data-column-width="70" data-column-priority="1000"></div>
     </div>
     <ol class="item-list unlist">
-      <li class="item collapsible collapsed" data-item-name="Fireball">
+      <li class="item collapsible collapsed" data-item-name="{{previewSpell.name}}">
         <div class="item-row">
           <div class="item-name">
-            <img class="item-image gold-icon" src="icons/magic/fire/projectile-fireball-smoke-large-orange.webp" alt="Fireball" draggable="false">
+            <img class="item-image gold-icon" src="{{previewSpell.img}}" alt="{{previewSpell.name}}" draggable="false">
             <div class="name name-stacked">
-              <span class="title">Fireball</span>
-              <span class="subtitle">Evocation • 3rd Level</span>
+              <span class="title">{{previewSpell.name}}</span>
+              <span class="subtitle">{{previewSpell.schoolLabel}} • {{previewSpell.levelShort}}</span>
             </div>
             <div class="tags"></div>
           </div>
           <div class="item-detail item-price hidden-width" data-column-id="price">
-            Evocation
+            {{previewSpell.schoolLabel}}
           </div>
           <div class="item-detail item-weight hidden-width" data-column-id="weight">
-            <i class="fa-solid fa-layer-group" inert=""></i> 3
+            <i class="fa-solid fa-layer-group" inert=""></i> {{previewSpell.level}}
           </div>
           <div class="item-detail item-quantity hidden-width" data-column-id="quantity">
-            Action
+            {{previewSpell.activation}}
           </div>
           <div class="item-detail item-roll" data-column-id="roll">
             <span class="value">15</span>
           </div>
           <div class="item-detail item-formula" data-column-id="formula">
             <div class="row">
-              <span class="formula">8d6 Fire</span>
+              <span class="formula">{{previewSpell.formula}}</span>
             </div>
           </div>
           <div class="item-detail item-uses" data-column-id="charges">
@@ -128,23 +156,26 @@
     </ol>
   </div>
 </div>
+</div>
 
+<div class="scirc-preview-sidebar">
 <div class="sc-item-rarity-colors__preview-label">Sidebar</div>
 <div class="foundry-interface-preview">
   <div class="directory-window">
     <ol class="directory-list">
       <li class="directory-item entry document item flexrow" data-entry-id="preview-item-a" draggable="true" style="display: flex;">
-        <img class="thumbnail" src="icons/svg/book.svg" alt="Magic Missile">
-        <a class="entry-name ellipsis" data-action="activateEntry">Magic Missile</a>
+        <img class="thumbnail" src="icons/svg/book.svg" alt="Light">
+        <a class="entry-name ellipsis" data-action="activateEntry">Light</a>
       </li>
       <li class="directory-item entry document item flexrow is-target" data-entry-id="preview-item-b" draggable="true" style="display: flex;">
-        <img class="thumbnail" src="icons/magic/fire/projectile-fireball-smoke-large-orange.webp" alt="Fireball">
-        <a class="entry-name ellipsis" data-action="activateEntry">Fireball</a>
+        <img class="thumbnail" src="{{previewSpell.img}}" alt="{{previewSpell.name}}">
+        <a class="entry-name ellipsis" data-action="activateEntry">{{previewSpell.name}}</a>
       </li>
       <li class="directory-item entry document item flexrow" data-entry-id="preview-item-c" draggable="true" style="display: flex;">
-        <img class="thumbnail" src="icons/svg/book.svg" alt="Shield">
-        <a class="entry-name ellipsis" data-action="activateEntry">Shield</a>
+        <img class="thumbnail" src="icons/svg/book.svg" alt="Comprehend Languages">
+        <a class="entry-name ellipsis" data-action="activateEntry">Comprehend Languages</a>
       </li>
     </ol>
   </div>
+</div>
 </div>

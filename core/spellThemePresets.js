@@ -1,4 +1,5 @@
 import { getRarityFieldDefinitions } from "./rarityFieldSchema.js";
+import { buildThemeAccentFields } from "./themeAccents.js";
 import {
   buildSpellProfileKey,
   getSpellLevelEntries,
@@ -59,9 +60,13 @@ function mixColors(colorA, colorB, ratio = 0.5) {
   });
 }
 
+// Layout choices, not colors: a theme neither sets nor compares them.
+const NON_THEME_FIELD_KEYS = new Set(["tidy-background-area", "effect-placement"]);
+
 function buildBaseSpellFieldValues() {
   const values = {};
   for (const field of getRarityFieldDefinitions("spell")) {
+    if (NON_THEME_FIELD_KEYS.has(field.key)) continue;
     values[field.key] = field.defaultValue;
   }
   return values;
@@ -83,6 +88,7 @@ function buildSpellThemeFieldValues({
   const defaults = buildBaseSpellFieldValues();
   return {
     ...defaults,
+    ...buildThemeAccentFields({ primary, secondary, gradient }),
     "enable-item-color": true,
     "item-color": primary,
     "secondary-item-color": secondary,
@@ -145,7 +151,41 @@ function resolveSpellTextColor(palette, level, config) {
   return mixColors(baseText, textTarget, textMixRatio);
 }
 
-function buildProfileFromPalette(palette, level) {
+// Themes with effects give each school a motif drawn from what it does
+// (abjuration wards, evocation blasts, necromancy drains...), which grows with
+// the spell level: a few particles on cantrips, more from 3rd, the school's
+// aura from 5th, waves from 7th, and at 9th its runic circle (when the motif
+// has one) and an icon emanation. `pace` sets the theme's own rhythm.
+const DEFAULT_EFFECT_PACE = Object.freeze({ intensity: "normal", speed: "normal", amounts: ["few", "normal", "many"] });
+
+function buildSchoolEffects(motif, pace, level, palette) {
+  if (!motif) return {};
+  const numeric = Number(level) || 0;
+  const { intensity, speed, amounts } = { ...DEFAULT_EFFECT_PACE, ...pace };
+  const amount = numeric >= 7 ? amounts[2] : numeric >= 3 ? amounts[1] : amounts[0];
+
+  return {
+    "enable-effect-color": true,
+    "effect-color": String(palette.effect || palette.secondary).toUpperCase(),
+    "effect-intensity": intensity,
+    "effect-speed": speed,
+    "particles-option": true,
+    "particles-style": motif.particles,
+    "particle-motion": motif.motion ?? "auto",
+    "particle-amount": amount,
+    "shimmer-option": motif.shimmer === true && numeric >= 3,
+    "aura-option": Boolean(motif.aura) && numeric >= 5,
+    "aura-style": motif.aura ?? "energy",
+    "waves-option": Boolean(motif.waves) && numeric >= 7,
+    "waves-style": motif.waves ?? "energy",
+    "waves-shape": motif.wavesShape ?? "outline",
+    "runes-option": motif.runes === true && numeric >= 9,
+    "enable-inventory-icon-emanation": numeric >= 9,
+    "enable-foundry-interface-icon-emanation": numeric >= 9,
+  };
+}
+
+function buildProfileFromPalette(palette, level, effects = null, schoolKey = null) {
   const config = levelVisualConfig(level);
   const primary = mixColors(palette.primary, "#0B0F18", config.darkMix);
   const secondary = mixColors(palette.secondary, "#FFFFFF", config.lightMix);
@@ -154,7 +194,7 @@ function buildProfileFromPalette(palette, level) {
   const inventoryTitle = String(palette.inventoryTitle || text).toUpperCase();
   const inventoryDetails = String(palette.inventoryDetails || text).toUpperCase();
 
-  return buildSpellThemeFieldValues({
+  const values = buildSpellThemeFieldValues({
     primary,
     secondary,
     text,
@@ -167,14 +207,22 @@ function buildProfileFromPalette(palette, level) {
     foundryGradient: true,
     details: true,
   });
+  if (!effects) return values;
+  return { ...values, ...buildSchoolEffects(effects.motifs?.[schoolKey], effects.pace, level, palette) };
 }
 
-function defineSpellPreset(id, label, description, schools) {
+/**
+ * @param {object} [effects] - `motifs` (school key → particles, motion, aura,
+ *   waves, wavesShape, runes, shimmer) and `pace` (intensity, speed, amounts);
+ *   themes without it leave every effect off.
+ */
+function defineSpellPreset(id, label, description, schools, effects = null) {
   return Object.freeze({
     id,
     label,
     description,
     schools: Object.freeze(schools),
+    effects: effects ? Object.freeze(effects) : null,
   });
 }
 
@@ -374,6 +422,116 @@ export const SPELL_THEME_PRESETS = Object.freeze([
       trs: { primary: "#172816", secondary: "#8DC97F", text: "#F2FFF0", foundryText: "#EEFFEB", inventoryTitle: SPELL_LIGHT_TEXT_COOL, inventoryDetails: SPELL_DARK_TEXT_COOL },
     }
   ),
+  defineSpellPreset(
+    "arcanum-mechanica",
+    "Arcanum Mechanica",
+    "The schools as the rules describe them: warding glyphs orbit abjurations, portals swirl around conjurations, starlight twinkles over divinations, petals drift from charms, embers rise from evocations, mirages bubble around illusions, shadow falls from necromancy, and transmutations spin in alchemical glyphs.",
+    {
+      abj: { primary: "#234C8C", secondary: "#9ED8FF", text: "#F3FAFF" },
+      con: { primary: "#5B2A96", secondary: "#E3A8FF", text: "#FAF4FF" },
+      div: { primary: "#8A6A12", secondary: "#FFE9A3", text: "#FFFAEC" },
+      enc: { primary: "#A3236D", secondary: "#FFB3DA", text: "#FFF4FA" },
+      evo: { primary: "#B23A10", secondary: "#FFB347", text: "#FFF6EC" },
+      ill: { primary: "#3D3FA8", secondary: "#A9C2FF", text: "#F4F6FF" },
+      nec: { primary: "#1A1C1F", secondary: "#9EE6B0", text: "#F2FFF5" },
+      trs: { primary: "#8A5A16", secondary: "#8CE0B4", text: "#F3FFF8" },
+    },
+    {
+      motifs: {
+        abj: { particles: "glyphs", motion: "orbit", aura: "halo", waves: "ripples", runes: true },
+        con: { particles: "arcane", motion: "swirl", aura: "energy", waves: "sonar", runes: true },
+        div: { particles: "stardust", motion: "twinkle", aura: "corona", waves: "arcane", shimmer: true },
+        enc: { particles: "petals", motion: "wander", aura: "pulse", waves: "mist", wavesShape: "organic" },
+        evo: { particles: "embers", motion: "rise", aura: "fire", waves: "shockwave" },
+        ill: { particles: "bubbles", motion: "twinkle", aura: "halo", waves: "prism", shimmer: true },
+        nec: { particles: "shadow", motion: "fall", aura: "void", waves: "mist", wavesShape: "organic" },
+        trs: { particles: "glyphs", motion: "swirl", aura: "energy", waves: "burst", runes: true },
+      },
+    }
+  ),
+  defineSpellPreset(
+    "primal-elements",
+    "Primal Elements",
+    "Each school as an element: ice for abjuration's walls, the deep tide that conjuration calls up, starlight for divination, fey bloom for enchantment, wildfire for evocation, marsh wisps for illusion, grave dust for necromancy, and forge sparks for transmutation.",
+    {
+      abj: { primary: "#2E5E7A", secondary: "#CFEFFF", text: "#F2FAFF" },
+      con: { primary: "#0F5C6B", secondary: "#6FE3E0", text: "#EFFFFE" },
+      div: { primary: "#4E4490", secondary: "#FFF0B8", text: "#FFFBEE" },
+      enc: { primary: "#8A3A6A", secondary: "#FFC4E0", text: "#FFF5FA" },
+      evo: { primary: "#9C2A0E", secondary: "#FF8A3D", text: "#FFF4EC" },
+      ill: { primary: "#3A5646", secondary: "#D4FF9E", text: "#F6FFEE" },
+      nec: { primary: "#2A2420", secondary: "#A89880", text: "#FBF6EF" },
+      trs: { primary: "#6B4A2A", secondary: "#FFC870", text: "#FFF8EC" },
+    },
+    {
+      motifs: {
+        abj: { particles: "frost", motion: "fall", aura: "halo", waves: "ripples" },
+        con: { particles: "bubbles", motion: "rise", aura: "energy", waves: "mist", wavesShape: "organic" },
+        div: { particles: "stardust", motion: "twinkle", aura: "corona", waves: "sonar" },
+        enc: { particles: "petals", motion: "fall", aura: "pulse", waves: "ripples" },
+        evo: { particles: "embers", motion: "rise", aura: "fire", waves: "shockwave" },
+        ill: { particles: "fireflies", motion: "wander", aura: "halo", waves: "mist", wavesShape: "organic" },
+        nec: { particles: "shadow", motion: "rise", aura: "void", waves: "ripples" },
+        trs: { particles: "sparks", motion: "swirl", aura: "energy", waves: "burst" },
+      },
+    }
+  ),
+  defineSpellPreset(
+    "stormwire-sigils",
+    "Stormwire Sigils",
+    "High-voltage neon on near-black, fast and loud: every school crackles with sparks or sigils, storms gather around evocations and conjurations, and the waves hit hard at high levels.",
+    {
+      abj: { primary: "#0A1A3A", secondary: "#3DA9FF", text: "#EEF7FF" },
+      con: { primary: "#16083A", secondary: "#B44DFF", text: "#F8F0FF" },
+      div: { primary: "#0B2A2A", secondary: "#2CFFD5", text: "#ECFFFB" },
+      enc: { primary: "#2E0A2A", secondary: "#FF4FD8", text: "#FFF0FC" },
+      evo: { primary: "#2E1005", secondary: "#FFB020", text: "#FFF7EA" },
+      ill: { primary: "#140F3A", secondary: "#7D7BFF", text: "#F2F2FF" },
+      nec: { primary: "#0B100A", secondary: "#7CFF4F", text: "#F2FFEC" },
+      trs: { primary: "#2A1606", secondary: "#FF7A1A", text: "#FFF4EA" },
+    },
+    {
+      pace: { intensity: "strong", speed: "fast", amounts: ["normal", "many", "many"] },
+      motifs: {
+        abj: { particles: "glyphs", motion: "orbit", aura: "halo", waves: "shockwave", runes: true },
+        con: { particles: "sparks", motion: "swirl", aura: "storm", waves: "sonar", runes: true },
+        div: { particles: "glyphs", motion: "twinkle", aura: "corona", waves: "sonar", shimmer: true },
+        enc: { particles: "arcane", motion: "wander", aura: "pulse", waves: "prism" },
+        evo: { particles: "sparks", motion: "burst", aura: "storm", waves: "shockwave" },
+        ill: { particles: "arcane", motion: "twinkle", aura: "halo", waves: "prism", shimmer: true },
+        nec: { particles: "sparks", motion: "fall", aura: "void", waves: "burst" },
+        trs: { particles: "glyphs", motion: "swirl", aura: "energy", waves: "burst", runes: true },
+      },
+    }
+  ),
+  defineSpellPreset(
+    "hushed-sanctum",
+    "Hushed Sanctum",
+    "Muted dusk pastels and slow, sparse effects: motes keeping watch around wards, fireflies answering a summons, a quiet halo over prophecy, and soft mist around illusion and death. For tables that want atmosphere without spectacle.",
+    {
+      abj: { primary: "#3A4A63", secondary: "#C9D8F0", text: "#F4F8FF" },
+      con: { primary: "#3E3A5C", secondary: "#D7C9F2", text: "#F8F5FF" },
+      div: { primary: "#5B5440", secondary: "#F2E4B8", text: "#FFFBEF" },
+      enc: { primary: "#5C3E52", secondary: "#F2C9DD", text: "#FFF6FA" },
+      evo: { primary: "#5E3F33", secondary: "#F2C2A8", text: "#FFF7F2" },
+      ill: { primary: "#3E4A5C", secondary: "#CBE6F2", text: "#F3FBFF" },
+      nec: { primary: "#2E3033", secondary: "#BFC4C9", text: "#F6F8FA" },
+      trs: { primary: "#3F5244", secondary: "#CFE8D2", text: "#F4FFF5" },
+    },
+    {
+      pace: { intensity: "subtle", speed: "slow", amounts: ["few", "few", "normal"] },
+      motifs: {
+        abj: { particles: "stardust", motion: "orbit", aura: "halo", waves: "ripples" },
+        con: { particles: "fireflies", motion: "swirl", aura: "pulse", waves: "mist", wavesShape: "organic" },
+        div: { particles: "stardust", motion: "twinkle", aura: "corona", shimmer: true },
+        enc: { particles: "petals", motion: "wander", aura: "pulse" },
+        evo: { particles: "embers", motion: "rise", aura: "halo", waves: "ripples" },
+        ill: { particles: "bubbles", motion: "wander", waves: "prism", shimmer: true },
+        nec: { particles: "shadow", motion: "wander", aura: "void", waves: "mist", wavesShape: "organic" },
+        trs: { particles: "glyphs", motion: "orbit", aura: "energy", runes: true },
+      },
+    }
+  ),
 ]);
 
 function getPresetPaletteForSchool(preset, schoolKey) {
@@ -391,13 +549,13 @@ function buildPresetProfiles(preset, schools = getSpellSchoolEntries(), levels =
 
     const schoolProfileKey = buildSpellProfileKey(school.key, null, false);
     if (schoolProfileKey) {
-      profiles[schoolProfileKey] = buildProfileFromPalette(palette, 3);
+      profiles[schoolProfileKey] = buildProfileFromPalette(palette, 3, preset.effects, school.key);
     }
 
     for (const level of levels) {
       const levelProfileKey = buildSpellProfileKey(school.key, level, true);
       if (!levelProfileKey) continue;
-      profiles[levelProfileKey] = buildProfileFromPalette(palette, level);
+      profiles[levelProfileKey] = buildProfileFromPalette(palette, level, preset.effects, school.key);
     }
   }
 
@@ -483,6 +641,7 @@ export function doesDraftMatchSpellThemePreset(draftProfiles, themeId, {
     if (!draftFields || typeof draftFields !== "object") return false;
 
     for (const field of fields) {
+      if (!(field.key in expectedFields)) continue;
       const expectedValue = normalizeSpellThemeFieldValue(field, expectedFields[field.key]);
       const draftValue = normalizeSpellThemeFieldValue(field, draftFields[field.key]);
       if (expectedValue !== draftValue) {

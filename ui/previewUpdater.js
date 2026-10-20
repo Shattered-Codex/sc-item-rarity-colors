@@ -20,13 +20,23 @@ import { applyRarityClass, clearRarityClasses } from "../core/runtimeRarityStyle
 import { raritySupportsBorderGradient, raritySupportsBorderGlow } from "../core/rarityConfig.js";
 import { DEFAULT_COLORS, DEFAULT_GLOW_INTENSITY } from "../core/constants.js";
 import { scheduleOnNextAnimationFrame } from "../core/refreshScheduler.js";
+import { Tidy5eSheetStrategy } from "../sheets/strategies/Tidy5eSheetStrategy.js";
+import { applyIconEmanation, applyIconPulse, resolveEffectColor } from "../core/itemEffects.js";
+import { readEffectSettings } from "../core/effectSettingFields.js";
+import { UNIDENTIFIED_STYLE_KEY } from "../core/unidentifiedStyle.js";
+import { readConcealSettings } from "../core/unidentifiedImageConfig.js";
+import { previewImageConceal, SHEET_IMAGE_SELECTOR } from "../core/unidentifiedImageConceal.js";
+
+const tidyStrategy = new Tidy5eSheetStrategy();
 
 /**
  * Update the mini item sheet preview
  * @param {HTMLElement} formElement - The form element
- * @param {string} rarity - Rarity tier
+ * @param {string} rarity - Rarity tier, or the spell profile key
+ * @param {object} [options]
+ * @param {boolean} [options.isSpell=false] - Spell profiles skip rarity capability checks, as at runtime.
  */
-export function updateMiniSheetPreview(formElement, rarity) {
+export function updateMiniSheetPreview(formElement, rarity, options = {}) {
   const $form = $(formElement);
   const $miniSheet = $form.find(".mini-item-sheet");
 
@@ -39,6 +49,15 @@ export function updateMiniSheetPreview(formElement, rarity) {
   const gradientEnabled = $form.find(`input[type="checkbox"][name="${rarity}-gradient-option"]`).is(":checked");
   const gradientColor = $form.find(`input[type="color"][name="${rarity}-secondary-item-color"]`).val();
   const glowEnabled = $form.find(`input[type="checkbox"][name="${rarity}-glow-option"]`).is(":checked");
+  const tidyBackgroundArea = $form.find(`select[name="${rarity}-tidy-background-area"]`).val() || "content";
+  const enableGoldAccentColor = $form.find(`input[type="checkbox"][name="${rarity}-enable-gold-accent-color"]`).is(":checked");
+  const goldAccentColor = $form.find(`input[type="color"][name="${rarity}-gold-accent-color"]`).val();
+  const enableTableHeaderColor = $form.find(`input[type="checkbox"][name="${rarity}-enable-table-header-color"]`).is(":checked");
+  const tableHeaderColor = $form.find(`input[type="color"][name="${rarity}-table-header-color"]`).val();
+  const enableTableHeaderTextColor = $form.find(`input[type="checkbox"][name="${rarity}-enable-table-header-text-color"]`).is(":checked");
+  const tableHeaderTextColor = $form.find(`input[type="color"][name="${rarity}-table-header-text-color"]`).val();
+  const isOn = (key) => $form.find(`input[type="checkbox"][name="${rarity}-${key}"]`).is(":checked");
+  const valueOf = (key) => $form.find(`[name="${rarity}-${key}"]`).val();
 
   const settings = {
     enableItemColor,
@@ -48,15 +67,99 @@ export function updateMiniSheetPreview(formElement, rarity) {
     gradientEnabled,
     gradientColor: gradientColor || DEFAULT_COLORS.BACKGROUND_FALLBACK,
     glowEnabled,
+    tidyBackgroundArea,
+    enableGoldAccentColor,
+    goldAccentColor,
+    enableTableHeaderColor,
+    tableHeaderColor,
+    enableTableHeaderTextColor,
+    tableHeaderTextColor,
+    ...readEffectSettings((fieldKey, field) => (field.type === "checkbox" ? isOn(fieldKey) : valueOf(fieldKey))),
   };
 
-  const $sheetContent = $miniSheet.find(".application.sheet.item");
-  if ($sheetContent.length) {
-    applyRarityStyles($sheetContent, settings, { rarity, preview: true });
-  }
+  // One call per sheet: the D&D 5e and Tidy previews need different text
+  // color strategies, which are detected from the element they are given.
+  $miniSheet.find(".application.sheet.item").each((_, sheet) => {
+    applyRarityStyles($(sheet), settings, { rarity, preview: true });
+  });
 
   updateInventoryPreview($form, rarity, settings);
+  updateTidyInventoryPreview($form, rarity, settings, options);
   updateFoundryInterfacePreview($form, rarity, settings);
+  updateUnidentifiedImagePreview($form, rarity, settings);
+}
+
+// The preview item is a mace.
+const PREVIEW_IMAGE_KIND = "bludgeon";
+
+/**
+ * Hides the preview images as unidentified items would be, while the
+ * unidentified style is selected; shows the real ones otherwise.
+ */
+function updateUnidentifiedImagePreview($form, rarity, settings) {
+  const conceal = rarity === UNIDENTIFIED_STYLE_KEY
+    ? readConcealSettings((fieldKey, defaultValue) => {
+      const $input = $form.find(`[name="${rarity}-${fieldKey}"]`);
+      if (!$input.length) return defaultValue;
+      return $input.is(":checkbox") ? $input.is(":checked") : ($input.val() || defaultValue);
+    })
+    : null;
+  const effectColor = resolveEffectColor(settings);
+  const $preview = $form.find(".sc-item-rarity-colors__preview");
+
+  previewImageConceal($preview.find(".mini-item-sheet").find(SHEET_IMAGE_SELECTOR), conceal, PREVIEW_IMAGE_KIND, "sheet", effectColor);
+  previewImageConceal(
+    $preview.find(".inventory-preview-item .item-image, .tidy-inventory-preview .tidy-table-row-container .item-image"),
+    conceal,
+    PREVIEW_IMAGE_KIND,
+    "inventory",
+    effectColor
+  );
+  previewImageConceal($preview.find(".foundry-interface-preview .directory-item.is-target img.thumbnail"), conceal, PREVIEW_IMAGE_KIND, "sidebar", effectColor);
+}
+
+/**
+ * Update the Tidy 5e inventory row through the same strategy the actor sheet
+ * uses at runtime, so the preview cannot drift from the real result.
+ */
+function updateTidyInventoryPreview($form, rarity, itemSheetSettings, options = {}) {
+  const $rows = $form.find(".tidy-inventory-preview .tidy-table-row-container");
+  if (!$rows.length) return;
+
+  const isChecked = (key) => $form.find(`input[type="checkbox"][name="${rarity}-${key}"]`).is(":checked");
+  const colorOf = (key, fallback) => $form.find(`input[type="color"][name="${rarity}-${key}"]`).val() || fallback;
+
+  const settings = {
+    ...itemSheetSettings,
+    enableInventoryGradientEffects: isChecked("enable-inventory-gradient-effects"),
+    enableInventoryBorders: isChecked("enable-inventory-borders"),
+    enableInventoryBorderColor: isChecked("enable-inventory-border-color"),
+    inventoryBorderColor: colorOf("inventory-border-color", DEFAULT_COLORS.BACKGROUND_FALLBACK),
+    inventoryBorderSecondaryColor: colorOf("inventory-border-secondary-color", undefined),
+    enableInventoryBorderGlow: isChecked("enable-inventory-border-glow"),
+    enableInventoryTitleColor: isChecked("enable-inventory-title-color"),
+    inventoryTitleColor: colorOf("inventory-title-color", DEFAULT_COLORS.TEXT_DEFAULT),
+    enableInventoryDetailsColor: isChecked("enable-inventory-details-color"),
+    inventoryDetailsColor: colorOf("inventory-details-color", DEFAULT_COLORS.TEXT_DEFAULT),
+  };
+
+  const isSpell = options.isSpell === true;
+  $rows.each((_, row) => {
+    const $row = $(row);
+    $row.addClass("scirc-managed-item-row");
+    if (isSpell) clearRarityClasses($row);
+    else applyRarityClass($row, rarity);
+
+    tidyStrategy._applyResolvedStyles(
+      $row,
+      tidyStrategy.getGradientElement($row),
+      tidyStrategy.getBorderElement($row),
+      settings,
+      isSpell
+        ? { preview: true, useRarityCapabilities: false }
+        : { rarity, preview: true, useRarityCapabilities: true }
+    );
+  });
 }
 
 /**
@@ -107,6 +210,8 @@ function updateInventoryPreview(formElement, rarity, itemSheetSettings) {
   }
 
   const $inventoryImage = $inventoryPreview.find(".item-image");
+  applyIconPulse($inventoryImage, itemSheetSettings, { preview: true });
+  applyIconEmanation($inventoryImage.get(), itemSheetSettings.enableInventoryIconEmanation === true, itemSheetSettings);
   
   if (!enableInventoryBorders) {
     clearInventoryBorder($inventoryImage);
@@ -150,42 +255,25 @@ function updateInventoryPreview(formElement, rarity, itemSheetSettings) {
     clearInventoryBorder($inventoryImage);
   }
 
-  const titleSelectors = [
-    ".item-name .name-stacked .title",
-    ".item-name .name-stacked .subtitle",
-    ".item-name",
-    ".item-name a",
-  ];
   if (enableTitleColor && titleColor) {
     scheduleOnNextAnimationFrame(() => {
-      applyTitleColor($inventoryPreview, titleColor, titleSelectors, { preview: true });
+      applyTitleColor($inventoryPreview, titleColor, { preview: true });
       applyRarityClass($inventoryPreview.find(".item-row"), rarity);
     });
   } else {
     scheduleOnNextAnimationFrame(() => {
-      clearTitleColor($inventoryPreview, titleSelectors);
+      clearTitleColor($inventoryPreview);
     });
   }
 
-  const detailsSelectors = [
-    ".item-detail",
-    ".item-detail .value",
-    ".item-detail .sign",
-    ".item-detail .formula",
-    ".item-detail .separator",
-    ".item-detail .max",
-    ".item-detail .currency",
-    ".item-detail input",
-    ".item-detail i",
-  ];
   if (enableDetailsColor && detailsColor) {
     scheduleOnNextAnimationFrame(() => {
-      applyDetailsColor($inventoryPreview, detailsColor, detailsSelectors, { preview: true });
+      applyDetailsColor($inventoryPreview, detailsColor, { preview: true });
       applyRarityClass($inventoryPreview.find(".item-row"), rarity);
     });
   } else {
     scheduleOnNextAnimationFrame(() => {
-      clearDetailsColor($inventoryPreview, detailsSelectors);
+      clearDetailsColor($inventoryPreview);
     });
   }
 }
@@ -208,6 +296,7 @@ function updateFoundryInterfacePreview(formElement, rarity, itemSheetSettings) {
 
   const $directoryItem = $foundryPreview.find(".directory-item.is-target");
   if (!$directoryItem.length) return;
+  applyIconEmanation($directoryItem.find("img.thumbnail").get(), itemSheetSettings.enableFoundryInterfaceIconEmanation === true, itemSheetSettings);
   const $otherDirectoryItems = $foundryPreview.find(".directory-item").not($directoryItem);
 
   const clearDirectoryPreviewRow = ($rows) => {
@@ -215,14 +304,10 @@ function updateFoundryInterfacePreview(formElement, rarity, itemSheetSettings) {
     clearRarityClasses($rows);
     $rows.each((_, row) => {
       if (!row) return;
-      // Legacy inline cleanup.
       row.style.removeProperty("--scirc-dir-bg-primary");
       row.style.removeProperty("--scirc-dir-bg-secondary");
       row.style.removeProperty("--scirc-dir-bg-fallback");
       row.style.removeProperty("--scirc-dir-text-color");
-      row.style.removeProperty("background");
-      row.style.removeProperty("color");
-      row.style.removeProperty("text-shadow");
     });
   };
 

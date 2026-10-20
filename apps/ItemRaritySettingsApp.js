@@ -1,7 +1,4 @@
-import { updateColorPickerVisibility } from "../ui/visibilityManager.js";
-import { updateMiniSheetPreview } from "../ui/previewUpdater.js";
-import { DEFAULT_COLORS, MODULE_ID as DEFAULT_MODULE_ID, RARITY_TIERS } from "../core/constants.js";
-import { normalizeHexColor } from "../core/colorUtils.js";
+import { MODULE_ID as DEFAULT_MODULE_ID, RARITY_TIERS } from "../core/constants.js";
 import {
   buildConfigEnvelope,
   downloadConfigEnvelope,
@@ -18,22 +15,19 @@ import {
   ITEM_RARITY_THEME_RARITIES,
 } from "../core/rarityThemePresets.js";
 import { getMergedRarityEntries, humanizeRarityLabel, normalizeRarityKey } from "../core/rarityListConfig.js";
-import { createAnimationFrameScheduler } from "../core/refreshScheduler.js";
 import { getRaritySetting } from "../core/settingsManager.js";
 import { runSettingsTransaction } from "../core/settingsTransaction.js";
 import { ensureRaritySettingsRegistered } from "../settings/settingsRegistration.js";
-
-/**
- * ItemRaritySettingsApp
- * A configurable UI application for managing item rarity color settings.
- * Dynamically updates the mini item preview as user changes form inputs.
- * Uses ApplicationV2 API with HandlebarsApplicationMixin.
- */
-const { ApplicationV2, HandlebarsApplicationMixin } = foundry.applications.api;
+import { StyleEditorApp } from "./StyleEditorApp.js";
+import { UNIDENTIFIED_STYLE_KEY, UNIDENTIFIED_STYLE_LABEL } from "../core/unidentifiedStyle.js";
 
 const ITEM_RARITY_CONFIG_KIND = "item-rarity-settings";
 
-export class ItemRaritySettingsApp extends HandlebarsApplicationMixin(ApplicationV2) {
+/**
+ * Item rarity color editor. Every rarity is edited in one draft and saved
+ * together; the rail switches which rarity the form shows.
+ */
+export class ItemRaritySettingsApp extends StyleEditorApp {
   constructor(context = "general", options = {}, moduleId) {
     super(options);
     this.moduleId = moduleId || ItemRaritySettingsApp.MODULE_ID;
@@ -43,35 +37,14 @@ export class ItemRaritySettingsApp extends HandlebarsApplicationMixin(Applicatio
     this._savedSettings = null;
   }
 
-  /** Default app configuration */
+  static CONFIG_LABEL = "item rarity settings";
+
   static DEFAULT_OPTIONS = {
     id: "sc-item-rarity-colors",
-    classes: ["sc-item-rarity-colors", "sc-item-rarity-colors--item-tier-manager"],
-    form: {
-      handler: ItemRaritySettingsApp.onSubmit,
-      closeOnSubmit: true,
-      submitOnChange: false,
-      submitOnClose: false,
-    },
-    position: {
-      width: 1080,
-      height: 860,
-    },
-    tag: "form",
+    classes: ["sc-item-rarity-colors--item-tier-manager"],
     window: {
-      contentClasses: ["sc-item-rarity-colors"],
-      title: "Item Tier Rarity Settings",
-      resizable: true,
-    },
-  };
-
-  /** Template parts definition */
-  static PARTS = {
-    form: {
-      template: "modules/sc-item-rarity-colors/templates/item-tier-rarity.html",
-    },
-    footer: {
-      template: "modules/sc-item-rarity-colors/templates/form-footer.html",
+      icon: "fas fa-palette",
+      title: "Item Rarity Colors",
     },
   };
 
@@ -133,78 +106,6 @@ export class ItemRaritySettingsApp extends HandlebarsApplicationMixin(Applicatio
     return ITEM_RARITY_THEME_RARITIES;
   }
 
-  _normalizeFieldValue(field, value) {
-    if (field.type === "checkbox") {
-      return value === true || value === "true" || value === "on" || value === 1 || value === "1";
-    }
-
-    if (field.type === "color") {
-      return typeof value === "string" && value ? value : field.defaultValue;
-    }
-
-    return value;
-  }
-
-  _bindColorControlInputs(formElement, onValueChange) {
-    const controls = formElement.querySelectorAll(".sc-item-rarity-colors__color-control");
-
-    controls.forEach((control) => {
-      const colorInput = control.querySelector('input[type="color"]');
-      const hexInput = control.querySelector(".sc-item-rarity-colors__hex-input");
-      if (!colorInput || !hexInput) return;
-
-      const syncHexFromColor = () => {
-        const normalized = normalizeHexColor(colorInput.value) || "#000000";
-        hexInput.value = normalized;
-        hexInput.classList.remove("is-invalid");
-      };
-
-      const applyHexToColor = ({ commit = false } = {}) => {
-        const normalized = normalizeHexColor(hexInput.value, {
-          allowShort: commit,
-          expandShort: commit,
-        });
-        if (!normalized) {
-          if (commit) {
-            syncHexFromColor();
-            return false;
-          }
-          hexInput.classList.add("is-invalid");
-          return false;
-        }
-
-        hexInput.classList.remove("is-invalid");
-        hexInput.value = normalized;
-        colorInput.value = normalized.toLowerCase();
-        return true;
-      };
-
-      syncHexFromColor();
-
-      colorInput.addEventListener("input", () => {
-        syncHexFromColor();
-        onValueChange();
-      });
-
-      colorInput.addEventListener("change", () => {
-        syncHexFromColor();
-        onValueChange();
-      });
-
-      hexInput.addEventListener("input", () => {
-        if (applyHexToColor()) onValueChange();
-      });
-
-      const commitHexInput = () => {
-        applyHexToColor({ commit: true });
-        onValueChange();
-      };
-
-      hexInput.addEventListener("change", commitHexInput);
-      hexInput.addEventListener("blur", commitHexInput);
-    });
-  }
-
   _ensureDraftSettings() {
     if (this._draftSettings) return;
 
@@ -215,6 +116,7 @@ export class ItemRaritySettingsApp extends HandlebarsApplicationMixin(Applicatio
     const managedRarities = new Set([
       ...rarityOptions.map((option) => option.key),
       ...this._getManagedThemeRarities(),
+      UNIDENTIFIED_STYLE_KEY,
     ]);
 
     for (const rarity of managedRarities) {
@@ -251,52 +153,10 @@ export class ItemRaritySettingsApp extends HandlebarsApplicationMixin(Applicatio
     return this.selectedThemeId;
   }
 
-  _hasUnsavedChanges() {
-    if (!this._draftSettings || !this._savedSettings) return false;
-
-    for (const [rarity, rarityDraft] of Object.entries(this._draftSettings)) {
-      const savedRarity = this._savedSettings[rarity];
-      if (!savedRarity) return true;
-
-      for (const [fieldKey, draftValue] of Object.entries(rarityDraft)) {
-        if (draftValue !== savedRarity[fieldKey]) return true;
-      }
-    }
-
-    return false;
-  }
-
-  _getSaveStateContext() {
-    const dirty = this._hasUnsavedChanges();
-    return dirty
-      ? {
-        saveStateLabel: "Unsaved changes",
-        saveStateClass: "is-dirty",
-      }
-      : {
-        saveStateLabel: "All changes saved",
-        saveStateClass: "is-clean",
-      };
-  }
-
-  _syncThemeControlState(formElement = this.form) {
-    if (!formElement) return;
-
-    const themeSelect = formElement.querySelector('select[name="selected-theme"]');
-    if (themeSelect && themeSelect.value !== this.selectedThemeId) {
-      themeSelect.value = this.selectedThemeId;
-    }
-  }
-
-  _syncSaveStateIndicator() {
-    const state = this._getSaveStateContext();
-    const statusElement = this.element?.querySelector("[data-save-state]");
-    const labelElement = this.element?.querySelector("[data-save-state-label]");
-    if (!statusElement || !labelElement) return;
-
-    statusElement.classList.toggle("is-dirty", state.saveStateClass === "is-dirty");
-    statusElement.classList.toggle("is-clean", state.saveStateClass === "is-clean");
-    labelElement.textContent = state.saveStateLabel;
+  _hasUnsavedChanges(knownEntryDirty) {
+    return Object.keys(this._draftSettings ?? {}).some((rarity) =>
+      knownEntryDirty?.get(rarity) ?? this._isEntryDirty(rarity)
+    );
   }
 
   _applySelectedThemePreset() {
@@ -411,248 +271,125 @@ export class ItemRaritySettingsApp extends HandlebarsApplicationMixin(Applicatio
     );
   }
 
-  /**
-   * Prepare context data for the template.
-   * Returns the settings fields and their current stored values.
-   */
-  _prepareContext() {
-    const rarityOptions = this._getRarityOptions();
-    if (!rarityOptions.length) {
-      return { title: "No Rarities Found", fields: [] };
-    }
+  // ---------------------------------------------------------------------------
+  // StyleEditorApp hooks
+  // ---------------------------------------------------------------------------
 
-    if (!this.selectedRarity || !rarityOptions.some((option) => option.key === this.selectedRarity)) {
-      this.selectedRarity = rarityOptions[0].key;
+  async _prepareContext(options) {
+    const entries = this._getEntries();
+    if (!this.selectedRarity || !entries.some((entry) => entry.key === this.selectedRarity)) {
+      this.selectedRarity = entries[0]?.key ?? null;
     }
 
     this._ensureDraftSettings();
     this._refreshSelectedThemeId();
+    return super._prepareContext(options);
+  }
 
-    const fieldDefinitions = this._getFieldDefinitionsForRarity(this.selectedRarity);
-    const rarityDraft = this._draftSettings[this.selectedRarity] || {};
-    const fields = fieldDefinitions.map((field) => ({
-      name: `${this.selectedRarity}-${field.key}`,
-      key: field.key,
-      label: field.label,
-      type: field.type,
-      value: this._normalizeFieldValue(field, rarityDraft[field.key]),
-      isColor: field.type === "color",
-      isCheckbox: field.type === "checkbox",
-      group: field.group || "item-sheet",
-    }));
+  /** The rarities, then the style unidentified items use in their place. */
+  _getEntries() {
+    return [
+      ...this._getRarityOptions(),
+      { key: UNIDENTIFIED_STYLE_KEY, label: UNIDENTIFIED_STYLE_LABEL, dividerBefore: true },
+    ];
+  }
 
-    const groupedFields = {
-      itemSheet: fields.filter((field) => field.group === "item-sheet"),
-      actorSheet: fields.filter((field) => field.group === "actor-sheet"),
-      foundryInterface: fields.filter((field) => field.group === "foundry-interface"),
-    };
+  _getSelectedEntryKey() {
+    return this.selectedRarity;
+  }
 
-    const fieldsByKey = new Map(fields.map((field) => [field.key, field]));
-    const backgroundColor = fieldsByKey.get("item-color")?.value || DEFAULT_COLORS.BACKGROUND_FALLBACK;
-    const textColor = fieldsByKey.get("text-color")?.value || DEFAULT_COLORS.TEXT_DEFAULT;
-    const secondaryColor = fieldsByKey.get("secondary-item-color")?.value || DEFAULT_COLORS.BACKGROUND_FALLBACK;
-    const gradient = fieldsByKey.get("gradient-option")?.value || false;
-    const glow = fieldsByKey.get("glow-option")?.value || false;
-    const enableTitleColor = fieldsByKey.get("enable-inventory-title-color")?.value || false;
-    const titleColor = fieldsByKey.get("inventory-title-color")?.value || DEFAULT_COLORS.TEXT_DEFAULT;
-    const enableDetailsColor = fieldsByKey.get("enable-inventory-details-color")?.value || false;
-    const detailsColor = fieldsByKey.get("inventory-details-color")?.value || DEFAULT_COLORS.TEXT_DEFAULT;
-    const enableFoundryInterfaceGradientEffects = fieldsByKey.get("enable-foundry-interface-gradient-effects")?.value || false;
-    const enableFoundryInterfaceTextColor = fieldsByKey.get("enable-foundry-interface-text-color")?.value || false;
-    const foundryInterfaceTextColor = fieldsByKey.get("foundry-interface-text-color")?.value || DEFAULT_COLORS.TEXT_DEFAULT;
+  _setSelectedEntryKey(key) {
+    this.selectedRarity = key;
+  }
+
+  _prepareEditorContext() {
+    const isUnidentifiedStyle = this.selectedRarity === UNIDENTIFIED_STYLE_KEY;
     const selectedRarityLabel =
-      rarityOptions.find((option) => option.key === this.selectedRarity)?.label
+      this._getEntries().find((entry) => entry.key === this.selectedRarity)?.label
       || RARITY_CONFIG[this.selectedRarity]?.label
       || humanizeRarityLabel(this.selectedRarity);
-    const saveState = this._getSaveStateContext();
+
     const selectedThemePreset = getItemRarityThemePreset(this.selectedThemeId);
     const themeTooltip = selectedThemePreset
-      ? `Choose a preset to apply a visual base to built-in rarities. You can still adjust colors manually. Current preset: ${selectedThemePreset.label}. ${selectedThemePreset.description}`
-      : "Choose a preset to apply a visual base to built-in rarities. You can still adjust colors manually.";
-    const themeOptions = [
-      ...getItemRarityThemePresetOptions().map((option) => ({
-        ...option,
-        selected: option.id === this.selectedThemeId,
-      })),
-      {
-        id: CUSTOM_ITEM_RARITY_THEME_ID,
-        label: "Custom",
-        description: "Current values do not match any preset exactly.",
-        selected: this.selectedThemeId === CUSTOM_ITEM_RARITY_THEME_ID,
-        disabled: true,
-      },
-    ];
+      ? `Choose a preset to apply a visual base to built-in rarities (and to the unidentified style, for themes that include one). You can still adjust colors manually. Current preset: ${selectedThemePreset.label}. ${selectedThemePreset.description}`
+      : "Choose a preset to apply a visual base to built-in rarities (and to the unidentified style, for themes that include one). You can still adjust colors manually.";
 
     return {
-      title: `${selectedRarityLabel} Item Settings`,
-      fields,
-      groupedFields,
-      rarityOptions: rarityOptions.map((option) => ({
-        ...option,
-        selected: option.key === this.selectedRarity,
-      })),
-      themeOptions,
-      selectedThemeId: this.selectedThemeId,
+      railTitle: "Rarities",
+      entryTitle: selectedRarityLabel,
+      entryHint: isUnidentifiedStyle
+        ? "Used instead of the real rarity on unidentified items, so their colors do not give it away. Who sees it is set in Module Settings → Unidentified items."
+        : "Colors for item sheets, inventory rows, and the sidebar. The preview updates as you edit.",
       themeTooltip,
-      saveStateLabel: saveState.saveStateLabel,
-      saveStateClass: saveState.saveStateClass,
-      selectedRarity: this.selectedRarity,
-      backgroundColor,
-      textColor,
-      secondaryColor,
-      gradient,
-      glow,
-      enableTitleColor,
-      titleColor,
-      enableDetailsColor,
-      detailsColor,
-      gradientEnabled: gradient,
-      gradientColor: secondaryColor,
-      enableFoundryInterfaceGradientEffects,
-      enableFoundryInterfaceTextColor,
-      foundryInterfaceTextColor,
+      themeOptions: [
+        ...getItemRarityThemePresetOptions().map((option) => ({
+          ...option,
+          selected: option.id === this.selectedThemeId,
+        })),
+        {
+          id: CUSTOM_ITEM_RARITY_THEME_ID,
+          label: "Custom",
+          selected: this.selectedThemeId === CUSTOM_ITEM_RARITY_THEME_ID,
+          disabled: true,
+        },
+      ],
+      panels: this._buildFieldPanels(
+        this._getFieldDefinitionsForRarity(this.selectedRarity),
+        this._draftSettings?.[this.selectedRarity] ?? {},
+        this.selectedRarity
+      ),
     };
   }
 
-  /**
-   * Called after the application is rendered.
-   * Initializes listeners and updates live preview as inputs change.
-   */
-  async _onRender(context, options) {
-    // Handle cancel button
-    const cancelButton = this.element?.querySelector('[data-action="close"]');
-    if (cancelButton) {
-      cancelButton.addEventListener("click", () => this.close());
-    }
+  _captureDraft() {
+    this._captureCurrentRarityDraft(this.element);
+  }
 
-    const exportButton = this.element?.querySelector('[data-action="export-config"]');
-    if (exportButton) {
-      exportButton.addEventListener("click", async () => {
-        try {
-          await this._exportConfig();
-        } catch (error) {
-          if (error?.message === "No file selected.") return;
-          console.error(`${this._getEffectiveModuleId()} | Failed to export item rarity settings.`, error);
-          ui.notifications.error(error?.message || "Failed to export item rarity settings.");
-        }
-      });
-    }
+  _isEntryDirty(rarity) {
+    const draft = this._draftSettings?.[rarity];
+    const saved = this._savedSettings?.[rarity];
+    if (!draft) return false;
+    if (!saved) return true;
+    // Color inputs report lowercase hex while stored values may not be.
+    const same = (left, right) => String(left).toLowerCase() === String(right).toLowerCase();
+    return Object.entries(draft).some(([fieldKey, value]) => !same(value, saved[fieldKey]));
+  }
 
-    const importButton = this.element?.querySelector('[data-action="import-config"]');
-    if (importButton) {
-      importButton.addEventListener("click", async () => {
-        try {
-          await this._importConfig();
-        } catch (error) {
-          if (error?.message === "No file selected.") return;
-          console.error(`${this._getEffectiveModuleId()} | Failed to import item rarity settings.`, error);
-          ui.notifications.error(error?.message || "Failed to import item rarity settings.");
-        }
-      });
-    }
+  _getEntryValues(rarity) {
+    return this._draftSettings?.[rarity] ?? null;
+  }
 
-    if (!this.form) return;
+  _getPreviewKey() {
+    return this.selectedRarity;
+  }
 
-    const raritySelect = this.form.querySelector('select[name="selected-rarity"]');
-    if (raritySelect) {
-      raritySelect.addEventListener("change", async (event) => {
-        this._captureCurrentRarityDraft(this.form);
-        this.selectedRarity = event.currentTarget.value;
-        await this.render(true);
-      });
-    }
-
-    const themeSelect = this.form.querySelector('select[name="selected-theme"]');
-    if (themeSelect) {
-      themeSelect.addEventListener("change", async (event) => {
-        this._captureCurrentRarityDraft(this.form);
-        const nextThemeId = event.currentTarget.value || CUSTOM_ITEM_RARITY_THEME_ID;
-        if (nextThemeId === CUSTOM_ITEM_RARITY_THEME_ID) {
-          this._refreshSelectedThemeId();
-          this._syncThemeControlState(this.form);
-          this._syncSaveStateIndicator();
-          return;
-        }
-
-        this.selectedThemeId = nextThemeId;
-        this._applySelectedThemePreset();
-        await this.render(true);
-      });
-    }
-
-    const miniSheet = $(this.form).find(".mini-item-sheet .application.sheet.item");
-    const inventoryPreview = $(this.form).find(".inventory-preview-item");
-
-    const refreshUi = () => {
-      updateColorPickerVisibility(this.form);
-      this._captureCurrentRarityDraft(this.form);
+  _applyThemePreset(themeId) {
+    if (!themeId || themeId === CUSTOM_ITEM_RARITY_THEME_ID) {
       this._refreshSelectedThemeId();
-      this._syncThemeControlState(this.form);
-      this._syncSaveStateIndicator();
-
-      if (miniSheet.length || inventoryPreview.length) {
-        updateMiniSheetPreview(this.form, this.selectedRarity);
-      }
-    };
-    const frameRefreshUi = createAnimationFrameScheduler(refreshUi);
-
-    refreshUi();
-
-    if (!miniSheet.length && !inventoryPreview.length) {
-      return;
+      return false;
     }
-
-    this._bindColorControlInputs(this.form, () => {
-      frameRefreshUi.request();
-    });
-
-    const checkboxInputs = this.form.querySelectorAll('input[type="checkbox"]');
-    checkboxInputs.forEach((input) => {
-      input.addEventListener("input", refreshUi);
-      input.addEventListener("change", refreshUi);
-    });
-
-    this._syncThemeControlState(this.form);
-    this._syncSaveStateIndicator();
+    this.selectedThemeId = themeId;
+    return this._applySelectedThemePreset();
   }
 
-  /**
-   * Handle form submission and persist all settings.
-   * Static method used as form handler in DEFAULT_OPTIONS.
-   * Note: ApplicationV2 binds 'this' to the application instance when calling this handler.
-   */
-  static async onSubmit(event, form, formData) {
-    // 'this' is bound to the application instance by ApplicationV2
+  async _persist() {
     const moduleId = this._getEffectiveModuleId();
     this.moduleId = moduleId;
 
-    this._captureCurrentRarityDraft(form);
-
-    const rarityOptions = this._getRarityOptions();
-    const rarityLabelMap = new Map(rarityOptions.map((option) => [option.key, option.label]));
+    const rarityLabelMap = new Map(this._getEntries().map((entry) => [entry.key, entry.label]));
     for (const rarity of Object.keys(this._draftSettings || {})) {
       ensureRaritySettingsRegistered(moduleId, rarity, rarityLabelMap.get(rarity));
     }
 
     const pendingUpdates = [];
-
     for (const [rarity, raritySettings] of Object.entries(this._draftSettings || {})) {
-      const fields = this._getFieldDefinitionsForRarity(rarity);
-
-      for (const field of fields) {
+      for (const field of this._getFieldDefinitionsForRarity(rarity)) {
         const settingName = `${rarity}-${field.key}`;
-        const settingKey = `${moduleId}.${settingName}`;
-        if (!game.settings.settings.has(settingKey)) continue;
+        if (!game.settings.settings.has(`${moduleId}.${settingName}`)) continue;
 
-        const rawValue = raritySettings[field.key];
-        const settingValue = this._normalizeFieldValue(field, rawValue);
-        const currentValue = game.settings.get(moduleId, settingName);
-        if (currentValue === settingValue) continue;
-
-        pendingUpdates.push({
-          settingName,
-          settingValue,
-        });
+        const settingValue = this._normalizeFieldValue(field, raritySettings[field.key]);
+        if (game.settings.get(moduleId, settingName) === settingValue) continue;
+        pendingUpdates.push({ settingName, settingValue });
       }
     }
 
@@ -669,17 +406,9 @@ export class ItemRaritySettingsApp extends HandlebarsApplicationMixin(Applicatio
       });
     }
 
-    ui.notifications.info(pendingUpdates.length > 0
-      ? `Saved item rarity settings (${pendingUpdates.length} change(s)).`
-      : "No item rarity setting changes to save.");
-    await this.close();
+    this._savedSettings = foundry.utils.deepClone(this._draftSettings);
   }
 
-  async close(options = {}) {
-    return super.close(options);
-  }
-
-  // Override render to ensure moduleId is set
   render(force = false, options = {}) {
     this.moduleId = this._getEffectiveModuleId();
     return super.render(force, options);

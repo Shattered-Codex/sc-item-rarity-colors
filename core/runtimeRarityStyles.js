@@ -1,23 +1,22 @@
-import { MODULE_ID } from "./constants.js";
+import { MODULE_ID, RARITY_CLASS_PREFIX } from "./constants.js";
+import { UNIDENTIFIED_STYLE_KEY } from "./unidentifiedStyle.js";
 import { normalizeColorWithFallback as normalizeColor } from "./colorUtils.js";
 import { getMergedRarityEntries, normalizeRarityKey } from "./rarityListConfig.js";
 import { buildRaritySettings } from "./settingsManager.js";
+import { resolveEffectColor } from "./itemEffects.js";
 import { ActorInventoryRuntimeStyleStrategy } from "./runtimeStyleStrategies/ActorInventoryRuntimeStyleStrategy.js";
 import { ItemDirectoryRuntimeStyleStrategy } from "./runtimeStyleStrategies/ItemDirectoryRuntimeStyleStrategy.js";
 import { ItemSheetRuntimeStyleStrategy } from "./runtimeStyleStrategies/ItemSheetRuntimeStyleStrategy.js";
+import { UnidentifiedImageRuntimeStyleStrategy } from "./runtimeStyleStrategies/UnidentifiedImageRuntimeStyleStrategy.js";
 
 const STYLE_ELEMENT_ID = "scirc-runtime-rarity-styles";
-const RARITY_CLASS_PREFIX = "scirc-rarity-";
 let _cachedCssText = null;
-
-export function invalidateRuntimeStylesCache() {
-  _cachedCssText = null;
-}
 
 const runtimeStrategies = [
   new ItemSheetRuntimeStyleStrategy(),
   new ActorInventoryRuntimeStyleStrategy(),
   new ItemDirectoryRuntimeStyleStrategy(),
+  new UnidentifiedImageRuntimeStyleStrategy(),
 ];
 
 export function toRarityClassKey(rarity) {
@@ -32,38 +31,38 @@ export function getRarityClassName(rarity) {
   return key ? `${RARITY_CLASS_PREFIX}${key}` : null;
 }
 
-export function clearRarityClasses(elementOrCollection) {
-  if (!elementOrCollection) return;
-  const $elements = elementOrCollection instanceof jQuery ? elementOrCollection : $(elementOrCollection);
-  if (!$elements.length) return;
+// Called for every row on every render: works on the elements directly (no
+// jQuery wrapper) and leaves the class attribute alone when it is already
+// right, since each classList change rewrites it.
+function toElements(elementOrCollection) {
+  if (!elementOrCollection) return [];
+  if (elementOrCollection instanceof jQuery) return elementOrCollection.get();
+  if (elementOrCollection.classList) return [elementOrCollection];
+  return Array.from(elementOrCollection);
+}
 
-  $elements.each((_, element) => {
-    if (!element?.classList) return;
-    for (const className of [...element.classList]) {
-      if (className.startsWith(RARITY_CLASS_PREFIX)) {
-        element.classList.remove(className);
-      }
-    }
-  });
+function setRarityClass(element, className) {
+  if (!element?.classList) return;
+  for (const existing of [...element.classList]) {
+    if (existing !== className && existing.startsWith(RARITY_CLASS_PREFIX)) element.classList.remove(existing);
+  }
+  if (className && !element.classList.contains(className)) element.classList.add(className);
+}
+
+export function clearRarityClasses(elementOrCollection) {
+  for (const element of toElements(elementOrCollection)) setRarityClass(element, null);
 }
 
 export function applyRarityClass(elementOrCollection, rarity) {
-  if (!elementOrCollection) return;
-  const $elements = elementOrCollection instanceof jQuery ? elementOrCollection : $(elementOrCollection);
-  if (!$elements.length) return;
-
   const className = getRarityClassName(rarity);
-  clearRarityClasses($elements);
-  if (!className) return;
-
-  $elements.each((_, element) => {
-    if (!element?.classList) return;
-    element.classList.add(className);
-  });
+  for (const element of toElements(elementOrCollection)) setRarityClass(element, className);
 }
 
 function buildRuntimeStyleText(moduleId = MODULE_ID) {
-  const entries = getMergedRarityEntries(moduleId, { includeHidden: true });
+  const entries = [
+    ...getMergedRarityEntries(moduleId, { includeHidden: true }),
+    { key: UNIDENTIFIED_STYLE_KEY },
+  ];
   const blocks = [];
 
   for (const entry of entries) {
@@ -77,6 +76,11 @@ function buildRuntimeStyleText(moduleId = MODULE_ID) {
     const sheetPrimary = normalizeColor(settings.backgroundColor, "#000000");
     const sheetSecondary = normalizeColor(settings.gradientColor, "#ffffff");
     const sheetText = normalizeColor(settings.itemSheetTextColor, "#000000");
+    const sheetGold = normalizeColor(settings.goldAccentColor, "#9f9275");
+    const sheetTableHeader = normalizeColor(settings.tableHeaderColor, "#491d25");
+    const sheetTableHeaderText = normalizeColor(settings.tableHeaderTextColor, "#ffffff");
+    const effect = normalizeColor(resolveEffectColor(settings), "#ffd27a");
+    const particle = settings.enableParticleColor ? normalizeColor(settings.particleColor, "#ffffff") : null;
     const dirText = normalizeColor(settings.foundryInterfaceTextColor, "#000000");
     const inventoryTitle = normalizeColor(settings.inventoryTitleColor, "#000000");
     const inventoryDetails = normalizeColor(settings.inventoryDetailsColor, "#000000");
@@ -87,6 +91,11 @@ function buildRuntimeStyleText(moduleId = MODULE_ID) {
       sheetPrimary,
       sheetSecondary,
       sheetText,
+      sheetGold,
+      sheetTableHeader,
+      sheetTableHeaderText,
+      effect,
+      particle,
       directoryText: dirText,
       inventoryTitle,
       inventoryDetails,

@@ -1,9 +1,35 @@
 import { RARITY_CONFIG } from "./rarityConfig.js";
+import { UNIDENTIFIED_STYLE_KEY } from "./unidentifiedStyle.js";
+import {
+  buildImageKindFieldKey,
+  CONCEAL_IMAGE_MODES,
+  CONCEAL_MARK_SIZES,
+  DEFAULT_CONCEAL_IMAGE_MODE,
+  ITEM_IMAGE_KINDS,
+} from "./unidentifiedImageConfig.js";
 
+/**
+ * Field definitions shared by the item rarity and spell school editors.
+ *
+ * `label` and `settingName` describe the stored setting. The editor windows
+ * use the `ui*` keys instead: `uiLabel` is the short row label, `inlineWith`
+ * places a color on the same row as the checkbox that enables it, `nested`
+ * indents a row under the option it depends on, and `uiHint` becomes a tooltip.
+ * A `select` field lists its stored values and labels in `choices`; a field
+ * with `requiresModule` is only offered while that module is active. `panel`
+ * puts a row on the editor's Effects tab instead of Colors, where `section`
+ * groups it (general, aura, particles, icons); a row's inline field follows
+ * its host.
+ *
+ * A field with `entry: "unidentified"` exists only on the unidentified style
+ * (its Image tab), and one with `themeable: false` is never set or compared by
+ * a theme preset. An `image` field stores a file path.
+ */
 export const RARITY_FIELD_DEFINITIONS = Object.freeze([
   {
     key: "enable-item-color",
     label: "Change Item Sheet Background Color",
+    uiLabel: "Background color",
     settingName: ": Enable Item Sheet Background Color",
     type: "checkbox",
     group: "item-sheet",
@@ -12,6 +38,8 @@ export const RARITY_FIELD_DEFINITIONS = Object.freeze([
   {
     key: "item-color",
     label: "Item Sheet Background Color",
+    uiLabel: "Background color",
+    inlineWith: "enable-item-color",
     settingName: "Item Color",
     type: "color",
     group: "item-sheet",
@@ -21,6 +49,8 @@ export const RARITY_FIELD_DEFINITIONS = Object.freeze([
   {
     key: "secondary-item-color",
     label: "Secondary Color",
+    uiLabel: "Secondary color",
+    inlineWith: "gradient-option",
     settingName: "Secondary Item Color",
     type: "color",
     group: "item-sheet",
@@ -31,6 +61,8 @@ export const RARITY_FIELD_DEFINITIONS = Object.freeze([
   {
     key: "gradient-option",
     label: "Enable Gradient",
+    uiLabel: "Gradient",
+    nested: true,
     settingName: "Gradient Option",
     type: "checkbox",
     group: "item-sheet",
@@ -40,17 +72,39 @@ export const RARITY_FIELD_DEFINITIONS = Object.freeze([
   },
   {
     key: "glow-option",
+    section: "aura",
     label: "Enable Glow Effect",
+    uiLabel: "Glow",
+    uiHint: "A pulsing glow around the item sheet frame, in the background colors (or the effect color when the background is off).",
+    panel: "effects",
     settingName: "Glow Option",
     type: "checkbox",
     group: "item-sheet",
     defaultValue: false,
     requiredFlag: "supportsGlow",
+  },
+  {
+    key: "tidy-background-area",
+    label: "Tidy 5e Background Area",
+    uiLabel: "Tidy 5e area",
+    nested: true,
+    uiHint: "Where the background color goes on Tidy 5e item sheets: the content, the sidebar behind the image, or the whole sheet.",
+    settingName: ": Tidy 5e Background Area",
+    type: "select",
+    choices: Object.freeze({
+      content: "Content",
+      sidebar: "Sidebar",
+      sheet: "Whole sheet",
+    }),
+    group: "item-sheet",
+    defaultValue: "content",
+    requiresModule: "tidy5e-sheet",
     visibleWhen: { all: ["enable-item-color"] },
   },
   {
     key: "enable-text-color",
     label: "Change Item Sheet Text Color",
+    uiLabel: "Text color",
     settingName: ": Enable Item Sheet Text Color",
     type: "checkbox",
     group: "item-sheet",
@@ -59,6 +113,8 @@ export const RARITY_FIELD_DEFINITIONS = Object.freeze([
   {
     key: "text-color",
     label: "Item Sheet Text Color",
+    uiLabel: "Text color",
+    inlineWith: "enable-text-color",
     settingName: "Item Sheet Text Color",
     type: "color",
     group: "item-sheet",
@@ -66,8 +122,73 @@ export const RARITY_FIELD_DEFINITIONS = Object.freeze([
     visibleWhen: { all: ["enable-text-color"] },
   },
   {
+    key: "enable-gold-accent-color",
+    label: "Change Item Sheet Gold Accent Color",
+    uiLabel: "Gold accent",
+    uiHint: "Recolors the gold details of the item sheet: tab underline, dividers, borders, and the ampersand. Works on D&D 5e and Tidy 5e sheets.",
+    settingName: ": Enable Item Sheet Gold Accent Color",
+    type: "checkbox",
+    group: "item-sheet",
+    defaultValue: false,
+  },
+  {
+    key: "gold-accent-color",
+    label: "Item Sheet Gold Accent Color",
+    uiLabel: "Gold accent",
+    inlineWith: "enable-gold-accent-color",
+    settingName: ": Item Sheet Gold Accent Color",
+    type: "color",
+    group: "item-sheet",
+    defaultValue: "#9f9275",
+    visibleWhen: { all: ["enable-gold-accent-color"] },
+  },
+  {
+    key: "enable-table-header-color",
+    label: "Change Item Sheet Table Header Color",
+    uiLabel: "Table headers",
+    uiHint: "Recolors the header bar of the item sheet tables (Activities, Effects, and others). Works on D&D 5e and Tidy 5e sheets.",
+    settingName: ": Enable Item Sheet Table Header Color",
+    type: "checkbox",
+    group: "item-sheet",
+    defaultValue: false,
+  },
+  {
+    key: "table-header-color",
+    label: "Item Sheet Table Header Color",
+    uiLabel: "Table headers",
+    inlineWith: "enable-table-header-color",
+    settingName: ": Item Sheet Table Header Color",
+    type: "color",
+    group: "item-sheet",
+    defaultValue: "#491d25",
+    visibleWhen: { all: ["enable-table-header-color"] },
+  },
+  {
+    key: "enable-table-header-text-color",
+    label: "Change Item Sheet Table Header Text Color",
+    uiLabel: "Table header text",
+    uiHint: "Recolors the text and icons on the item sheet table headers. Independent from the header color.",
+    settingName: ": Enable Item Sheet Table Header Text Color",
+    type: "checkbox",
+    group: "item-sheet",
+    defaultValue: false,
+  },
+  {
+    key: "table-header-text-color",
+    label: "Item Sheet Table Header Text Color",
+    uiLabel: "Table header text",
+    inlineWith: "enable-table-header-text-color",
+    settingName: ": Item Sheet Table Header Text Color",
+    type: "color",
+    group: "item-sheet",
+    defaultValue: "#ffffff",
+    visibleWhen: { all: ["enable-table-header-text-color"] },
+  },
+  {
     key: "enable-inventory-gradient-effects",
     label: "Enable Inventory Item Gradient Effects",
+    uiLabel: "Row gradient",
+    uiHint: "Paints the inventory row with the item sheet background colors.",
     settingName: ": Enable Inventory Item Gradient Effects",
     type: "checkbox",
     group: "actor-sheet",
@@ -77,6 +198,8 @@ export const RARITY_FIELD_DEFINITIONS = Object.freeze([
   {
     key: "enable-inventory-borders",
     label: "Enable Inventory Coloured Borders",
+    uiLabel: "Icon border",
+    uiHint: "Outlines the item icon. While the item sheet background is on, the border follows those colors.",
     settingName: ": Enable Inventory Coloured Borders",
     type: "checkbox",
     group: "actor-sheet",
@@ -85,6 +208,8 @@ export const RARITY_FIELD_DEFINITIONS = Object.freeze([
   {
     key: "enable-inventory-border-color",
     label: "Change Item Border Color in Inventory",
+    uiLabel: "Custom border color",
+    nested: true,
     settingName: ": Enable Inventory Border Color",
     type: "checkbox",
     group: "actor-sheet",
@@ -94,6 +219,8 @@ export const RARITY_FIELD_DEFINITIONS = Object.freeze([
   {
     key: "inventory-border-color",
     label: "Inventory Item Border Color",
+    uiLabel: "Border color",
+    inlineWith: "enable-inventory-border-color",
     settingName: ": Inventory Border Color",
     type: "color",
     group: "actor-sheet",
@@ -103,6 +230,8 @@ export const RARITY_FIELD_DEFINITIONS = Object.freeze([
   {
     key: "inventory-border-secondary-color",
     label: "Inventory Item Border Secondary Color",
+    uiLabel: "Border secondary color",
+    nested: true,
     settingName: ": Inventory Border Secondary Color",
     type: "color",
     group: "actor-sheet",
@@ -112,7 +241,11 @@ export const RARITY_FIELD_DEFINITIONS = Object.freeze([
   },
   {
     key: "enable-inventory-border-glow",
+    section: "icons",
     label: "Enable Inventory Border Glow",
+    uiLabel: "Inventory: border glow",
+    uiHint: "Animates the custom icon border between its two colors. Available with Icon border and Custom border color (Colors tab).",
+    panel: "effects",
     settingName: ": Enable Inventory Border Glow",
     type: "checkbox",
     group: "actor-sheet",
@@ -123,6 +256,7 @@ export const RARITY_FIELD_DEFINITIONS = Object.freeze([
   {
     key: "enable-inventory-title-color",
     label: "Change Item Title/Subtitle Color in Inventory",
+    uiLabel: "Title and subtitle color",
     settingName: ": Enable Inventory Title/Subtitle Color",
     type: "checkbox",
     group: "actor-sheet",
@@ -131,6 +265,8 @@ export const RARITY_FIELD_DEFINITIONS = Object.freeze([
   {
     key: "inventory-title-color",
     label: "Inventory Item Title/Subtitle Color",
+    uiLabel: "Title and subtitle color",
+    inlineWith: "enable-inventory-title-color",
     settingName: ": Inventory Title/Subtitle Color",
     type: "color",
     group: "actor-sheet",
@@ -140,6 +276,7 @@ export const RARITY_FIELD_DEFINITIONS = Object.freeze([
   {
     key: "enable-inventory-details-color",
     label: "Change Item Details Text Color",
+    uiLabel: "Details text color",
     settingName: ": Enable Inventory Details Text Color",
     type: "checkbox",
     group: "actor-sheet",
@@ -148,6 +285,8 @@ export const RARITY_FIELD_DEFINITIONS = Object.freeze([
   {
     key: "inventory-details-color",
     label: "Inventory Item Details Text Color",
+    uiLabel: "Details text color",
+    inlineWith: "enable-inventory-details-color",
     settingName: ": Inventory Details Text Color",
     type: "color",
     group: "actor-sheet",
@@ -157,6 +296,8 @@ export const RARITY_FIELD_DEFINITIONS = Object.freeze([
   {
     key: "enable-foundry-interface-gradient-effects",
     label: "Enable Foundry Interface Item Gradient Effects",
+    uiLabel: "Row gradient",
+    uiHint: "Paints the sidebar directory row with the item sheet background colors.",
     settingName: ": Enable Foundry Interface Item Gradient Effects",
     type: "checkbox",
     group: "foundry-interface",
@@ -166,6 +307,7 @@ export const RARITY_FIELD_DEFINITIONS = Object.freeze([
   {
     key: "enable-foundry-interface-text-color",
     label: "Change Foundry Interface Item Text Color",
+    uiLabel: "Text color",
     settingName: ": Enable Foundry Interface Item Text Color",
     type: "checkbox",
     group: "foundry-interface",
@@ -174,19 +316,457 @@ export const RARITY_FIELD_DEFINITIONS = Object.freeze([
   {
     key: "foundry-interface-text-color",
     label: "Foundry Interface Item Text Color",
+    uiLabel: "Text color",
+    inlineWith: "enable-foundry-interface-text-color",
     settingName: ": Foundry Interface Item Text Color",
     type: "color",
     group: "foundry-interface",
     defaultValue: "#000000",
     visibleWhen: { all: ["enable-foundry-interface-text-color"] },
   },
+  // --- Animated effects (Effects tab) -------------------------------------
+  {
+    key: "shimmer-option",
+    section: "aura",
+    label: "Enable Shimmer Effect",
+    uiLabel: "Shimmer",
+    uiHint: "A light sweep that crosses the item image every few seconds, like polished metal.",
+    panel: "effects",
+    settingName: ": Enable Shimmer Effect",
+    type: "checkbox",
+    group: "item-sheet",
+    defaultValue: false,
+  },
+  {
+    key: "particles-option",
+    section: "particles",
+    label: "Enable Particles Effect",
+    uiLabel: "Particles",
+    uiHint: "Small fragments coming from behind the item (sheet or image, see Placement). Pick their look here and their motion below.",
+    panel: "effects",
+    settingName: ": Enable Particles Effect",
+    type: "checkbox",
+    group: "item-sheet",
+    defaultValue: false,
+  },
+  {
+    key: "particles-style",
+    label: "Particles Style",
+    uiLabel: "Particles",
+    inlineWith: "particles-option",
+    settingName: ": Particles Style",
+    type: "select",
+    choices: Object.freeze({
+      arcane: "Arcane sparks",
+      embers: "Embers",
+      stardust: "Stardust",
+      frost: "Frost",
+      shadow: "Shadow wisps",
+      fireflies: "Fireflies",
+      petals: "Petals",
+      bubbles: "Bubbles",
+      glyphs: "Rune glyphs",
+      sparks: "Lightning sparks",
+    }),
+    group: "item-sheet",
+    defaultValue: "arcane",
+    visibleWhen: { all: ["particles-option"] },
+  },
+  {
+    key: "particle-motion",
+    section: "particles",
+    label: "Particle Motion",
+    uiLabel: "Motion",
+    nested: true,
+    uiHint: "Auto gives each look its natural motion: embers and bubbles rise, petals and frost fall, fireflies wander, stardust twinkles, glyphs orbit, the rest burst outward.",
+    panel: "effects",
+    settingName: ": Particle Motion",
+    type: "select",
+    choices: Object.freeze({
+      auto: "Auto",
+      burst: "Burst outward",
+      rise: "Rise",
+      fall: "Fall",
+      swirl: "Swirl",
+      orbit: "Orbit",
+      twinkle: "Twinkle",
+      wander: "Wander",
+    }),
+    group: "item-sheet",
+    defaultValue: "auto",
+    visibleWhen: { all: ["particles-option"] },
+  },
+  {
+    key: "particle-amount",
+    section: "particles",
+    label: "Particle Amount",
+    uiLabel: "Amount",
+    nested: true,
+    panel: "effects",
+    settingName: ": Particle Amount",
+    type: "select",
+    choices: Object.freeze({ few: "Few", normal: "Normal", many: "Many" }),
+    group: "item-sheet",
+    defaultValue: "normal",
+    visibleWhen: { all: ["particles-option"] },
+  },
+  {
+    key: "particle-distance",
+    section: "particles",
+    label: "Particle Distance",
+    uiLabel: "Distance",
+    nested: true,
+    panel: "effects",
+    settingName: ": Particle Distance",
+    type: "select",
+    choices: Object.freeze({ short: "Short", normal: "Normal", far: "Far" }),
+    group: "item-sheet",
+    defaultValue: "normal",
+    visibleWhen: { all: ["particles-option"] },
+  },
+  {
+    key: "enable-particle-color",
+    section: "particles",
+    label: "Use Custom Particle Color",
+    uiLabel: "Particle color",
+    nested: true,
+    uiHint: "Give the particles their own color. When off, they use the effect color.",
+    panel: "effects",
+    settingName: ": Use Custom Particle Color",
+    type: "checkbox",
+    group: "item-sheet",
+    defaultValue: false,
+    visibleWhen: { all: ["particles-option"] },
+  },
+  {
+    key: "particle-color",
+    label: "Particle Color",
+    uiLabel: "Particle color",
+    inlineWith: "enable-particle-color",
+    settingName: ": Particle Color",
+    type: "color",
+    group: "item-sheet",
+    defaultValue: "#ffffff",
+    visibleWhen: { all: ["particles-option", "enable-particle-color"] },
+  },
+  {
+    key: "aura-option",
+    section: "aura",
+    label: "Enable Aura Effect",
+    uiLabel: "Mystic aura",
+    uiHint: "Energy: tongues of energy flickering around the item. Fire: flames licking upward. Void: slow tongues of darkness with a glowing rim. Pulse: a breathing glow. Halo: a band of light running around it. Corona: rays of light slowly turning. Storm: crackling arcs of lightning.",
+    panel: "effects",
+    settingName: ": Enable Aura Effect",
+    type: "checkbox",
+    group: "item-sheet",
+    defaultValue: false,
+  },
+  {
+    key: "aura-style",
+    label: "Aura Style",
+    uiLabel: "Mystic aura",
+    inlineWith: "aura-option",
+    settingName: ": Aura Style",
+    type: "select",
+    choices: Object.freeze({
+      energy: "Energy",
+      fire: "Fire",
+      void: "Void",
+      pulse: "Pulse",
+      halo: "Halo",
+      corona: "Corona",
+      storm: "Storm",
+    }),
+    group: "item-sheet",
+    defaultValue: "energy",
+    visibleWhen: { all: ["aura-option"] },
+  },
+  {
+    key: "waves-option",
+    section: "aura",
+    label: "Enable Energy Waves Effect",
+    uiLabel: "Energy waves",
+    uiHint: "Waves now and then expanding outward and fading. Energy: uneven rings. Ripples: three thin rings in a row. Shockwave: one strong, fast blast. Arcane: dotted rings (turning around the image). Mist: soft glowing haze. Sonar: a filled ping. Prism: a ring of shifting hues. Burst: spikes of light.",
+    panel: "effects",
+    settingName: ": Enable Energy Waves Effect",
+    type: "checkbox",
+    group: "item-sheet",
+    defaultValue: false,
+  },
+  {
+    key: "waves-style",
+    label: "Energy Waves Style",
+    uiLabel: "Energy waves",
+    inlineWith: "waves-option",
+    settingName: ": Energy Waves Style",
+    type: "select",
+    choices: Object.freeze({
+      energy: "Energy",
+      ripples: "Ripples",
+      shockwave: "Shockwave",
+      arcane: "Arcane",
+      mist: "Mist",
+      sonar: "Sonar",
+      prism: "Prism",
+      burst: "Burst",
+    }),
+    group: "item-sheet",
+    defaultValue: "energy",
+    visibleWhen: { all: ["waves-option"] },
+  },
+  {
+    key: "waves-distance",
+    section: "aura",
+    label: "Energy Waves Distance",
+    uiLabel: "Distance",
+    uiHint: "How far the waves travel before fading.",
+    nested: true,
+    panel: "effects",
+    settingName: ": Energy Waves Distance",
+    type: "select",
+    choices: Object.freeze({ short: "Short", normal: "Normal", far: "Far" }),
+    group: "item-sheet",
+    defaultValue: "normal",
+    visibleWhen: { all: ["waves-option"] },
+  },
+  {
+    key: "waves-shape",
+    section: "aura",
+    label: "Energy Waves Shape",
+    uiLabel: "Shape",
+    uiHint: "Outline: the waves follow the sheet or image outline. Organic: they wobble and bulge like living energy as they spread.",
+    nested: true,
+    panel: "effects",
+    settingName: ": Energy Waves Shape",
+    type: "select",
+    choices: Object.freeze({ outline: "Outline", organic: "Organic" }),
+    group: "item-sheet",
+    defaultValue: "outline",
+    visibleWhen: { all: ["waves-option"] },
+  },
+  {
+    key: "runes-option",
+    section: "aura",
+    label: "Enable Runic Circle Effect",
+    uiLabel: "Runic circle",
+    uiHint: "A circle of runic marks slowly turning behind the item image.",
+    panel: "effects",
+    settingName: ": Enable Runic Circle Effect",
+    type: "checkbox",
+    group: "item-sheet",
+    defaultValue: false,
+  },
+  {
+    key: "effect-placement",
+    section: "general",
+    label: "Effect Placement",
+    uiLabel: "Placement",
+    uiHint: "Whole sheet: the item sheet radiates, with particles escaping from behind its edges and energy flickering around it. Item image: the same effects come from the item image.",
+    panel: "effects",
+    settingName: ": Effect Placement",
+    type: "select",
+    choices: Object.freeze({ sheet: "Whole sheet", image: "Item image" }),
+    group: "item-sheet",
+    defaultValue: "sheet",
+  },
+  {
+    key: "enable-effect-color",
+    section: "general",
+    label: "Use Custom Effect Color",
+    uiLabel: "Effect color",
+    uiHint: "When off, effects take the item's colors: the secondary color with Gradient on, else the background color.",
+    panel: "effects",
+    settingName: ": Use Custom Effect Color",
+    type: "checkbox",
+    group: "item-sheet",
+    defaultValue: false,
+  },
+  {
+    key: "effect-color",
+    label: "Effect Color",
+    uiLabel: "Effect color",
+    inlineWith: "enable-effect-color",
+    settingName: ": Effect Color",
+    type: "color",
+    group: "item-sheet",
+    defaultValue: "#ffd27a",
+    visibleWhen: { all: ["enable-effect-color"] },
+  },
+  {
+    key: "effect-intensity",
+    section: "general",
+    label: "Effect Intensity",
+    uiLabel: "Intensity",
+    panel: "effects",
+    settingName: ": Effect Intensity",
+    type: "select",
+    choices: Object.freeze({ subtle: "Subtle", normal: "Normal", strong: "Strong" }),
+    group: "item-sheet",
+    defaultValue: "normal",
+  },
+  {
+    key: "effect-speed",
+    section: "general",
+    label: "Effect Speed",
+    uiLabel: "Speed",
+    panel: "effects",
+    settingName: ": Effect Speed",
+    type: "select",
+    choices: Object.freeze({ slow: "Slow", normal: "Normal", fast: "Fast" }),
+    group: "item-sheet",
+    defaultValue: "normal",
+  },
+  {
+    key: "enable-inventory-icon-emanation",
+    section: "icons",
+    label: "Enable Inventory Icon Emanation",
+    uiLabel: "Inventory: icon emanation",
+    uiHint: "A small energy aura and particles escaping from the item icon in inventories, in the effect color.",
+    panel: "effects",
+    settingName: ": Enable Inventory Icon Emanation",
+    type: "checkbox",
+    group: "actor-sheet",
+    defaultValue: false,
+  },
+  {
+    key: "enable-foundry-interface-icon-emanation",
+    section: "icons",
+    label: "Enable Sidebar Icon Emanation",
+    uiLabel: "Sidebar: icon emanation",
+    uiHint: "A small energy aura and particles escaping from the item thumbnail in the Items sidebar and compendiums.",
+    panel: "effects",
+    settingName: ": Enable Sidebar Icon Emanation",
+    type: "checkbox",
+    group: "foundry-interface",
+    defaultValue: false,
+  },
+  {
+    key: "enable-inventory-icon-pulse",
+    section: "icons",
+    label: "Enable Inventory Icon Pulse",
+    uiLabel: "Inventory: icon pulse",
+    uiHint: "A soft light pulsing around the item icon in inventories, in the effect color.",
+    panel: "effects",
+    settingName: ": Enable Inventory Icon Pulse",
+    type: "checkbox",
+    group: "actor-sheet",
+    defaultValue: false,
+  },
+  // --- Unidentified image (Image tab, unidentified style only) -------------
+  ...buildUnidentifiedImageFields(),
 ]);
 
-export function getRarityFieldDefinitions(rarity) {
-  const rarityConfig = RARITY_CONFIG[rarity] || {};
-  if (!Object.keys(rarityConfig).length) return RARITY_FIELD_DEFINITIONS;
+function buildUnidentifiedImageFields() {
+  const field = (definition) => ({
+    panel: "unidentified",
+    entry: "unidentified",
+    themeable: false,
+    group: "item-sheet",
+    ...definition,
+  });
+  const showsTypeImages = { equals: { "conceal-image-mode": "type" } };
 
-  return RARITY_FIELD_DEFINITIONS.filter((field) => {
+  return [
+    field({
+      key: "conceal-image-mode",
+      section: "conceal-image",
+      label: "Unidentified Image",
+      uiLabel: "Image",
+      uiHint: "Shadowed: the item's own image darkened and tinted in the effect color, so its shape shows but not its colors. Silhouette: the item's shape as a flat shade of the effect color (outlined on the item sheet), cut from the image's lit parts (very dark or deep red parts can drop out). Blurred: the image out of focus. By item type: a stand-in picked below for each kind of item. Real image: only the question mark, if on.",
+      settingName: ": Unidentified Image",
+      type: "select",
+      choices: CONCEAL_IMAGE_MODES,
+      defaultValue: DEFAULT_CONCEAL_IMAGE_MODE,
+    }),
+    field({
+      key: "conceal-mark-option",
+      section: "conceal-image",
+      label: "Question Mark Over the Image",
+      uiLabel: "Question mark",
+      uiHint: "A question mark drawn over the image.",
+      settingName: ": Question Mark Over the Image",
+      type: "checkbox",
+      defaultValue: true,
+    }),
+    field({
+      key: "conceal-mark-color",
+      label: "Question Mark Color",
+      uiLabel: "Question mark",
+      inlineWith: "conceal-mark-option",
+      settingName: ": Question Mark Color",
+      type: "color",
+      defaultValue: "#f4efff",
+      visibleWhen: { all: ["conceal-mark-option"] },
+    }),
+    field({
+      key: "conceal-mark-size",
+      section: "conceal-image",
+      label: "Question Mark Size",
+      uiLabel: "Size",
+      nested: true,
+      settingName: ": Question Mark Size",
+      type: "select",
+      choices: CONCEAL_MARK_SIZES,
+      defaultValue: "medium",
+      visibleWhen: { all: ["conceal-mark-option"] },
+    }),
+    field({
+      key: "conceal-on-sheet",
+      section: "conceal-where",
+      label: "Hide the Image on Item Sheets",
+      uiLabel: "Item sheet",
+      uiHint: "The image at the top of the item sheet. It also stops a click on it from opening the real image.",
+      settingName: ": Hide the Image on Item Sheets",
+      type: "checkbox",
+      defaultValue: true,
+    }),
+    field({
+      key: "conceal-in-inventory",
+      section: "conceal-where",
+      label: "Hide the Image in Inventories",
+      uiLabel: "Inventory",
+      uiHint: "The item icon in actor inventories.",
+      settingName: ": Hide the Image in Inventories",
+      type: "checkbox",
+      group: "actor-sheet",
+      defaultValue: true,
+    }),
+    field({
+      key: "conceal-in-sidebar",
+      section: "conceal-where",
+      label: "Hide the Image in the Sidebar",
+      uiLabel: "Sidebar and compendiums",
+      uiHint: "The item thumbnail in the Items sidebar and in compendiums.",
+      settingName: ": Hide the Image in the Sidebar",
+      type: "checkbox",
+      group: "foundry-interface",
+      defaultValue: true,
+    }),
+    ...ITEM_IMAGE_KINDS.map((kind) => field({
+      key: buildImageKindFieldKey(kind.key),
+      section: kind.section,
+      label: `Unidentified Image: ${kind.label}`,
+      uiLabel: kind.label,
+      settingName: `: Unidentified Image (${kind.label})`,
+      type: "image",
+      defaultValue: kind.defaultImage,
+      visibleWhen: showsTypeImages,
+    })),
+  ];
+}
+
+const isUnidentifiedStyle = (rarity) => rarity === UNIDENTIFIED_STYLE_KEY;
+
+const SHARED_FIELD_DEFINITIONS = Object.freeze(RARITY_FIELD_DEFINITIONS.filter((field) => field.entry !== "unidentified"));
+
+export function getRarityFieldDefinitions(rarity) {
+  // The unidentified style has no tier config: every field, plus its own.
+  if (isUnidentifiedStyle(rarity)) return RARITY_FIELD_DEFINITIONS;
+
+  const rarityConfig = RARITY_CONFIG[rarity] || {};
+  if (!Object.keys(rarityConfig).length) return SHARED_FIELD_DEFINITIONS;
+
+  return SHARED_FIELD_DEFINITIONS.filter((field) => {
     if (!field.requiredFlag) return true;
     return Boolean(rarityConfig[field.requiredFlag]);
   });
@@ -217,5 +797,15 @@ export function isRarityFieldVisible(field, state = {}) {
     return false;
   }
 
+  // `equals` compares a select field's value: { "field-key": "value" }.
+  if (rule.equals && Object.entries(rule.equals).some(([key, value]) => state?.[key] !== value)) {
+    return false;
+  }
+
   return true;
+}
+
+/** The stored value for a select field, falling back to its default. */
+export function normalizeSelectFieldValue(field, value) {
+  return Object.hasOwn(field?.choices ?? {}, value) ? value : field?.defaultValue;
 }

@@ -1,27 +1,46 @@
 import { normalizeRarityKey } from "../core/rarityListConfig.js";
-import { applyInventoryBorder, clearInventoryBorder } from "../core/styleAppliers.js";
+import { shouldUseUnidentifiedStyle, UNIDENTIFIED_STYLE_KEY } from "../core/unidentifiedStyle.js";
+import { applySheetEffects, clearSheetEffects, resolveEffectColor } from "../core/itemEffects.js";
 import { getItemSheetTextStyleStrategyForElement } from "../sheets/itemSheetTextStrategies.js";
 import { applyRarityClass, clearRarityClasses } from "../core/runtimeRarityStyles.js";
 
 const SHEET_GLOW_CLASS = "scirc-glow";
 const SHEET_BG_CLASS = "scirc-item-sheet-bg-enabled";
 const SHEET_BG_GRADIENT_CLASS = "scirc-item-sheet-bg-gradient-enabled";
+// Tidy 5e only: the background colors also (or only) paint the sidebar.
+const SHEET_TIDY_SIDEBAR_BG_CLASS = "scirc-tidy-sidebar-bg";
 const SHEET_TEXT_COLOR_VAR = "--scirc-item-sheet-text-color";
+// Optional single-color accents: each toggles a class whose CSS re-points the
+// system/Tidy variables at the accent variable (see item sheet strategy CSS).
+const SHEET_ACCENTS = Object.freeze([
+  Object.freeze({
+    enabledKey: "enableGoldAccentColor",
+    colorKey: "goldAccentColor",
+    className: "scirc-item-sheet-gold-enabled",
+    variable: "--scirc-item-sheet-gold",
+  }),
+  Object.freeze({
+    enabledKey: "enableTableHeaderColor",
+    colorKey: "tableHeaderColor",
+    className: "scirc-item-sheet-table-header-enabled",
+    variable: "--scirc-item-sheet-table-header",
+  }),
+  Object.freeze({
+    enabledKey: "enableTableHeaderTextColor",
+    colorKey: "tableHeaderTextColor",
+    className: "scirc-item-sheet-table-header-text-enabled",
+    variable: "--scirc-item-sheet-table-header-text",
+  }),
+]);
 const SHEET_BG_PRIMARY_VAR = "--scirc-item-sheet-bg-primary";
 const SHEET_BG_SECONDARY_VAR = "--scirc-item-sheet-bg-secondary";
-const BORDER_GLOW_CLASS_REGEX = /(^|\s)(?:scirc-)?glow-fade-border-\S+/g;
 
 function clearSheetBackgroundState($element) {
   $element.removeClass(SHEET_BG_CLASS);
+  $element.removeClass(SHEET_TIDY_SIDEBAR_BG_CLASS);
   $element.removeClass(SHEET_BG_GRADIENT_CLASS);
   $element.css(SHEET_BG_PRIMARY_VAR, "");
   $element.css(SHEET_BG_SECONDARY_VAR, "");
-
-  // Legacy inline cleanup.
-  $element.css({
-    "background-image": "",
-    "background-color": "",
-  });
 }
 
 /**
@@ -33,9 +52,22 @@ function clearSheetBackgroundState($element) {
 export function extractRawItemRarity(item) {
   return item?.system?.rarity?.value
     ?? item?.system?.rarity
+    ?? firstRarity(item?.system?.rarities)
     ?? item?.system?.details?.rarity
     ?? item?.rarity
     ?? null;
+}
+
+/**
+ * D&D 5e 6.0 stores a set of rarities (`system.rarities`) instead of one
+ * string. On documents `system.rarity` still returns its first (lowest)
+ * entry, but raw data such as a compendium index only has the set, as an
+ * array; this reads the same first entry from either form.
+ */
+function firstRarity(rarities) {
+  if (Array.isArray(rarities)) return rarities[0] ?? null;
+  if (rarities instanceof Set) return rarities.values().next().value ?? null;
+  return null;
 }
 
 /**
@@ -46,6 +78,19 @@ export function extractRawItemRarity(item) {
  */
 export function getItemRarity(item) {
   return normalizeRarityKey(extractRawItemRarity(item));
+}
+
+/**
+ * The rarity whose style this user should see on `item`: the unidentified
+ * style when the item is unidentified for them (see Module Settings), else
+ * the item's own rarity.
+ *
+ * @param {object} item - Item document or plain item-like object.
+ * @returns {string|null}
+ */
+export function getDisplayRarity(item) {
+  if (shouldUseUnidentifiedStyle(item)) return UNIDENTIFIED_STYLE_KEY;
+  return getItemRarity(item);
 }
 
 /**
@@ -66,7 +111,11 @@ export function applyRarityStyles(element, settings, options = {}) {
 
   // Background & Gradient
   if (settings.enableItemColor !== false) {
-    $element.addClass(SHEET_BG_CLASS);
+    // Tidy 5e sheets can put the color on the content (default), the sidebar,
+    // or both; every other sheet colors the whole window as before.
+    const tidyArea = $element.hasClass("tidy5e-sheet") ? settings.tidyBackgroundArea : null;
+    $element.toggleClass(SHEET_BG_CLASS, tidyArea !== "sidebar");
+    $element.toggleClass(SHEET_TIDY_SIDEBAR_BG_CLASS, tidyArea === "sidebar" || tidyArea === "sheet");
     if (preview) {
       $element.css(SHEET_BG_PRIMARY_VAR, settings.backgroundColor || "#ffffff");
     } else {
@@ -90,12 +139,10 @@ export function applyRarityStyles(element, settings, options = {}) {
     $element.removeClass(SHEET_GLOW_CLASS);
     $element.css("--glow-primary", "");
     $element.css("--glow-secondary", "");
-    // Remove any glow animation classes
-    $element.removeClass((_, className) => (className.match(BORDER_GLOW_CLASS_REGEX) || []).join(" "));
   }
 
-  // Text Color - Support both itemSheetTextColor (new) and textColor (legacy/preview)
-  const textColor = settings.itemSheetTextColor || settings.textColor;
+  // Text color
+  const textColor = settings.itemSheetTextColor;
   const textStyleStrategy = options.textStyleStrategy || getItemSheetTextStyleStrategyForElement($element);
   if (settings.enableTextColor !== false && textColor) {
     if (preview) {
@@ -109,11 +156,20 @@ export function applyRarityStyles(element, settings, options = {}) {
     textStyleStrategy?.clearTextColor($element);
   }
 
-  // Glow
-  if (settings.enableItemColor !== false && settings.glowEnabled) {
+  // Accents (gold details, table headers)
+  for (const accent of SHEET_ACCENTS) {
+    const color = settings[accent.enabledKey] ? settings[accent.colorKey] : null;
+    $element.toggleClass(accent.className, Boolean(color));
+    $element.css(accent.variable, color && preview ? color : "");
+  }
+
+  // Glow: independent of the background. Without a background it pulses in
+  // the effect color.
+  if (settings.glowEnabled) {
     $element.addClass(SHEET_GLOW_CLASS);
     if (preview) {
-      $element.css("--glow-primary", settings.backgroundColor);
+      const glowPrimary = settings.enableItemColor !== false ? settings.backgroundColor : resolveEffectColor(settings);
+      $element.css("--glow-primary", glowPrimary);
       $element.css("--glow-secondary", settings.gradientEnabled ? settings.gradientColor : "#000000");
     } else {
       $element.css("--glow-primary", "");
@@ -123,9 +179,10 @@ export function applyRarityStyles(element, settings, options = {}) {
     $element.removeClass(SHEET_GLOW_CLASS);
     $element.css("--glow-primary", "");
     $element.css("--glow-secondary", "");
-    // Remove any glow animation classes
-    $element.removeClass((_, className) => (className.match(BORDER_GLOW_CLASS_REGEX) || []).join(" "));
   }
+
+  // Animated effects (shimmer, particles, aura, runes).
+  $element.each((_, node) => applySheetEffects(node, settings, { preview }));
 }
 
 /**
@@ -149,29 +206,14 @@ export function removeRarityStyles(element, options = {}) {
   const textStyleStrategy = options.textStyleStrategy || getItemSheetTextStyleStrategyForElement($element);
   textStyleStrategy?.clearTextColor($element);
 
+  for (const accent of SHEET_ACCENTS) {
+    $element.removeClass(accent.className);
+    $element.css(accent.variable, "");
+  }
+
+  $element.each((_, node) => clearSheetEffects(node));
+
   // Remove glow class and related CSS variables
   $element.removeClass(SHEET_GLOW_CLASS);
 
-  // Remove any glow animation classes
-  $element.removeClass((_, className) => (className.match(BORDER_GLOW_CLASS_REGEX) || []).join(" "));
-}
-
-/**
- * Apply a border and optional glow animation based on rarity settings.
- *
- * @param {HTMLElement|JQuery} element - Target item container.
- * @param {object} settings - Must include backgroundColor, gradientColor, etc.
- * @param {number} intensity - Glow intensity (default: 6px).
- */
-export function applyActorSheetItemBorder(element, settings, intensity = 6) {
-  applyInventoryBorder(element, settings, intensity, { preview: true });
-}
-
-/**
- * Remove any previously applied glow/border from one or more elements.
- *
- * @param {HTMLElement|JQuery} element - Target element(s) or jQuery wrapper.
- */
-export function clearActorSheetItemBorder(element) {
-  clearInventoryBorder(element);
 }

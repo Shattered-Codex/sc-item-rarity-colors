@@ -6,6 +6,9 @@
 import { MODULE_ID } from "./constants.js";
 import { raritySupportsGradient, raritySupportsGlow, raritySupportsBorderGradient, raritySupportsBorderGlow } from "./rarityConfig.js";
 import { normalizeRarityKey } from "./rarityListConfig.js";
+import { readEffectSettings } from "./effectSettingFields.js";
+import { UNIDENTIFIED_STYLE_KEY } from "./unidentifiedStyle.js";
+import { readConcealSettings } from "./unidentifiedImageConfig.js";
 
 const _raritySettingsCache = new Map();
 
@@ -21,20 +24,6 @@ export function invalidateRaritySettingsCache() {
  */
 export function settingExists(moduleId, key) {
   return game.settings.settings.has(`${moduleId}.${key}`);
-}
-
-/**
- * Get a setting value with a default fallback
- * @param {string} moduleId - Module ID
- * @param {string} key - Setting key
- * @param {*} defaultValue - Default value if setting doesn't exist
- * @returns {*}
- */
-export function getSetting(moduleId, key, defaultValue = null) {
-  if (!settingExists(moduleId, key)) {
-    return defaultValue;
-  }
-  return game.settings.get(moduleId, key);
 }
 
 /**
@@ -101,6 +90,22 @@ export function buildRaritySettings(rarity) {
       ? getRaritySetting(MODULE_ID, rarity, "glow-option", false)
       : false,
 
+    // Gold accent (dnd5e / Tidy 5e gold details)
+    enableGoldAccentColor: getRaritySetting(MODULE_ID, rarity, "enable-gold-accent-color", false),
+    goldAccentColor: getRaritySetting(MODULE_ID, rarity, "gold-accent-color", "#9f9275"),
+
+    // Table header bars on the item sheet
+    enableTableHeaderColor: getRaritySetting(MODULE_ID, rarity, "enable-table-header-color", false),
+    tableHeaderColor: getRaritySetting(MODULE_ID, rarity, "table-header-color", "#491d25"),
+    enableTableHeaderTextColor: getRaritySetting(MODULE_ID, rarity, "enable-table-header-text-color", false),
+    tableHeaderTextColor: getRaritySetting(MODULE_ID, rarity, "table-header-text-color", "#ffffff"),
+
+    // Animated effects (Effects tab)
+    ...readEffectSettings((fieldKey, field) => getRaritySetting(MODULE_ID, rarity, fieldKey, field.defaultValue ?? null)),
+
+    // Where the background goes on Tidy 5e sheets: content, sidebar, or sheet.
+    tidyBackgroundArea: getRaritySetting(MODULE_ID, rarity, "tidy-background-area", "content"),
+
     // Inventory Effects
     enableInventoryGradientEffects: getRaritySetting(MODULE_ID, rarity, "enable-inventory-gradient-effects", false),
     enableInventoryBorders: getRaritySetting(MODULE_ID, rarity, "enable-inventory-borders", false),
@@ -145,6 +150,11 @@ export function buildRaritySettings(rarity) {
     );
   } else {
     settings.enableInventoryBorderGlow = false;
+  }
+
+  // How unidentified items hide their image (Image tab).
+  if (cacheKey === UNIDENTIFIED_STYLE_KEY) {
+    settings.conceal = readConcealSettings((fieldKey, defaultValue) => getRaritySetting(MODULE_ID, rarity, fieldKey, defaultValue));
   }
 
   _raritySettingsCache.set(cacheKey, settings);

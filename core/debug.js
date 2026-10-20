@@ -2,17 +2,30 @@ import { MODULE_ID } from "./constants.js";
 
 export const DEBUG_LOGS_SETTING_KEY = "debugLogsEnabled";
 
-function hasDebugSettingRegistered() {
-  return game?.settings?.settings?.has?.(`${MODULE_ID}.${DEBUG_LOGS_SETTING_KEY}`) === true;
+// Logging is checked on hot paths (every inventory row on every render), and
+// reading a client setting builds a Setting document each time, so the flag
+// is read once and then kept in sync by the setting's onChange.
+let debugEnabled = null;
+
+function readDebugSetting() {
+  try {
+    if (!game?.settings?.settings?.has?.(`${MODULE_ID}.${DEBUG_LOGS_SETTING_KEY}`)) return null;
+    return game.settings.get(MODULE_ID, DEBUG_LOGS_SETTING_KEY) === true;
+  } catch (_error) {
+    return null;
+  }
+}
+
+/** Called by the debug setting's onChange. */
+export function setDebugEnabled(value) {
+  debugEnabled = value === true;
 }
 
 export function isDebugEnabled() {
-  try {
-    if (!hasDebugSettingRegistered()) return false;
-    return game.settings.get(MODULE_ID, DEBUG_LOGS_SETTING_KEY) === true;
-  } catch (_error) {
-    return false;
-  }
+  // Until the setting is registered the answer is not cached, so the first
+  // read after registration picks up the stored value.
+  debugEnabled ??= readDebugSetting();
+  return debugEnabled === true;
 }
 
 export function debugLog(message, details = null) {

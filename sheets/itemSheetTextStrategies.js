@@ -3,8 +3,6 @@ import { getSheetType } from "../scripts/sheetDetectionHelper.js";
 import { Dnd5eItemSheetTextStrategy } from "./strategies/Dnd5eItemSheetTextStrategy.js";
 import { Tidy5eItemSheetTextStrategy } from "./strategies/Tidy5eItemSheetTextStrategy.js";
 
-export { Dnd5eItemSheetTextStrategy, Tidy5eItemSheetTextStrategy };
-
 /**
  * Returns the proper item sheet text strategy for a known sheet type.
  * @param {string} sheetType

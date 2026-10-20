@@ -4,8 +4,6 @@
   border-radius: 8px;
   animation: scircGlowAnimation 3s infinite alternate;
   box-shadow: 0 0 15px var(--glow-primary, #ffffff);
-  background: linear-gradient(to left, var(--glow-primary, #ffffff), var(--glow-secondary, #ffffff));
-  background-size: 200% 100%;
 }
 
 .scirc-item-sheet-bg-enabled {

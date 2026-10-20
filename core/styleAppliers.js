@@ -6,7 +6,6 @@
 import { DEFAULT_COLORS, DEFAULT_GLOW_INTENSITY } from "./constants.js";
 import { applyRarityClass } from "./runtimeRarityStyles.js";
 
-const LEGACY_BORDER_GLOW_CLASS_REGEX = /(^|\s)(?:scirc-)?glow-fade-border-\S+/g;
 const INVENTORY_GRADIENT_CLASS = "scirc-inv-gradient-enabled";
 const INVENTORY_BORDER_MANAGED_CLASS = "scirc-inv-border-managed";
 const INVENTORY_BORDER_SOLID_CLASS = "scirc-inv-border-solid";
@@ -30,8 +29,12 @@ const INVENTORY_BORDER_MODE_CLASSES = [
   INVENTORY_BORDER_GLOW_CLASS,
 ];
 
-function removeLegacyGlowClasses($element) {
-  $element.removeClass((_, className) => (className.match(LEGACY_BORDER_GLOW_CLASS_REGEX) || []).join(" "));
+// Inventory rows are restyled on every sheet render, most of them items with
+// nothing to clear. classList.remove rewrites the class attribute even for a
+// class that is not there, so only classes present are removed.
+function removeClasses(node, classNames) {
+  const present = classNames.filter((className) => node.classList.contains(className));
+  if (present.length) node.classList.remove(...present);
 }
 
 function setCssVariable(element, name, value) {
@@ -87,12 +90,6 @@ export function applyInventoryGradient(element, settings, options = {}) {
     } else {
       clearPreviewGradientVariables(node);
     }
-
-    // Legacy inline cleanup.
-    node.style.removeProperty("background");
-    node.style.removeProperty("background-color");
-    node.style.removeProperty("background-image");
-    node.style.removeProperty("box-shadow");
   });
 }
 
@@ -106,14 +103,8 @@ export function clearInventoryGradient(element) {
   const $element = element instanceof jQuery ? element : $(element);
   $element.each((_, node) => {
     if (!node) return;
-    node.classList.remove(INVENTORY_GRADIENT_CLASS);
+    removeClasses(node, [INVENTORY_GRADIENT_CLASS]);
     clearPreviewGradientVariables(node);
-
-    // Legacy inline cleanup.
-    node.style.removeProperty("background");
-    node.style.removeProperty("background-color");
-    node.style.removeProperty("background-image");
-    node.style.removeProperty("box-shadow");
   });
 }
 
@@ -144,11 +135,10 @@ export function applyInventoryBorder(element, settings, intensity = DEFAULT_GLOW
     if (!node) return;
 
     node.classList.add(INVENTORY_BORDER_MANAGED_CLASS);
-    node.classList.remove(...INVENTORY_BORDER_MODE_CLASSES);
+    removeClasses(node, INVENTORY_BORDER_MODE_CLASSES);
     if (rarity !== undefined && rarity !== null) {
       applyRarityClass(node, rarity);
     }
-    removeLegacyGlowClasses($(node));
 
     if (settings?.glowEnabled) {
       node.classList.add(INVENTORY_BORDER_GLOW_CLASS);
@@ -167,11 +157,6 @@ export function applyInventoryBorder(element, settings, intensity = DEFAULT_GLOW
       setCssVariable(node, INVENTORY_BORDER_SECONDARY_VAR, "");
       setCssVariable(node, INVENTORY_BORDER_GLOW_INTENSITY_VAR, "");
     }
-
-    // Legacy inline cleanup.
-    node.style.removeProperty("border");
-    node.style.removeProperty("border-image");
-    node.style.removeProperty("box-shadow");
   });
 }
 
@@ -186,30 +171,22 @@ export function clearInventoryBorder(element) {
   $element.each((_, node) => {
     if (!node) return;
 
-    removeLegacyGlowClasses($(node));
-    node.classList.remove(...INVENTORY_BORDER_MODE_CLASSES);
+    removeClasses(node, INVENTORY_BORDER_MODE_CLASSES);
 
     setCssVariable(node, INVENTORY_BORDER_PRIMARY_VAR, "");
     setCssVariable(node, INVENTORY_BORDER_SECONDARY_VAR, "");
     setCssVariable(node, INVENTORY_BORDER_GLOW_INTENSITY_VAR, "");
-
-    // Legacy inline cleanup.
-    node.style.removeProperty("border");
-    node.style.removeProperty("border-image");
-    node.style.removeProperty("border-radius");
-    node.style.removeProperty("box-shadow");
   });
 }
 
 /**
- * Apply text color to title/subtitle elements.
+ * Apply text color to title/subtitle elements (the CSS picks them).
  * @param {jQuery|HTMLElement} container - Container element
  * @param {string} color - Color value
- * @param {string[]} selectors - Array of CSS selectors to target
  * @param {object} [options]
  * @param {boolean} [options.preview=false] - When true, applies unsaved preview vars inline.
  */
-export function applyTitleColor(container, color, selectors, options = {}) {
+export function applyTitleColor(container, color, options = {}) {
   if (!container || !color) return;
 
   const $container = container instanceof jQuery ? container : $(container);
@@ -220,39 +197,31 @@ export function applyTitleColor(container, color, selectors, options = {}) {
     node.classList.add(INVENTORY_TITLE_COLOR_CLASS);
     setCssVariable(node, INVENTORY_TITLE_COLOR_VAR, preview ? color : "");
   });
-
-  // Clear legacy inline colors from prior versions/renders.
-  const safeSelectors = Array.isArray(selectors) ? selectors : [];
-  safeSelectors.forEach((selector) => $container.find(selector).css("color", ""));
 }
 
 /**
  * Clear text color from title/subtitle elements.
  * @param {jQuery|HTMLElement} container - Container element
- * @param {string[]} selectors - Array of CSS selectors to target
  */
-export function clearTitleColor(container, selectors) {
+export function clearTitleColor(container) {
   if (!container) return;
 
   const $container = container instanceof jQuery ? container : $(container);
   $container.each((_, node) => {
     if (!node) return;
-    node.classList.remove(INVENTORY_TITLE_COLOR_CLASS);
+    removeClasses(node, [INVENTORY_TITLE_COLOR_CLASS]);
     setCssVariable(node, INVENTORY_TITLE_COLOR_VAR, "");
   });
-  const safeSelectors = Array.isArray(selectors) ? selectors : [];
-  safeSelectors.forEach((selector) => $container.find(selector).css("color", ""));
 }
 
 /**
- * Apply text color to details elements.
+ * Apply text color to details elements (the CSS picks them).
  * @param {jQuery|HTMLElement} container - Container element
  * @param {string} color - Color value
- * @param {string[]} selectors - Array of CSS selectors to target
  * @param {object} [options]
  * @param {boolean} [options.preview=false] - When true, applies unsaved preview vars inline.
  */
-export function applyDetailsColor(container, color, selectors, options = {}) {
+export function applyDetailsColor(container, color, options = {}) {
   if (!container || !color) return;
 
   const $container = container instanceof jQuery ? container : $(container);
@@ -262,26 +231,19 @@ export function applyDetailsColor(container, color, selectors, options = {}) {
     node.classList.add(INVENTORY_DETAILS_COLOR_CLASS);
     setCssVariable(node, INVENTORY_DETAILS_COLOR_VAR, preview ? color : "");
   });
-
-  // Clear legacy inline colors from prior versions/renders.
-  const safeSelectors = Array.isArray(selectors) ? selectors : [];
-  safeSelectors.forEach((selector) => $container.find(selector).css("color", ""));
 }
 
 /**
  * Clear text color from details elements.
  * @param {jQuery|HTMLElement} container - Container element
- * @param {string[]} selectors - Array of CSS selectors to target
  */
-export function clearDetailsColor(container, selectors) {
+export function clearDetailsColor(container) {
   if (!container) return;
 
   const $container = container instanceof jQuery ? container : $(container);
   $container.each((_, node) => {
     if (!node) return;
-    node.classList.remove(INVENTORY_DETAILS_COLOR_CLASS);
+    removeClasses(node, [INVENTORY_DETAILS_COLOR_CLASS]);
     setCssVariable(node, INVENTORY_DETAILS_COLOR_VAR, "");
   });
-  const safeSelectors = Array.isArray(selectors) ? selectors : [];
-  safeSelectors.forEach((selector) => $container.find(selector).css("color", ""));
 }
