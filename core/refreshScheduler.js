@@ -81,18 +81,6 @@ export function scheduleOnNextAnimationFrame(callback) {
 }
 
 /**
- * Run once immediately and once on the next animation frame.
- *
- * @param {Function} callback
- * @returns {Function} cancel next-frame pass
- */
-export function runNowAndOnNextAnimationFrame(callback) {
-  if (typeof callback !== "function") return () => false;
-  callback();
-  return scheduleOnNextAnimationFrame(callback);
-}
-
-/**
  * Create a frame scheduler that collapses multiple requests into one pass/frame.
  *
  * @param {Function} callback

@@ -141,13 +141,12 @@ export function applyActorInventoryEffects(moduleId) {
   }
 
   // Apply rarity effects whenever an Actor sheet is rendered
-  Hooks.on("renderActorSheet", handleActorSheetRender);
+  // D&D 5e and Tidy 5e actor sheets are all ActorSheetV2.
   Hooks.on("renderActorSheetV2", handleActorSheetRender);
-  Hooks.on("renderActorSheet5e", handleActorSheetRender);
 
   // Reapply effects when module settings change
-  registerSettingChangeHooks((moduleOrSetting, maybeKey) => {
-    if (!isModuleSettingChange(moduleOrSetting, maybeKey, moduleId)) return;
+  registerSettingChangeHooks((settingKey) => {
+    if (!isModuleSettingChange(settingKey, moduleId)) return;
     if (isSettingsTransactionActive(moduleId)) return;
     debugLog("setting change matched module for actor inventory; queued refresh");
     actorSheetRefresh.request("setting-change");

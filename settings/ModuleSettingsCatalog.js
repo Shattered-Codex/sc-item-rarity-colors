@@ -1,4 +1,4 @@
-import { DEBUG_LOGS_SETTING_KEY } from "../core/debug.js";
+import { DEBUG_LOGS_SETTING_KEY, setDebugEnabled } from "../core/debug.js";
 import { UNIDENTIFIED_VIEWERS, UNIDENTIFIED_VIEWERS_SETTING_KEY } from "../core/unidentifiedStyle.js";
 import { applyAnimatedEffectsPreference, DISABLE_EFFECTS_SETTING_KEY } from "../core/itemEffects.js";
 
@@ -108,6 +108,7 @@ const SECTIONS = Object.freeze([
         default: false,
         name: "Enable debug logs",
         hint: "Log rarity color flow details in the browser console for troubleshooting.",
+        onChange: (value) => setDebugEnabled(value),
       }),
     ]),
     actions: Object.freeze([]),

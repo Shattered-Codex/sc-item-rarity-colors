@@ -10,11 +10,7 @@ import { getActiveSpellStyleForItem } from "./spellSchoolHelper.js";
 import { buildRaritySettings } from "../core/settingsManager.js";
 import { isModuleSettingChange, registerSettingChangeHooks } from "../core/settingChangeHelper.js";
 import { debugLog, debugWarn } from "../core/debug.js";
-import {
-  createDebouncedRefreshRequester,
-  REFRESH_DELAYS_MS,
-  runNowAndOnNextAnimationFrame,
-} from "../core/refreshScheduler.js";
+import { createDebouncedRefreshRequester, REFRESH_DELAYS_MS } from "../core/refreshScheduler.js";
 import { applyRarityClass, clearRarityClasses, ensureRuntimeRarityStyles } from "../core/runtimeRarityStyles.js";
 import {
   isSettingsTransactionActive,
@@ -49,10 +45,25 @@ const COMPENDIUM_INDEX_FIELDS = [
 const isModuleOwnedNode = (node) =>
   node?.nodeType === Node.ELEMENT_NODE && [...node.classList].some((className) => className.startsWith("scirc-"));
 
-/** A change that only added or removed elements this module draws. */
-function isModuleOwnedMutation(record) {
-  const nodes = [...record.addedNodes, ...record.removedNodes];
-  return nodes.length > 0 && nodes.every(isModuleOwnedNode);
+const isItemRow = (node) => node.matches?.(DIRECTORY_ROW_SELECTOR) && !node.classList.contains("folder");
+
+/**
+ * The item rows a batch of DOM changes added: rows themselves, and the rows
+ * inside an added list or folder. Elements this module draws (icon effects,
+ * the unidentified image cover) are skipped.
+ */
+function collectAddedRows(records) {
+  const rows = new Set();
+  for (const record of records) {
+    for (const node of record.addedNodes) {
+      if (node.nodeType !== Node.ELEMENT_NODE || isModuleOwnedNode(node)) continue;
+      if (isItemRow(node)) rows.add(node);
+      for (const row of node.querySelectorAll(DIRECTORY_ROW_SELECTOR)) {
+        if (isItemRow(row)) rows.add(row);
+      }
+    }
+  }
+  return [...rows].filter((row) => row.isConnected);
 }
 
 function getCompendiumApplicationClass() {
@@ -274,23 +285,18 @@ function resolveItemFromRow(app, rowElement) {
 function clearRowVisuals(rowElement) {
   if (!rowElement) return;
 
-  DIRECTORY_STATE_CLASSES.forEach((stateClass) => rowElement.classList.remove(stateClass));
+  // classList.remove rewrites the class attribute even for a class that is
+  // not there, so only classes present are removed; on a fresh row this
+  // writes nothing.
+  for (const stateClass of DIRECTORY_STATE_CLASSES) {
+    if (rowElement.classList.contains(stateClass)) rowElement.classList.remove(stateClass);
+  }
   clearRarityClasses(rowElement);
 
   rowElement.style.removeProperty("--scirc-dir-bg-primary");
   rowElement.style.removeProperty("--scirc-dir-bg-secondary");
   rowElement.style.removeProperty("--scirc-dir-bg-fallback");
   rowElement.style.removeProperty("--scirc-dir-text-color");
-  rowElement.style.removeProperty("background");
-  rowElement.style.removeProperty("color");
-  rowElement.style.removeProperty("text-shadow");
-
-  rowElement
-    .querySelectorAll(".entry-name, .entry-name a, .document-name, .document-name a")
-    .forEach((el) => {
-      el.style.removeProperty("color");
-      el.style.removeProperty("text-shadow");
-    });
 }
 
 function resolveRootElement(htmlOrElement) {
@@ -435,17 +441,6 @@ function getKnownItemDirectoryRoots() {
   return roots;
 }
 
-function isItemsSidebarContext(app, html) {
-  if (isItemDirectoryApp(app)) return true;
-  if (app?.tabName) return app.tabName === "items";
-  if (app?.id === "items" || app?.options?.id === "items") return true;
-  if (typeof app?.id === "string" && app.id.toLowerCase().includes("item")) return true;
-  if (typeof app?.constructor?.name === "string" && app.constructor.name.toLowerCase().includes("item")) return true;
-
-  const root = resolveRootElement(html);
-  return isItemDirectoryRoot(root);
-}
-
 export function applyItemDirectoryEffects(moduleId) {
   ensureRuntimeRarityStyles(moduleId);
   const raritySettingsCache = new Map();
@@ -498,23 +493,22 @@ export function applyItemDirectoryEffects(moduleId) {
 
   // Icon emanation is reused across refreshes (re-creating it would restart
   // its animation on every item update), so each path states whether it is on.
-  const syncThumbnailEmanation = (rowElement, settings) => {
-    applyIconEmanation(
-      rowElement.querySelectorAll("img.thumbnail"),
-      settings?.enableFoundryInterfaceIconEmanation === true,
-      settings ?? {}
-    );
+  const getThumbnails = (rowElement) => rowElement.querySelectorAll("img.thumbnail");
+
+  const syncThumbnailEmanation = (rowElement, settings, thumbnails = getThumbnails(rowElement)) => {
+    applyIconEmanation(thumbnails, settings?.enableFoundryInterfaceIconEmanation === true, settings ?? {});
   };
 
-  const syncThumbnailConceal = (rowElement, item) => {
-    syncImageConceal(rowElement.querySelectorAll("img.thumbnail"), item, item ? getDisplayRarity(item) : null, "sidebar");
+  const syncThumbnailConceal = (rowElement, item, thumbnails = getThumbnails(rowElement)) => {
+    syncImageConceal(thumbnails, item, item ? getDisplayRarity(item) : null, "sidebar");
   };
 
   const applyStylesToDirectoryRow = (item, rowElement) => {
     if (!rowElement) return { applied: false, reason: "missing-row" };
 
     clearRowVisuals(rowElement);
-    syncThumbnailConceal(rowElement, item);
+    const thumbnails = getThumbnails(rowElement);
+    syncThumbnailConceal(rowElement, item, thumbnails);
 
     const spellStyle = getActiveSpellStyleForItem(item, moduleId);
     if (spellStyle) {
@@ -537,7 +531,7 @@ export function applyItemDirectoryEffects(moduleId) {
         rowElement.classList.add("scirc-dir-text-enabled");
         rowElement.style.setProperty("--scirc-dir-text-color", spellSettings.foundryInterfaceTextColor);
       }
-      syncThumbnailEmanation(rowElement, spellSettings);
+      syncThumbnailEmanation(rowElement, spellSettings, thumbnails);
 
       return {
         applied: true,
@@ -550,7 +544,7 @@ export function applyItemDirectoryEffects(moduleId) {
 
     const rarity = getDisplayRarity(item);
     if (!rarity) {
-      syncThumbnailEmanation(rowElement, null);
+      syncThumbnailEmanation(rowElement, null, thumbnails);
       return {
         applied: false,
         reason: "missing-rarity",
@@ -559,7 +553,7 @@ export function applyItemDirectoryEffects(moduleId) {
 
     const settings = getCachedRaritySettings(rarity);
     if (!settings) {
-      syncThumbnailEmanation(rowElement, null);
+      syncThumbnailEmanation(rowElement, null, thumbnails);
       return {
         applied: false,
         reason: "missing-settings",
@@ -577,7 +571,7 @@ export function applyItemDirectoryEffects(moduleId) {
       rowElement.classList.add("scirc-dir-text-enabled");
     }
 
-    syncThumbnailEmanation(rowElement, settings);
+    syncThumbnailEmanation(rowElement, settings, thumbnails);
 
     return {
       applied: true,
@@ -634,17 +628,23 @@ export function applyItemDirectoryEffects(moduleId) {
     return null;
   };
 
-  const applyStylesToItemDirectoryRoot = async (rootElement, app = null) => {
-    const rows = getRowsFromRoot(rootElement);
+  /**
+   * Styles `rows` of one directory or compendium. World items resolve at
+   * once, so the Items sidebar is styled synchronously, before it paints;
+   * only rows still unresolved (compendium documents) wait for a lookup.
+   */
+  const applyStylesToRows = async (rows, app = null) => {
     if (!rows.length) return;
 
-    try {
-      await ensureCompendiumIndexFieldsLoaded(app?.collection);
-    } catch (error) {
-      debugWarn("Compendium index preload failed; falling back to document resolution", {
-        appId: app?.id ?? null,
-        message: error?.message ?? String(error),
-      });
+    if (isItemCollection(app?.collection)) {
+      try {
+        await ensureCompendiumIndexFieldsLoaded(app.collection);
+      } catch (error) {
+        debugWarn("Compendium index preload failed; falling back to document resolution", {
+          appId: app?.id ?? null,
+          message: error?.message ?? String(error),
+        });
+      }
     }
 
     let appliedCount = 0;
@@ -653,7 +653,15 @@ export function applyItemDirectoryEffects(moduleId) {
     let noSettingsCount = 0;
     let spellStyleCount = 0;
 
-    const items = await Promise.all(rows.map((rowElement) => resolveItemForRowAsync(rowElement, app)));
+    const items = rows.map((rowElement) => {
+      const item = resolveItemForRow(rowElement, app);
+      return item?.system ? item : null;
+    });
+    const pending = items.flatMap((item, index) => (item ? [] : [index]));
+    if (pending.length) {
+      const resolved = await Promise.all(pending.map((index) => resolveItemForRowAsync(rows[index], app)));
+      pending.forEach((rowIndex, position) => { items[rowIndex] = resolved[position]; });
+    }
 
     rows.forEach((rowElement, index) => {
       const item = items[index];
@@ -693,11 +701,15 @@ export function applyItemDirectoryEffects(moduleId) {
     }
   };
 
+  const applyStylesToItemDirectoryRoot = (rootElement, app = null) => applyStylesToRows(getRowsFromRoot(rootElement), app);
+
   const refreshAllKnownItemDirectories = async () => {
     const roots = getKnownItemDirectoryRoots();
     if (!roots.length) return;
 
     for (const root of roots) {
+      // Later renders of a root are then picked up by its observer.
+      observeDirectoryRoot(root.element, root.app);
       await applyStylesToItemDirectoryRoot(root.element, root.app);
     }
   };
@@ -724,10 +736,10 @@ export function applyItemDirectoryEffects(moduleId) {
         observedRoots.delete(root);
         return;
       }
-      // Our own icon companions (effects, the unidentified image cover) are
-      // added here too; repainting for them would only add them again.
-      if (records.every(isModuleOwnedMutation)) return;
-      requestRefresh("item-directory-mutation");
+      // A re-render replaces the list, so the new rows are all there is to
+      // style; rows already styled are left alone.
+      const rows = collectAddedRows(records);
+      if (rows.length) void applyStylesToRows(rows, app);
     });
 
     observer.observe(root, {
@@ -766,14 +778,19 @@ export function applyItemDirectoryEffects(moduleId) {
       directoryRootCount: directoryRoots.length,
       looseCompendiumRoot: shouldUseLooseCompendiumRoot,
     });
+    // A root already observed needs nothing here: its observer styles the
+    // rows this render added. A new one gets one full pass, then is observed.
     if (directoryRoots.length) {
       directoryRoots.forEach((directoryRoot) => {
+        if (observedRoots.has(directoryRoot)) return;
         observeDirectoryRoot(directoryRoot, app);
-        runNowAndOnNextAnimationFrame(() => void applyStylesToItemDirectoryRoot(directoryRoot, app));
+        void applyStylesToItemDirectoryRoot(directoryRoot, app);
       });
-    } else if (shouldUseLooseCompendiumRoot) {
+    } else if (shouldUseLooseCompendiumRoot && !observedRoots.has(root)) {
+      // Compendium lists fill in after the render hook; the observer styles
+      // those rows as they arrive.
       observeDirectoryRoot(root, app, { allowLooseRoot: true });
-      runNowAndOnNextAnimationFrame(() => void applyStylesToItemDirectoryRoot(root, app));
+      void applyStylesToItemDirectoryRoot(root, app);
     }
     // When no directory list exists yet, the sidebar may still be injecting
     // it, so look again shortly. Found roots are observed above, which
@@ -797,18 +814,6 @@ export function applyItemDirectoryEffects(moduleId) {
     scheduleApply(html, app);
   });
 
-  Hooks.on("renderApplicationV2", (app, element) => {
-    // isItemCompendiumApp relies on foundry.applications.sidebar.apps.Compendium existing,
-    // which may not be present in all Foundry versions. Fall back to isItemCollection on the
-    // collection, which is the actual reliable signal that this is an item compendium.
-    const isItemComp = isItemCompendiumApp(app) || isItemCollection(app?.collection);
-    if (!isItemComp) return;
-    scheduleApply(element, app);
-    // Compendium item lists in Foundry v13 load asynchronously after the initial render hook.
-    // Schedule a delayed refresh so styles are applied once items are in the DOM.
-    requestRefresh("compendium-async-load", 500);
-  });
-
   Hooks.on("closeApplicationV2", (app, element) => {
     if (!isItemCompendiumApp(app)) return;
     disconnectObservedRoots(element ?? app?.element ?? null);
@@ -823,25 +828,13 @@ export function applyItemDirectoryEffects(moduleId) {
     requestRefresh("updateCompendium");
   });
 
-  Hooks.on("renderSidebarTab", (app, html) => {
-    if (isItemsSidebarContext(app, html)) {
-      scheduleApply(html, app);
-      return;
-    }
-
-    // Limit fallback refreshes to moments where the Items tab is actually active.
-    if (ui?.sidebar?.activeTab === "items") {
-      requestRefresh("renderSidebarTab-active-items-fallback");
-    }
-  });
-
   Hooks.on("renderSidebar", () => {
     if (ui?.sidebar?.activeTab !== "items") return;
     requestRefresh("renderSidebar-active-items");
   });
 
-  registerSettingChangeHooks((moduleOrSetting, maybeKey) => {
-    if (!isModuleSettingChange(moduleOrSetting, maybeKey, moduleId)) return;
+  registerSettingChangeHooks((settingKey) => {
+    if (!isModuleSettingChange(settingKey, moduleId)) return;
     if (isSettingsTransactionActive(moduleId)) return;
 
     raritySettingsCache.clear();
@@ -856,17 +849,18 @@ export function applyItemDirectoryEffects(moduleId) {
     requestRefresh("settings-transaction-complete", REFRESH_DELAYS_MS.SETTINGS_CHANGE);
   });
 
-  // Items owned by an actor never appear in the Items directory or a
-  // compendium list, and they change constantly in play (uses, quantities),
-  // so their events must not repaint every directory row.
-  const onDirectoryItemChange = (reason) => (item) => {
-    if (item?.parent) return;
-    resolvedDocumentCache.clear();
-    requestRefresh(reason);
-  };
-  Hooks.on("createItem", onDirectoryItemChange("createItem"));
-  Hooks.on("updateItem", onDirectoryItemChange("updateItem"));
-  Hooks.on("deleteItem", onDirectoryItemChange("deleteItem"));
+  // Creating, updating, or deleting a world item re-renders the Items
+  // directory, and the observer styles the rows that brings. An update made
+  // without a render still restyles that item's own rows, never the whole
+  // list. Items owned by an actor never appear here.
+  Hooks.on("updateItem", (item) => {
+    if (item?.parent || !item?.id) return;
+    const id = CSS.escape(item.id);
+    for (const root of getKnownItemDirectoryRoots()) {
+      const rows = [...root.element.querySelectorAll(`:is([data-entry-id="${id}"], [data-document-id="${id}"])`)].filter(isItemRow);
+      if (rows.length) void applyStylesToRows(rows, root.app);
+    }
+  });
 
   debugLog("Item directory rarity hooks registered");
   requestRefresh("initialization");

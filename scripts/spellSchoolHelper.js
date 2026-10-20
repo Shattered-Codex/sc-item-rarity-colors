@@ -3,10 +3,7 @@ import {
   buildSpellStyleSettingsFromFields,
   getSpellStyleProfileForItem,
   isSpellStyleSettingsActive,
-  isSpellItem,
 } from "../core/spellSchoolConfig.js";
-
-export { isSpellItem };
 
 // Resolved settings per profile `fields` object. Those objects are cached and
 // replaced when the spell styles change, so a WeakMap keyed on them needs no

@@ -1,6 +1,5 @@
 import { MODULE_ID } from "../core/constants.js";
 import { debugLog } from "../core/debug.js";
-import { removeLegacyWorldSettings } from "../core/legacySettings.js";
 import { applyAnimatedEffectsPreference, DISABLE_EFFECTS_SETTING_KEY } from "../core/itemEffects.js";
 import { ensureRuntimeRarityStyles } from "../core/runtimeRarityStyles.js";
 import {
@@ -12,7 +11,7 @@ import {
 } from "../core/rarityListConfig.js";
 import { invalidateRaritySettingsCache } from "../core/settingsManager.js";
 import { invalidateSpellStyleCache } from "../core/spellSchoolConfig.js";
-import { getSettingKeyFromHookPayload, isModuleSettingChange } from "../core/settingChangeHelper.js";
+import { isModuleSettingChange } from "../core/settingChangeHelper.js";
 import { isSettingsTransactionActive } from "../core/settingsTransaction.js";
 import { registerMenus } from "../settings/settingsMenus.js";
 import { registerModuleSettings } from "../settings/settingsRegistration.js";
@@ -24,18 +23,6 @@ import { registerModulePartials } from "./partialsHelper.js";
 export async function onInit() {
   debugLog("Lifecycle: init start");
   initializeSystemRarityBaseline();
-
-  Handlebars.registerHelper("eq", function(a, b) {
-    return a === b;
-  });
-
-  Handlebars.registerHelper("gt", function(a, b) {
-    return a > b;
-  });
-
-  Handlebars.registerHelper("length", function(array) {
-    return array ? array.length : 0;
-  });
 
   registerModuleSettings(MODULE_ID);
   registerMenus(MODULE_ID);
@@ -64,26 +51,24 @@ export function onReady() {
   applyItemRarityEffects(MODULE_ID);
   applyActorInventoryEffects(MODULE_ID);
   applyItemDirectoryEffects(MODULE_ID);
-  void removeLegacyWorldSettings(MODULE_ID);
   applyAnimatedEffectsPreference(game.settings.get(MODULE_ID, DISABLE_EFFECTS_SETTING_KEY));
   debugLog("Lifecycle: ready complete");
 }
 
-export function onSettingChange(moduleOrSetting, maybeKey) {
-  if (!isModuleSettingChange(moduleOrSetting, maybeKey, MODULE_ID)) return;
+export function onSettingChange(settingKey) {
+  if (!isModuleSettingChange(settingKey, MODULE_ID)) return;
   if (isSettingsTransactionActive(MODULE_ID)) return;
 
   invalidateRaritySettingsCache();
   invalidateSpellStyleCache();
   ensureRuntimeRarityStyles(MODULE_ID);
 
-  const fullSettingKey = getSettingKeyFromHookPayload(moduleOrSetting, maybeKey);
-  const isRarityListChange = fullSettingKey === `${MODULE_ID}.${RARITY_LIST_SETTING_KEY}`
-    || fullSettingKey === `${MODULE_ID}.${RARITY_LIST_ENABLED_SETTING_KEY}`;
+  const isRarityListChange = settingKey === `${MODULE_ID}.${RARITY_LIST_SETTING_KEY}`
+    || settingKey === `${MODULE_ID}.${RARITY_LIST_ENABLED_SETTING_KEY}`;
   if (!isRarityListChange) return;
 
   clearNormalizeRarityKeyCache();
-  debugLog("Lifecycle: setting change detected", { fullSettingKey });
+  debugLog("Lifecycle: setting change detected", { settingKey });
   applyMergedRarityConfigToDnd5e(MODULE_ID);
 }
 

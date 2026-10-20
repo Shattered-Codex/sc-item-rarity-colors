@@ -12,10 +12,6 @@ import { UnidentifiedImageRuntimeStyleStrategy } from "./runtimeStyleStrategies/
 const STYLE_ELEMENT_ID = "scirc-runtime-rarity-styles";
 let _cachedCssText = null;
 
-export function invalidateRuntimeStylesCache() {
-  _cachedCssText = null;
-}
-
 const runtimeStrategies = [
   new ItemSheetRuntimeStyleStrategy(),
   new ActorInventoryRuntimeStyleStrategy(),
@@ -35,34 +31,31 @@ export function getRarityClassName(rarity) {
   return key ? `${RARITY_CLASS_PREFIX}${key}` : null;
 }
 
-export function clearRarityClasses(elementOrCollection) {
-  if (!elementOrCollection) return;
-  const $elements = elementOrCollection instanceof jQuery ? elementOrCollection : $(elementOrCollection);
-  if (!$elements.length) return;
+// Called for every row on every render: works on the elements directly (no
+// jQuery wrapper) and leaves the class attribute alone when it is already
+// right, since each classList change rewrites it.
+function toElements(elementOrCollection) {
+  if (!elementOrCollection) return [];
+  if (elementOrCollection instanceof jQuery) return elementOrCollection.get();
+  if (elementOrCollection.classList) return [elementOrCollection];
+  return Array.from(elementOrCollection);
+}
 
-  $elements.each((_, element) => {
-    if (!element?.classList) return;
-    for (const className of [...element.classList]) {
-      if (className.startsWith(RARITY_CLASS_PREFIX)) {
-        element.classList.remove(className);
-      }
-    }
-  });
+function setRarityClass(element, className) {
+  if (!element?.classList) return;
+  for (const existing of [...element.classList]) {
+    if (existing !== className && existing.startsWith(RARITY_CLASS_PREFIX)) element.classList.remove(existing);
+  }
+  if (className && !element.classList.contains(className)) element.classList.add(className);
+}
+
+export function clearRarityClasses(elementOrCollection) {
+  for (const element of toElements(elementOrCollection)) setRarityClass(element, null);
 }
 
 export function applyRarityClass(elementOrCollection, rarity) {
-  if (!elementOrCollection) return;
-  const $elements = elementOrCollection instanceof jQuery ? elementOrCollection : $(elementOrCollection);
-  if (!$elements.length) return;
-
   const className = getRarityClassName(rarity);
-  clearRarityClasses($elements);
-  if (!className) return;
-
-  $elements.each((_, element) => {
-    if (!element?.classList) return;
-    element.classList.add(className);
-  });
+  for (const element of toElements(elementOrCollection)) setRarityClass(element, className);
 }
 
 function buildRuntimeStyleText(moduleId = MODULE_ID) {

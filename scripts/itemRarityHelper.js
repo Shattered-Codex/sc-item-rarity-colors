@@ -1,7 +1,6 @@
 import { normalizeRarityKey } from "../core/rarityListConfig.js";
 import { shouldUseUnidentifiedStyle, UNIDENTIFIED_STYLE_KEY } from "../core/unidentifiedStyle.js";
 import { applySheetEffects, clearSheetEffects, resolveEffectColor } from "../core/itemEffects.js";
-import { applyInventoryBorder, clearInventoryBorder } from "../core/styleAppliers.js";
 import { getItemSheetTextStyleStrategyForElement } from "../sheets/itemSheetTextStrategies.js";
 import { applyRarityClass, clearRarityClasses } from "../core/runtimeRarityStyles.js";
 
@@ -35,7 +34,6 @@ const SHEET_ACCENTS = Object.freeze([
 ]);
 const SHEET_BG_PRIMARY_VAR = "--scirc-item-sheet-bg-primary";
 const SHEET_BG_SECONDARY_VAR = "--scirc-item-sheet-bg-secondary";
-const BORDER_GLOW_CLASS_REGEX = /(^|\s)(?:scirc-)?glow-fade-border-\S+/g;
 
 function clearSheetBackgroundState($element) {
   $element.removeClass(SHEET_BG_CLASS);
@@ -43,12 +41,6 @@ function clearSheetBackgroundState($element) {
   $element.removeClass(SHEET_BG_GRADIENT_CLASS);
   $element.css(SHEET_BG_PRIMARY_VAR, "");
   $element.css(SHEET_BG_SECONDARY_VAR, "");
-
-  // Legacy inline cleanup.
-  $element.css({
-    "background-image": "",
-    "background-color": "",
-  });
 }
 
 /**
@@ -147,12 +139,10 @@ export function applyRarityStyles(element, settings, options = {}) {
     $element.removeClass(SHEET_GLOW_CLASS);
     $element.css("--glow-primary", "");
     $element.css("--glow-secondary", "");
-    // Remove any glow animation classes
-    $element.removeClass((_, className) => (className.match(BORDER_GLOW_CLASS_REGEX) || []).join(" "));
   }
 
-  // Text Color - Support both itemSheetTextColor (new) and textColor (legacy/preview)
-  const textColor = settings.itemSheetTextColor || settings.textColor;
+  // Text color
+  const textColor = settings.itemSheetTextColor;
   const textStyleStrategy = options.textStyleStrategy || getItemSheetTextStyleStrategyForElement($element);
   if (settings.enableTextColor !== false && textColor) {
     if (preview) {
@@ -189,8 +179,6 @@ export function applyRarityStyles(element, settings, options = {}) {
     $element.removeClass(SHEET_GLOW_CLASS);
     $element.css("--glow-primary", "");
     $element.css("--glow-secondary", "");
-    // Remove any glow animation classes
-    $element.removeClass((_, className) => (className.match(BORDER_GLOW_CLASS_REGEX) || []).join(" "));
   }
 
   // Animated effects (shimmer, particles, aura, runes).
@@ -228,26 +216,4 @@ export function removeRarityStyles(element, options = {}) {
   // Remove glow class and related CSS variables
   $element.removeClass(SHEET_GLOW_CLASS);
 
-  // Remove any glow animation classes
-  $element.removeClass((_, className) => (className.match(BORDER_GLOW_CLASS_REGEX) || []).join(" "));
-}
-
-/**
- * Apply a border and optional glow animation based on rarity settings.
- *
- * @param {HTMLElement|JQuery} element - Target item container.
- * @param {object} settings - Must include backgroundColor, gradientColor, etc.
- * @param {number} intensity - Glow intensity (default: 6px).
- */
-export function applyActorSheetItemBorder(element, settings, intensity = 6) {
-  applyInventoryBorder(element, settings, intensity, { preview: true });
-}
-
-/**
- * Remove any previously applied glow/border from one or more elements.
- *
- * @param {HTMLElement|JQuery} element - Target element(s) or jQuery wrapper.
- */
-export function clearActorSheetItemBorder(element) {
-  clearInventoryBorder(element);
 }

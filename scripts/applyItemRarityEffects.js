@@ -188,13 +188,12 @@ export function applyItemRarityEffects(moduleId) {
   }
 
   // Hook registrations
-  Hooks.on("renderItemSheet", applyStylesToSheet);
+  // D&D 5e item sheets (ItemSheet5e) and Tidy 5e item sheets (ItemSheetV2).
   Hooks.on("renderItemSheet5e", applyStylesToSheet);
   Hooks.on("renderItemSheetV2", applyStylesToSheet);
-  Hooks.on("renderItemSheet5e2", applyStylesToSheet);
 
-  registerSettingChangeHooks((moduleOrSetting, maybeKey) => {
-    if (!isModuleSettingChange(moduleOrSetting, maybeKey, moduleId)) return;
+  registerSettingChangeHooks((settingKey) => {
+    if (!isModuleSettingChange(settingKey, moduleId)) return;
     if (isSettingsTransactionActive(moduleId)) return;
     debugLog("setting change matched module for item sheets; queued refresh");
     itemSheetRefresh.request("setting-change");

@@ -59,22 +59,6 @@ export class BaseSheetStrategy {
   }
 
   /**
-   * Get selectors for title/subtitle elements.
-   * @returns {string[]}
-   */
-  getTitleSelectors() {
-    throw new Error("getTitleSelectors must be implemented by subclass");
-  }
-
-  /**
-   * Get selectors for detail elements.
-   * @returns {string[]}
-   */
-  getDetailsSelectors() {
-    throw new Error("getDetailsSelectors must be implemented by subclass");
-  }
-
-  /**
    * Prepare element before applying border (sheet-specific adjustments).
    * @param {jQuery} _borderElement - Border element.
    */
@@ -82,7 +66,7 @@ export class BaseSheetStrategy {
     // Default: no-op, override if needed.
   }
 
-  _applyResolvedStyles($itemElement, $gradientElement, $borderElement, titleSelectors, detailsSelectors, settings, options = {}) {
+  _applyResolvedStyles($itemElement, $gradientElement, $borderElement, settings, options = {}) {
     const rarity = options?.rarity ?? null;
     const preview = options?.preview === true;
     const useRarityCapabilities = options?.useRarityCapabilities === true;
@@ -161,15 +145,15 @@ export class BaseSheetStrategy {
     applyIconEmanation($borderElement.get(), settings.enableInventoryIconEmanation === true, settings);
 
     if (settings.enableInventoryTitleColor && settings.inventoryTitleColor) {
-      applyTitleColor($itemElement, settings.inventoryTitleColor, titleSelectors, { preview });
+      applyTitleColor($itemElement, settings.inventoryTitleColor, { preview });
     } else {
-      clearTitleColor($itemElement, titleSelectors);
+      clearTitleColor($itemElement);
     }
 
     if (settings.enableInventoryDetailsColor && settings.inventoryDetailsColor) {
-      applyDetailsColor($itemElement, settings.inventoryDetailsColor, detailsSelectors, { preview });
+      applyDetailsColor($itemElement, settings.inventoryDetailsColor, { preview });
     } else {
-      clearDetailsColor($itemElement, detailsSelectors);
+      clearDetailsColor($itemElement);
     }
 
     return {
@@ -189,8 +173,6 @@ export class BaseSheetStrategy {
   applyItemStyles($itemElement, item, moduleId) {
     const $gradientElement = this.getGradientElement($itemElement);
     const $borderElement = this.getBorderElement($itemElement);
-    const titleSelectors = this.getTitleSelectors();
-    const detailsSelectors = this.getDetailsSelectors();
     const itemId = item?.id ?? item?._id ?? null;
     const itemName = item?.name ?? null;
     const rarity = getDisplayRarity(item);
@@ -208,8 +190,6 @@ export class BaseSheetStrategy {
         $itemElement,
         $gradientElement,
         $borderElement,
-        titleSelectors,
-        detailsSelectors,
         spellStyle.settings,
         { preview: true, useRarityCapabilities: false }
       );
@@ -231,14 +211,14 @@ export class BaseSheetStrategy {
       clearRarityClasses($itemElement);
       clearInventoryGradient($gradientElement);
       clearInventoryBorder($borderElement);
-      clearTitleColor($itemElement, titleSelectors);
-      clearDetailsColor($itemElement, detailsSelectors);
+      clearTitleColor($itemElement);
+      clearDetailsColor($itemElement);
       clearIconEmanation($itemElement[0]);
       // The icon keeps its element across renders: stop its pulse and drop the
       // rarity class that colored it (and its border).
       applyIconPulse($borderElement, {});
       clearRarityClasses($borderElement);
-      $itemElement.removeClass("scirc-managed-item-row");
+      if ($itemElement.hasClass("scirc-managed-item-row")) $itemElement.removeClass("scirc-managed-item-row");
       debugLog("Actor item styles cleared (no rarity)", {
         strategy: this.constructor.name,
         itemId,
@@ -255,8 +235,6 @@ export class BaseSheetStrategy {
       $itemElement,
       $gradientElement,
       $borderElement,
-      titleSelectors,
-      detailsSelectors,
       raritySettings,
       { rarity, preview: false, useRarityCapabilities: true }
     );

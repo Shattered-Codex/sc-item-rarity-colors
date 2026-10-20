@@ -1,91 +1,65 @@
 /**
- * Normalize Foundry's setSetting hook payload into a full setting key.
- * Supports both legacy payloads ("module", "key") and object payloads ({ key }).
+ * The full key ("module.key") of a changed setting: the key itself, or the
+ * key of a Setting document.
  *
- * @param {unknown} moduleOrSetting
- * @param {unknown} maybeKey
+ * @param {string|{key?: string}} payload
  * @returns {string|null}
  */
-export function getSettingKeyFromHookPayload(moduleOrSetting, maybeKey) {
-  if (typeof moduleOrSetting === "string") {
-    if (moduleOrSetting.includes(".")) return moduleOrSetting;
-    if (typeof maybeKey === "string" && maybeKey) return `${moduleOrSetting}.${maybeKey}`;
-    return moduleOrSetting;
-  }
-
-  const key = moduleOrSetting?.key;
+function getSettingKeyFromHookPayload(payload) {
+  if (typeof payload === "string") return payload || null;
+  const key = payload?.key;
   return typeof key === "string" && key ? key : null;
 }
 
 /**
- * Check whether a setSetting payload belongs to a given module namespace.
+ * Whether a changed setting belongs to a given module.
  *
- * @param {unknown} moduleOrSetting
- * @param {unknown} maybeKey
+ * @param {string|{key?: string}} payload
  * @param {string} moduleId
  * @returns {boolean}
  */
-export function isModuleSettingChange(moduleOrSetting, maybeKey, moduleId) {
-  if (moduleOrSetting === moduleId) return true;
-
-  const fullSettingKey = getSettingKeyFromHookPayload(moduleOrSetting, maybeKey);
+export function isModuleSettingChange(payload, moduleId) {
+  const fullSettingKey = getSettingKeyFromHookPayload(payload);
   return typeof fullSettingKey === "string" && fullSettingKey.startsWith(`${moduleId}.`);
 }
 
 const DEDUPE_WINDOW_MS = 80;
 
-function scheduleMicrotask(callback) {
-  if (typeof queueMicrotask === "function") {
-    queueMicrotask(callback);
-    return;
-  }
-  Promise.resolve().then(callback);
-}
-
 /**
- * Register setting-change hooks for both legacy and modern Foundry payloads.
- * Some environments emit "setSetting", while others emit Setting document hooks.
+ * Calls `handler` with the full key of each world setting created or updated
+ * (Setting document hooks), at most once per key in a short window.
  *
- * @param {(moduleOrSetting: unknown, maybeKey?: unknown) => void} handler
+ * @param {(settingKey: string) => void} handler
  */
 export function registerSettingChangeHooks(handler) {
   if (typeof handler !== "function") return;
 
-  const pendingEvents = new Map();
+  const pendingEvents = new Set();
   const recentlyDispatchedAt = new Map();
   let flushScheduled = false;
 
-  const enqueue = (moduleOrSetting, maybeKey) => {
-    const fullSettingKey = getSettingKeyFromHookPayload(moduleOrSetting, maybeKey);
-    const dedupeKey = fullSettingKey ?? `${String(moduleOrSetting)}::${String(maybeKey ?? "")}`;
+  const enqueue = (setting) => {
+    const fullSettingKey = getSettingKeyFromHookPayload(setting);
+    if (!fullSettingKey) return;
     const now = Date.now();
-    const lastDispatchedAt = recentlyDispatchedAt.get(dedupeKey);
+    const lastDispatchedAt = recentlyDispatchedAt.get(fullSettingKey);
     if (lastDispatchedAt !== undefined && now - lastDispatchedAt < DEDUPE_WINDOW_MS) return;
-    if (pendingEvents.has(dedupeKey)) return;
+    if (pendingEvents.has(fullSettingKey)) return;
 
-    pendingEvents.set(dedupeKey, {
-      dedupeKey,
-      fullSettingKey,
-      moduleOrSetting,
-      maybeKey,
-    });
+    pendingEvents.add(fullSettingKey);
 
     if (flushScheduled) return;
     flushScheduled = true;
 
-    scheduleMicrotask(() => {
+    queueMicrotask(() => {
       flushScheduled = false;
-      const events = Array.from(pendingEvents.values());
+      const settingKeys = Array.from(pendingEvents);
       pendingEvents.clear();
 
       const dispatchedAt = Date.now();
-      for (const event of events) {
-        recentlyDispatchedAt.set(event.dedupeKey, dispatchedAt);
-        if (event.fullSettingKey) {
-          handler(event.fullSettingKey);
-        } else {
-          handler(event.moduleOrSetting, event.maybeKey);
-        }
+      for (const settingKey of settingKeys) {
+        recentlyDispatchedAt.set(settingKey, dispatchedAt);
+        handler(settingKey);
       }
 
       if (recentlyDispatchedAt.size > 256) {
@@ -97,10 +71,6 @@ export function registerSettingChangeHooks(handler) {
       }
     });
   };
-
-  Hooks.on("setSetting", (moduleOrSetting, maybeKey) => {
-    enqueue(moduleOrSetting, maybeKey);
-  });
 
   Hooks.on("updateSetting", (setting) => {
     enqueue(setting);

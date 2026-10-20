@@ -154,8 +154,6 @@ function updateTidyInventoryPreview($form, rarity, itemSheetSettings, options = 
       $row,
       tidyStrategy.getGradientElement($row),
       tidyStrategy.getBorderElement($row),
-      tidyStrategy.getTitleSelectors(),
-      tidyStrategy.getDetailsSelectors(),
       settings,
       isSpell
         ? { preview: true, useRarityCapabilities: false }
@@ -257,42 +255,25 @@ function updateInventoryPreview(formElement, rarity, itemSheetSettings) {
     clearInventoryBorder($inventoryImage);
   }
 
-  const titleSelectors = [
-    ".item-name .name-stacked .title",
-    ".item-name .name-stacked .subtitle",
-    ".item-name",
-    ".item-name a",
-  ];
   if (enableTitleColor && titleColor) {
     scheduleOnNextAnimationFrame(() => {
-      applyTitleColor($inventoryPreview, titleColor, titleSelectors, { preview: true });
+      applyTitleColor($inventoryPreview, titleColor, { preview: true });
       applyRarityClass($inventoryPreview.find(".item-row"), rarity);
     });
   } else {
     scheduleOnNextAnimationFrame(() => {
-      clearTitleColor($inventoryPreview, titleSelectors);
+      clearTitleColor($inventoryPreview);
     });
   }
 
-  const detailsSelectors = [
-    ".item-detail",
-    ".item-detail .value",
-    ".item-detail .sign",
-    ".item-detail .formula",
-    ".item-detail .separator",
-    ".item-detail .max",
-    ".item-detail .currency",
-    ".item-detail input",
-    ".item-detail i",
-  ];
   if (enableDetailsColor && detailsColor) {
     scheduleOnNextAnimationFrame(() => {
-      applyDetailsColor($inventoryPreview, detailsColor, detailsSelectors, { preview: true });
+      applyDetailsColor($inventoryPreview, detailsColor, { preview: true });
       applyRarityClass($inventoryPreview.find(".item-row"), rarity);
     });
   } else {
     scheduleOnNextAnimationFrame(() => {
-      clearDetailsColor($inventoryPreview, detailsSelectors);
+      clearDetailsColor($inventoryPreview);
     });
   }
 }
@@ -323,14 +304,10 @@ function updateFoundryInterfacePreview(formElement, rarity, itemSheetSettings) {
     clearRarityClasses($rows);
     $rows.each((_, row) => {
       if (!row) return;
-      // Legacy inline cleanup.
       row.style.removeProperty("--scirc-dir-bg-primary");
       row.style.removeProperty("--scirc-dir-bg-secondary");
       row.style.removeProperty("--scirc-dir-bg-fallback");
       row.style.removeProperty("--scirc-dir-text-color");
-      row.style.removeProperty("background");
-      row.style.removeProperty("color");
-      row.style.removeProperty("text-shadow");
     });
   };
 

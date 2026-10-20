@@ -27,20 +27,6 @@ export function settingExists(moduleId, key) {
 }
 
 /**
- * Get a setting value with a default fallback
- * @param {string} moduleId - Module ID
- * @param {string} key - Setting key
- * @param {*} defaultValue - Default value if setting doesn't exist
- * @returns {*}
- */
-export function getSetting(moduleId, key, defaultValue = null) {
-  if (!settingExists(moduleId, key)) {
-    return defaultValue;
-  }
-  return game.settings.get(moduleId, key);
-}
-
-/**
  * Get a rarity-specific setting
  * @param {string} moduleId - Module ID
  * @param {string} rarity - Rarity tier
