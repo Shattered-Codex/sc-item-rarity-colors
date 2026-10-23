@@ -130,6 +130,29 @@ Switch the editor preview to **Tidy 5e** to check colors and effects against Tid
 
 ---
 
+## Public API
+
+Other modules can style their own item rows the way this module styles actor inventory rows. The API is
+published at `init` and versioned; check `version` before calling it.
+
+```js
+const api = game.modules.get("sc-item-rarity-colors");
+if (api?.active && api.api?.version >= 1) {
+  api.api.styleItemRow(rowElement, item, { imageSelector: ".my-icon > img" });
+}
+```
+
+`styleItemRow(row, item, { imageSelector = "img" })` applies the item's rarity (or spell) gradient and text colors to
+`row`, and the border, icon effects, and unidentified image cover to the image matched by `imageSelector`. An item that
+is unidentified to the current user gets the **Unidentified** style, so its rarity is not revealed. It is safe to call
+again after each render.
+
+- Title colors reach `.item-name` and `.item-type` inside the row; details colors reach `.item-detail` and
+  `.item-quantity`.
+- The image needs a positioned parent (`position: relative`), since its cover and effects are placed beside it.
+
+---
+
 ## Notes
 
 - Rarity visuals are configurable per rarity tier.

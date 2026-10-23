@@ -19,6 +19,7 @@ import { applyActorInventoryEffects } from "./applyActorInventoryEffects.js";
 import { applyItemDirectoryEffects } from "./applyItemDirectoryEffects.js";
 import { applyItemRarityEffects } from "./applyItemRarityEffects.js";
 import { registerModulePartials } from "./partialsHelper.js";
+import { PublicApi } from "./PublicApi.js";
 
 export async function onInit() {
   debugLog("Lifecycle: init start");
@@ -27,6 +28,9 @@ export async function onInit() {
   registerModuleSettings(MODULE_ID);
   registerMenus(MODULE_ID);
   applyMergedRarityConfigToDnd5e(MODULE_ID);
+
+  const module = game.modules.get(MODULE_ID);
+  if (module) module.api = PublicApi.create(MODULE_ID);
 
   await registerModulePartials(MODULE_ID, [
     "item-template.html",

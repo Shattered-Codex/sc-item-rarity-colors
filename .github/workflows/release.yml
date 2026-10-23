@@ -357,5 +357,10 @@ jobs:
             -F "files[0]=@assets/imgs/cover.webp;filename=cover.webp;type=image/webp" \
             "$discord_wait_url"
 
-          jq -e '.attachments[] | select(.filename == "cover.webp")' "$response_file" >/dev/null
-          jq -e '.embeds[0].image.url | strings | contains("cover.webp")' "$response_file" >/dev/null
+          # Discord moves files referenced via attachment:// into the embed and returns an
+          # empty top-level `attachments` array, so verify the embed image's CDN URL instead.
+          if ! jq -e '.embeds[0].image.url | strings | test("^https://.*/cover\\.webp")' "$response_file" >/dev/null; then
+            echo "::error::Discord message was posted but the cover image is missing from the embed."
+            jq '{attachments, embeds: [.embeds[]? | {image}]}' "$response_file" || cat "$response_file"
+            exit 1
+          fi
