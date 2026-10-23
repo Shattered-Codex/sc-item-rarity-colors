@@ -264,6 +264,12 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: auto
           AWS_EC2_METADATA_DISABLED: true
+          # Avoid optional S3 checksum trailers on R2's S3-compatible endpoint.
+          AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+          AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+          # Retry transient R2/network errors with the CLI's exponential backoff.
+          AWS_RETRY_MODE: standard
+          AWS_MAX_ATTEMPTS: "10"
           R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
           R2_BUCKET: ${{ secrets.R2_BUCKET }}
           TAG: ${{ steps.tag_version.outputs.new_tag }}
@@ -275,9 +281,10 @@ jobs:
           fi
           ENDPOINT="https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com"
           TARGET="s3://${R2_BUCKET}/modules/${MODULE_ID}/${TAG}"
-          aws s3 cp module.json "${TARGET}/module.json" --endpoint-url "${ENDPOINT}"
-          aws s3 cp module-tiers.json "${TARGET}/module-tiers.json" --endpoint-url "${ENDPOINT}"
-          aws s3 cp "./${MODULE_ID}.zip" "${TARGET}/${MODULE_ID}.zip" --endpoint-url "${ENDPOINT}"
+          aws --version
+          aws s3 cp module.json "${TARGET}/module.json" --endpoint-url "${ENDPOINT}" --no-progress
+          aws s3 cp module-tiers.json "${TARGET}/module-tiers.json" --endpoint-url "${ENDPOINT}" --no-progress
+          aws s3 cp "./${MODULE_ID}.zip" "${TARGET}/${MODULE_ID}.zip" --endpoint-url "${ENDPOINT}" --no-progress
 
       - name: Publish to Foundry Package API
         if: success()
