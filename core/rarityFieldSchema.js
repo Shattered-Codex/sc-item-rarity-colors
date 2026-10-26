@@ -15,6 +15,8 @@ import {
  * use the `ui*` keys instead: `uiLabel` is the short row label, `inlineWith`
  * places a color on the same row as the checkbox that enables it, `nested`
  * indents a row under the option it depends on, and `uiHint` becomes a tooltip.
+ * `uiWarning` shows its `text` under the row while the field's value is one of
+ * `values`.
  * A `select` field lists its stored values and labels in `choices`; a field
  * with `requiresModule` is only offered while that module is active. `panel`
  * puts a row on the editor's Effects tab instead of Colors, where `section`
@@ -454,7 +456,7 @@ export const RARITY_FIELD_DEFINITIONS = Object.freeze([
     section: "aura",
     label: "Enable Aura Effect",
     uiLabel: "Mystic aura",
-    uiHint: "Energy: tongues of energy flickering around the item. Fire: flames licking upward. Void: slow tongues of darkness with a glowing rim. Pulse: a breathing glow. Halo: a band of light running around it. Corona: rays of light slowly turning. Storm: crackling arcs of lightning.",
+    uiHint: "Energy: flickering energy. Fire: upward flames. Void: darkness with a glowing rim. Pulse: a breathing glow. Halo: a moving band of light. Corona: turning rays. Storm: lightning arcs. Fluid: flowing energy around all edges, using Effect color and Distance. Fluid (wide): the same, reaching about twice as far. Fluid uses the Fluid aura quality setting of each browser.",
     panel: "effects",
     settingName: ": Enable Aura Effect",
     type: "checkbox",
@@ -476,6 +478,12 @@ export const RARITY_FIELD_DEFINITIONS = Object.freeze([
       halo: "Halo",
       corona: "Corona",
       storm: "Storm",
+      fluid: "Fluid",
+      "fluid-wide": "Fluid (wide)",
+    }),
+    uiWarning: Object.freeze({
+      text: "Fluid styles run a live simulation on the graphics card for every open sheet that shows them (up to six at once). With several item sheets open, slower computers may lag. Each user can lower or turn off Fluid aura quality in this module's settings.",
+      values: Object.freeze(["fluid", "fluid-wide"]),
     }),
     group: "item-sheet",
     defaultValue: "energy",
@@ -517,9 +525,9 @@ export const RARITY_FIELD_DEFINITIONS = Object.freeze([
   {
     key: "waves-distance",
     section: "aura",
-    label: "Energy Waves Distance",
+    label: "Effect Distance",
     uiLabel: "Distance",
-    uiHint: "How far the waves travel before fading.",
+    uiHint: "How far Fluid aura and energy waves travel from the sheet or image before fading.",
     nested: true,
     panel: "effects",
     settingName: ": Energy Waves Distance",
@@ -527,7 +535,7 @@ export const RARITY_FIELD_DEFINITIONS = Object.freeze([
     choices: Object.freeze({ short: "Short", normal: "Normal", far: "Far" }),
     group: "item-sheet",
     defaultValue: "normal",
-    visibleWhen: { all: ["waves-option"] },
+    visibleWhen: { any: ["waves-option", "aura-option"] },
   },
   {
     key: "waves-shape",
@@ -805,7 +813,13 @@ export function isRarityFieldVisible(field, state = {}) {
   return true;
 }
 
+/** Whether a field's warning applies to the value it has now. */
+export function isRarityFieldWarningShown(field, value) {
+  return Boolean(field?.uiWarning?.values.includes(value));
+}
+
 /** The stored value for a select field, falling back to its default. */
 export function normalizeSelectFieldValue(field, value) {
+  if (field?.key === "aura-style" && ["fluid-fire", "fluid-arcane", "fluid-fel", "fluid-radiant"].includes(value)) return "fluid";
   return Object.hasOwn(field?.choices ?? {}, value) ? value : field?.defaultValue;
 }

@@ -159,7 +159,7 @@
                 {{#if this.hint}}<p class="scirc-style-editor__section-hint">{{this.hint}}</p>{{/if}}
                 <div class="scirc-style-rows">
                   {{#each this.rows}}
-                    <div class="scirc-style-row{{#if this.nested}} is-nested{{/if}}" data-field-group>
+                    <div class="scirc-style-row{{#if this.nested}} is-nested{{/if}}{{#if this.warning}} has-warning{{/if}}" data-field-group>
                       {{#if this.field.isCheckbox}}
                         <label class="scirc-style-row__toggle" {{#if this.hint}}data-tooltip="{{this.hint}}"{{/if}}>
                           <span class="scirc-check">
@@ -186,6 +186,12 @@
                             {{> colorControl field=this.inline}}
                           {{/if}}
                         </span>
+                      {{/if}}
+                      {{#if this.warning}}
+                        <p class="scirc-style-row__warning" data-field-warning="{{this.warningFor}}" hidden>
+                          <i class="fas fa-triangle-exclamation" aria-hidden="true"></i>
+                          <span>{{this.warning}}</span>
+                        </p>
                       {{/if}}
                     </div>
                   {{/each}}

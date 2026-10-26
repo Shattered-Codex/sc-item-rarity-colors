@@ -1,6 +1,7 @@
 import { DEBUG_LOGS_SETTING_KEY, setDebugEnabled } from "../core/debug.js";
 import { UNIDENTIFIED_VIEWERS, UNIDENTIFIED_VIEWERS_SETTING_KEY } from "../core/unidentifiedStyle.js";
 import { applyAnimatedEffectsPreference, DISABLE_EFFECTS_SETTING_KEY } from "../core/itemEffects.js";
+import { AURA_QUALITY_SETTING_KEY, refreshItemAuraPreferences } from "../scripts/itemFluidAura.js";
 
 export const SETTING_SCOPES = Object.freeze({
   WORLD: "world",
@@ -90,7 +91,19 @@ const SECTIONS = Object.freeze([
         default: false,
         name: "Disable animated effects",
         hint: "Hide particles, auras, runic circles, and shimmer, and hold glows still, on this browser. Effects also stop automatically when the system asks to reduce motion.",
-        onChange: (value) => applyAnimatedEffectsPreference(value),
+        onChange: (value) => {
+          applyAnimatedEffectsPreference(value);
+          refreshItemAuraPreferences();
+        },
+      }),
+      Object.freeze({
+        key: AURA_QUALITY_SETTING_KEY,
+        scope: SETTING_SCOPES.CLIENT,
+        default: "low",
+        name: "Fluid aura quality",
+        hint: "Quality of the Fluid Mystic aura style. Every open sheet shows it; sheets in the background animate at a lower frame rate, and at most six run at once. Higher quality costs more GPU. Applies to this browser only and stops when the system asks to reduce motion.",
+        choices: Object.freeze({ off: "Off", low: "Low", medium: "Medium", high: "High" }),
+        onChange: refreshItemAuraPreferences,
       }),
     ]),
     actions: Object.freeze([]),
