@@ -307,12 +307,20 @@ export class StyleEditorApp extends HandlebarsApplicationMixin(ApplicationV2) {
     const titles = this.constructor.SECTION_TITLES;
     const rowFields = fieldDefinitions.filter((field) => !(field.inlineWith && keys.has(field.inlineWith)));
 
-    const toRow = (field) => ({
-      nested: field.nested === true,
-      hint: field.uiHint ?? "",
-      field: toContext(field),
-      inline: inlineByHost.has(field.key) ? toContext(inlineByHost.get(field.key)) : null,
-    });
+    const toRow = (field) => {
+      const inline = inlineByHost.get(field.key);
+      // A row carries the warning of its own field or of the one inline with
+      // it; the visibility pass shows it for the values that need it.
+      const warned = [field, inline].find((candidate) => candidate?.uiWarning);
+      return {
+        nested: field.nested === true,
+        hint: field.uiHint ?? "",
+        warning: warned?.uiWarning.text ?? "",
+        warningFor: warned ? `${namePrefix}-${warned.key}` : "",
+        field: toContext(field),
+        inline: inline ? toContext(inline) : null,
+      };
+    };
     // A tab lists its own sections, matched by the field's `section`; the
     // Colors tab groups by where a field shows (item sheet / inventory / sidebar).
     const sectionsFor = (panel, panelFields) => {

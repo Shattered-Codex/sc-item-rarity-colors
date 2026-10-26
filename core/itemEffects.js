@@ -20,6 +20,8 @@
  */
 
 import { IMAGE_COVER_CLASS, RARITY_CLASS_PREFIX } from "./constants.js";
+import { isFluidAuraStyle, syncItemFluidAura } from "../scripts/itemFluidAura.js";
+import { normalizeSelectFieldValue, RARITY_FIELD_DEFINITIONS } from "./rarityFieldSchema.js";
 import { ensureFrameOverlay, FRAME_MARGIN as FRAME_EDGE, removeFrameOverlay } from "./frameOverlay.js";
 import { followIconSize, unfollowIconSize } from "./iconSizeObserver.js";
 import {
@@ -44,14 +46,15 @@ const FX_CLASS_PREFIX = "scirc-fx-";
 const ICON_PULSE_CLASS = "scirc-inv-icon-pulse";
 const FX_DISABLED_BODY_CLASS = "scirc-fx-disabled";
 
-export const DISABLE_EFFECTS_SETTING_KEY = "disableAnimatedEffects";
+export { DISABLE_EFFECTS_SETTING_KEY } from "./constants.js";
 
 /** Per-browser off switch: a body class the effects stylesheet keys on. */
 export function applyAnimatedEffectsPreference(disabled) {
   globalThis.document?.body?.classList.toggle(FX_DISABLED_BODY_CLASS, disabled === true);
 }
 
-export const AURA_STYLES = Object.freeze(["energy", "fire", "void", "pulse", "halo", "corona", "storm"]);
+const AURA_STYLE_FIELD = RARITY_FIELD_DEFINITIONS.find((field) => field.key === "aura-style");
+export const AURA_STYLES = Object.freeze(Object.keys(AURA_STYLE_FIELD.choices));
 export const WAVE_STYLES = Object.freeze(["energy", "ripples", "shockwave", "arcane", "mist", "sonar", "prism", "burst"]);
 const WAVE_DISTANCES = Object.freeze(["short", "normal", "far"]);
 const WAVE_SHAPES = Object.freeze(["outline", "organic"]);
@@ -99,7 +102,8 @@ export function resolveSheetEffects(settings = {}) {
     particleAmount: pick(settings.particleAmount, Object.keys(PARTICLE_COUNTS), "normal"),
     particleDistance: pick(settings.particleDistance, Object.keys(PARTICLE_TRAVEL), "normal"),
     particleMotion: pick(settings.particleMotion, PARTICLE_MOTIONS, "auto"),
-    aura: settings.auraEnabled === true ? pick(settings.auraStyle, AURA_STYLES, "energy") : null,
+    aura: settings.auraEnabled === true ? normalizeSelectFieldValue(AURA_STYLE_FIELD, settings.auraStyle) : null,
+    color: resolveEffectColor(settings),
     waves: settings.wavesEnabled === true ? pick(settings.wavesStyle, WAVE_STYLES, "energy") : null,
     wavesDistance: pick(settings.wavesDistance, WAVE_DISTANCES, "normal"),
     wavesShape: pick(settings.wavesShape, WAVE_SHAPES, "outline"),
@@ -112,7 +116,10 @@ export function resolveSheetEffects(settings = {}) {
   effects.motion = effects.particles ? resolveParticleMotion(effects.particles, effects.particleMotion) : null;
   effects.any = effects.shimmer || Boolean(effects.particles) || Boolean(effects.aura) || Boolean(effects.waves) || effects.runes;
   effects.needsImageLayer = effects.any && effects.placement === "image";
-  effects.needsFrame = effects.any && effects.placement === "sheet";
+  // Fluid draws its own canvas around the window, so alone it needs no frame overlay.
+  const framedAura = Boolean(effects.aura) && !isFluidAuraStyle(effects.aura);
+  effects.needsFrame = effects.placement === "sheet"
+    && (effects.shimmer || Boolean(effects.particles) || framedAura || Boolean(effects.waves) || effects.runes);
   return effects;
 }
 
@@ -331,6 +338,7 @@ export function applySheetEffects(root, settings, { preview = false } = {}) {
 
   clearEffectClasses(root);
   if (!effects.any) {
+    syncItemFluidAura(root, { aura: null });
     root.style.removeProperty(FX_COLOR_VAR);
     root.style.removeProperty(FX_PARTICLE_COLOR_VAR);
     removeImageLayer(root);
@@ -368,10 +376,18 @@ export function applySheetEffects(root, settings, { preview = false } = {}) {
 
   if (effects.needsFrame) ensureSheetLayers(root, effects);
   else removeSheetLayers(root);
+
+  const imageHost = effects.placement === "image" ? findAnchor(root) : null;
+  const previewWrapper = root.closest(".mini-item-sheet");
+  syncItemFluidAura(root, effects, {
+    host: effects.placement === "image" ? imageHost : root,
+    layer: imageHost || previewWrapper || document.body,
+  });
 }
 
 export function clearSheetEffects(root) {
   if (!root?.classList) return;
+  syncItemFluidAura(root, { aura: null });
   clearEffectClasses(root);
   root.style.removeProperty(FX_COLOR_VAR);
   root.style.removeProperty(FX_PARTICLE_COLOR_VAR);

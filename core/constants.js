@@ -4,6 +4,7 @@
  */
 
 export const MODULE_ID = "sc-item-rarity-colors";
+export const DISABLE_EFFECTS_SETTING_KEY = "disableAnimatedEffects";
 
 // Class carrying a rarity's runtime CSS (see core/runtimeRarityStyles.js).
 export const RARITY_CLASS_PREFIX = "scirc-rarity-";

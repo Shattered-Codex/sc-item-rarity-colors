@@ -321,6 +321,7 @@
    sheet (frameOverlay.js positions its overlay inside this wrapper). */
 .scirc-style-editor .mini-item-sheet {
   position: relative;
+  isolation: isolate;
   padding-block: 46px;
 }
 
@@ -452,6 +453,41 @@
 .scirc-style-row__inline {
   display: inline-flex;
   flex: 0 0 auto;
+}
+
+/* A warning takes its own line under the row's controls. */
+.scirc-style-row.has-warning {
+  flex-wrap: wrap;
+}
+
+/* Keep the nested connector on the controls' line, not the taller row's middle. */
+.scirc-style-row.is-nested.has-warning::before {
+  bottom: auto;
+  height: 21px;
+}
+
+.scirc-style-row__warning {
+  display: flex;
+  flex: 1 0 100%;
+  box-sizing: border-box;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 2px 0 4px;
+  padding: 6px 8px;
+  background: var(--scirc-cfg-warn-soft);
+  border: 1px solid var(--scirc-cfg-warn);
+  border-radius: var(--scirc-cfg-radius-sm);
+  color: var(--scirc-cfg-warn);
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+
+.scirc-style-row__warning[hidden] {
+  display: none;
+}
+
+.scirc-style-row__warning > i {
+  margin-top: 2px;
 }
 
 /* === Image control (unidentified Image tab) =============================== */

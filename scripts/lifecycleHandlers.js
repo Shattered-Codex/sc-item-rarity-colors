@@ -20,6 +20,7 @@ import { applyItemDirectoryEffects } from "./applyItemDirectoryEffects.js";
 import { applyItemRarityEffects } from "./applyItemRarityEffects.js";
 import { registerModulePartials } from "./partialsHelper.js";
 import { PublicApi } from "./PublicApi.js";
+import { registerItemFluidAura } from "./itemFluidAura.js";
 
 export async function onInit() {
   debugLog("Lifecycle: init start");
@@ -56,6 +57,7 @@ export function onReady() {
   applyActorInventoryEffects(MODULE_ID);
   applyItemDirectoryEffects(MODULE_ID);
   applyAnimatedEffectsPreference(game.settings.get(MODULE_ID, DISABLE_EFFECTS_SETTING_KEY));
+  registerItemFluidAura();
   debugLog("Lifecycle: ready complete");
 }
 

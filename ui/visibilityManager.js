@@ -1,4 +1,4 @@
-import { getRarityFieldDefinitions, isRarityFieldVisible } from "../core/rarityFieldSchema.js";
+import { getRarityFieldDefinitions, isRarityFieldVisible, isRarityFieldWarningShown } from "../core/rarityFieldSchema.js";
 
 const RARITY_PREFIX_DISCOVERY_SUFFIX = "-enable-item-color";
 
@@ -48,7 +48,12 @@ function applyVisibilityForRarity($form, rarityPrefix) {
     if (!$input.length) continue;
     // A row and the color nested inside it are separate groups, so an inline
     // color can hide on its own while its checkbox stays visible.
-    setGroupVisibility($input.closest("[data-field-group]"), isRarityFieldVisible(field, state));
+    const visible = isRarityFieldVisible(field, state);
+    setGroupVisibility($input.closest("[data-field-group]"), visible);
+    if (field.uiWarning) {
+      $form.find(`[data-field-warning="${rarityPrefix}-${field.key}"]`)
+        .prop("hidden", !(visible && isRarityFieldWarningShown(field, state[field.key])));
+    }
   }
 }
 
