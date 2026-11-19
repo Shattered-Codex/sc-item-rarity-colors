@@ -1,6 +1,6 @@
 import { MODULE_ID } from "../core/constants.js";
 import { normalizeHexColor } from "../core/colorUtils.js";
-import { normalizeSelectFieldValue } from "../core/rarityFieldSchema.js";
+import { normalizeRangeFieldValue, normalizeSelectFieldValue } from "../core/rarityFieldSchema.js";
 import { CONCEAL_IMAGE_SECTIONS } from "../core/unidentifiedImageConfig.js";
 import { createAnimationFrameScheduler } from "../core/refreshScheduler.js";
 import { updateMiniSheetPreview } from "../ui/previewUpdater.js";
@@ -238,6 +238,7 @@ export class StyleEditorApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
     const scheduler = createAnimationFrameScheduler(() => this.#refresh());
     this._bindColorControlInputs(this.element, () => scheduler.request());
+    this._bindRangeControlInputs(this.element, () => scheduler.request());
 
     const rail = this.element.querySelector("[data-style-rail]");
     if (rail) rail.scrollTop = this.#railScrollTop;
@@ -296,6 +297,9 @@ export class StyleEditorApp extends HandlebarsApplicationMixin(ApplicationV2) {
         isCheckbox: field.type === "checkbox",
         isSelect: field.type === "select",
         isImage: field.type === "image",
+        isRange: field.type === "range",
+        range: field.range ?? null,
+        unit: field.unit ?? "",
         defaultValue: field.defaultValue,
         value,
         options: field.type === "select"
@@ -366,6 +370,9 @@ export class StyleEditorApp extends HandlebarsApplicationMixin(ApplicationV2) {
     if (field.type === "image") {
       return typeof value === "string" && value.trim() ? value.trim() : field.defaultValue;
     }
+    if (field.type === "range") {
+      return normalizeRangeFieldValue(field, value);
+    }
     return value;
   }
 
@@ -427,6 +434,17 @@ export class StyleEditorApp extends HandlebarsApplicationMixin(ApplicationV2) {
       };
       hexInput.addEventListener("change", commitHexInput);
       hexInput.addEventListener("blur", commitHexInput);
+    }
+  }
+
+  /** Sliders update their value label and the preview while they move. */
+  _bindRangeControlInputs(root, onValueChange) {
+    for (const input of root.querySelectorAll("input[type='range'][data-range-control]")) {
+      const output = root.querySelector(`[data-range-output="${input.name}"]`);
+      input.addEventListener("input", () => {
+        if (output) output.textContent = `${input.value}${input.dataset.rangeUnit ?? ""}`;
+        onValueChange();
+      });
     }
   }
 

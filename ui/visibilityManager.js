@@ -12,6 +12,7 @@ const FIELD_INPUT_SELECTORS = {
   select: "select",
   checkbox: 'input[type="checkbox"]',
   image: "input[data-image-path]",
+  range: 'input[type="range"]',
 };
 
 function getFieldInput($form, rarityPrefix, field) {

@@ -1,6 +1,11 @@
 import { MODULE_ID } from "./constants.js";
 import { normalizeHexColor } from "./colorUtils.js";
-import { getRarityFieldDefinitions, normalizeSelectFieldValue } from "./rarityFieldSchema.js";
+import { readAppearanceSettings } from "./appearanceSettingFields.js";
+import {
+  getRarityFieldDefinitions,
+  normalizeRangeFieldValue,
+  normalizeSelectFieldValue,
+} from "./rarityFieldSchema.js";
 import { readEffectSettings } from "./effectSettingFields.js";
 
 export const SPELL_SCHOOL_STYLES_SETTING_KEY = "spell-school-styles";
@@ -210,6 +215,11 @@ export function normalizeSpellStyleFieldValues(rawFields = {}, fallbackValues = 
       continue;
     }
 
+    if (field.type === "range") {
+      normalized[field.key] = normalizeRangeFieldValue(field, rawValue ?? fallback[field.key]);
+      continue;
+    }
+
     if (field.type === "color") {
       const normalizedColor = normalizeHexColor(rawValue, {
         allowShort: true,
@@ -240,6 +250,7 @@ export function buildSpellStyleSettingsFromFields(fields = {}) {
 
     glowEnabled: values["glow-option"],
     tidyBackgroundArea: values["tidy-background-area"],
+    ...readAppearanceSettings((fieldKey) => values[fieldKey]),
 
     enableGoldAccentColor: values["enable-gold-accent-color"],
     goldAccentColor: values["gold-accent-color"],

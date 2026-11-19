@@ -9,6 +9,7 @@ import { normalizeRarityKey } from "./rarityListConfig.js";
 import { readEffectSettings } from "./effectSettingFields.js";
 import { UNIDENTIFIED_STYLE_KEY } from "./unidentifiedStyle.js";
 import { readConcealSettings } from "./unidentifiedImageConfig.js";
+import { readAppearanceSettings } from "./appearanceSettingFields.js";
 
 const _raritySettingsCache = new Map();
 
@@ -102,6 +103,9 @@ export function buildRaritySettings(rarity) {
 
     // Animated effects (Effects tab)
     ...readEffectSettings((fieldKey, field) => getRaritySetting(MODULE_ID, rarity, fieldKey, field.defaultValue ?? null)),
+
+    // Color intensity per surface and gradient coverage (Colors tab sliders).
+    ...readAppearanceSettings((fieldKey, field) => getRaritySetting(MODULE_ID, rarity, fieldKey, field.defaultValue)),
 
     // Where the background goes on Tidy 5e sheets: content, sidebar, or sheet.
     tidyBackgroundArea: getRaritySetting(MODULE_ID, rarity, "tidy-background-area", "content"),

@@ -5,6 +5,7 @@
 
 import { DEFAULT_COLORS, DEFAULT_GLOW_INTENSITY } from "./constants.js";
 import { applyRarityClass } from "./runtimeRarityStyles.js";
+import { setGradientStopVariables } from "./gradientCoverage.js";
 
 const INVENTORY_GRADIENT_CLASS = "scirc-inv-gradient-enabled";
 const INVENTORY_BORDER_MANAGED_CLASS = "scirc-inv-border-managed";
@@ -55,12 +56,14 @@ function applyPreviewGradientVariables(element, settings) {
   setCssVariable(element, INVENTORY_BG_PRIMARY_VAR, primaryColor);
   setCssVariable(element, INVENTORY_BG_SECONDARY_VAR, secondaryColor);
   setCssVariable(element, INVENTORY_BG_FALLBACK_VAR, DEFAULT_COLORS.BACKGROUND_DEFAULT);
+  setGradientStopVariables(element, "inventory", settings.inventoryGradientCoverage ?? null);
 }
 
 function clearPreviewGradientVariables(element) {
   setCssVariable(element, INVENTORY_BG_PRIMARY_VAR, "");
   setCssVariable(element, INVENTORY_BG_SECONDARY_VAR, "");
   setCssVariable(element, INVENTORY_BG_FALLBACK_VAR, "");
+  setGradientStopVariables(element, "inventory", null);
 }
 
 /**

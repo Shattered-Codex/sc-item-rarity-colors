@@ -1,4 +1,4 @@
-import { RARITY_FIELD_DEFINITIONS } from "./rarityFieldSchema.js";
+import { normalizeRangeFieldValue, RARITY_FIELD_DEFINITIONS } from "./rarityFieldSchema.js";
 
 /**
  * The Effects tab settings as the effect code reads them: settings property →
@@ -30,6 +30,7 @@ export const EFFECT_SETTING_FIELDS = Object.freeze({
   enableInventoryIconPulse: "enable-inventory-icon-pulse",
   enableInventoryIconEmanation: "enable-inventory-icon-emanation",
   enableFoundryInterfaceIconEmanation: "enable-foundry-interface-icon-emanation",
+  inventoryBorderGlowSize: "inventory-border-glow-size",
 });
 
 const FIELDS_BY_KEY = new Map(RARITY_FIELD_DEFINITIONS.map((field) => [field.key, field]));
@@ -43,7 +44,10 @@ const FIELDS_BY_KEY = new Map(RARITY_FIELD_DEFINITIONS.map((field) => [field.key
 export function readEffectSettings(read) {
   const settings = {};
   for (const [property, fieldKey] of Object.entries(EFFECT_SETTING_FIELDS)) {
-    settings[property] = read(fieldKey, FIELDS_BY_KEY.get(fieldKey) ?? {});
+    const field = FIELDS_BY_KEY.get(fieldKey) ?? {};
+    const value = read(fieldKey, field);
+    // Sliders arrive as strings from the editor form.
+    settings[property] = field.type === "range" ? normalizeRangeFieldValue(field, value) : value;
   }
   return settings;
 }

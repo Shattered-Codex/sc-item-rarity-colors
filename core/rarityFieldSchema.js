@@ -25,7 +25,9 @@ import {
  *
  * A field with `entry: "unidentified"` exists only on the unidentified style
  * (its Image tab), and one with `themeable: false` is never set or compared by
- * a theme preset. An `image` field stores a file path.
+ * a theme preset. An `image` field stores a file path. A `range` field is a
+ * slider storing a number within its `range` ({ min, max, step }), shown with
+ * its `unit`.
  */
 export const RARITY_FIELD_DEFINITIONS = Object.freeze([
   {
@@ -101,6 +103,24 @@ export const RARITY_FIELD_DEFINITIONS = Object.freeze([
     group: "item-sheet",
     defaultValue: "content",
     requiresModule: "tidy5e-sheet",
+    visibleWhen: { all: ["enable-item-color"] },
+  },
+  {
+    // The sliders below are display adjustments (core/colorIntensity.js,
+    // core/gradientCoverage.js), not colors: themes neither set nor compare
+    // them, and their defaults keep the look the module has always had.
+    key: "sheet-color-intensity",
+    label: "Item Sheet Color Intensity",
+    uiLabel: "Color intensity",
+    nested: true,
+    uiHint: "Softens the background colors (and the glow that follows them) on the item sheet without changing them: lower values are less saturated at the same luminance, so text keeps its contrast. 100% shows the colors as configured.",
+    settingName: ": Item Sheet Color Intensity",
+    type: "range",
+    range: Object.freeze({ min: 10, max: 100, step: 5 }),
+    unit: "%",
+    group: "item-sheet",
+    defaultValue: 100,
+    themeable: false,
     visibleWhen: { all: ["enable-item-color"] },
   },
   {
@@ -198,6 +218,21 @@ export const RARITY_FIELD_DEFINITIONS = Object.freeze([
     visibleWhen: { all: ["enable-item-color"] },
   },
   {
+    key: "inventory-gradient-coverage",
+    label: "Inventory Gradient Coverage",
+    uiLabel: "Gradient coverage",
+    nested: true,
+    uiHint: "How far the colors reach into the inventory row. 100% is the original gradient; higher values color more of the row, lower values keep the colors near its corner.",
+    settingName: ": Inventory Gradient Coverage",
+    type: "range",
+    range: Object.freeze({ min: 50, max: 180, step: 10 }),
+    unit: "%",
+    group: "actor-sheet",
+    defaultValue: 100,
+    themeable: false,
+    visibleWhen: { all: ["enable-item-color", "enable-inventory-gradient-effects"] },
+  },
+  {
     key: "enable-inventory-borders",
     label: "Enable Inventory Coloured Borders",
     uiLabel: "Icon border",
@@ -242,6 +277,20 @@ export const RARITY_FIELD_DEFINITIONS = Object.freeze([
     visibleWhen: { all: ["enable-inventory-borders", "enable-inventory-border-color"], not: ["enable-item-color"] },
   },
   {
+    key: "inventory-color-intensity",
+    label: "Inventory Color Intensity",
+    uiLabel: "Color intensity",
+    uiHint: "Softens the row gradient and icon border colors in inventories without changing them: lower values are less saturated at the same luminance, so text keeps its contrast. 100% shows the colors as configured.",
+    settingName: ": Inventory Color Intensity",
+    type: "range",
+    range: Object.freeze({ min: 10, max: 100, step: 5 }),
+    unit: "%",
+    group: "actor-sheet",
+    defaultValue: 100,
+    themeable: false,
+    visibleWhen: { any: ["enable-inventory-gradient-effects", "enable-inventory-borders"] },
+  },
+  {
     key: "enable-inventory-border-glow",
     section: "icons",
     label: "Enable Inventory Border Glow",
@@ -254,6 +303,23 @@ export const RARITY_FIELD_DEFINITIONS = Object.freeze([
     defaultValue: false,
     requiredFlag: "supportsBorderGlow",
     visibleWhen: { all: ["enable-inventory-borders", "enable-inventory-border-color"], not: ["enable-item-color"] },
+  },
+  {
+    key: "inventory-border-glow-size",
+    section: "icons",
+    label: "Inventory Border Glow Size",
+    uiLabel: "Inventory: glow size",
+    nested: true,
+    uiHint: "How far the inventory icon border glow spreads: the border glow above, or the item sheet Glow while the background colors the border. 8 px is the original size.",
+    panel: "effects",
+    settingName: ": Inventory Border Glow Size",
+    type: "range",
+    range: Object.freeze({ min: 2, max: 20, step: 1 }),
+    unit: "px",
+    group: "actor-sheet",
+    defaultValue: 8,
+    themeable: false,
+    visibleWhen: { all: ["enable-inventory-borders"], any: ["glow-option", "enable-inventory-border-glow"] },
   },
   {
     key: "enable-inventory-title-color",
@@ -305,6 +371,36 @@ export const RARITY_FIELD_DEFINITIONS = Object.freeze([
     group: "foundry-interface",
     defaultValue: false,
     visibleWhen: { all: ["enable-item-color"] },
+  },
+  {
+    key: "sidebar-gradient-coverage",
+    label: "Sidebar Gradient Coverage",
+    uiLabel: "Gradient coverage",
+    nested: true,
+    uiHint: "How far the colors reach into the sidebar row from its right edge. 100% is the original gradient; higher values color more of the row, lower values less.",
+    settingName: ": Sidebar Gradient Coverage",
+    type: "range",
+    range: Object.freeze({ min: 50, max: 180, step: 10 }),
+    unit: "%",
+    group: "foundry-interface",
+    defaultValue: 100,
+    themeable: false,
+    visibleWhen: { all: ["enable-item-color", "enable-foundry-interface-gradient-effects"] },
+  },
+  {
+    key: "sidebar-color-intensity",
+    label: "Sidebar Color Intensity",
+    uiLabel: "Color intensity",
+    nested: true,
+    uiHint: "Softens the sidebar row gradient colors without changing them: lower values are less saturated at the same luminance, so text keeps its contrast. 100% shows the colors as configured.",
+    settingName: ": Sidebar Color Intensity",
+    type: "range",
+    range: Object.freeze({ min: 10, max: 100, step: 5 }),
+    unit: "%",
+    group: "foundry-interface",
+    defaultValue: 100,
+    themeable: false,
+    visibleWhen: { all: ["enable-item-color", "enable-foundry-interface-gradient-effects"] },
   },
   {
     key: "enable-foundry-interface-text-color",
@@ -819,6 +915,15 @@ export function isRarityFieldWarningShown(field, value) {
 }
 
 /** The stored value for a select field, falling back to its default. */
+/** A number within the field's range, snapped to its step; the default when unreadable. */
+export function normalizeRangeFieldValue(field, value) {
+  const number = typeof value === "string" && !value.trim() ? NaN : Number(value);
+  if (value === null || value === undefined || !Number.isFinite(number)) return field?.defaultValue;
+  const { min, max, step } = field.range;
+  const stepped = min + Math.round((number - min) / step) * step;
+  return Math.min(max, Math.max(min, stepped));
+}
+
 export function normalizeSelectFieldValue(field, value) {
   if (field?.key === "aura-style" && ["fluid-fire", "fluid-arcane", "fluid-fel", "fluid-radiant"].includes(value)) return "fluid";
   return Object.hasOwn(field?.choices ?? {}, value) ? value : field?.defaultValue;

@@ -5,10 +5,12 @@
 .directory-item.item.scirc-dir-gradient-enabled,
 .directory-item.document.item.scirc-dir-gradient-enabled,
 .directory-item.entry.document.item.scirc-dir-gradient-enabled {
+  /* The stops can be moved by the gradient coverage setting
+     (core/gradientCoverage.js); the fallbacks are the original stops. */
   background: linear-gradient(100deg,
       var(--scirc-dir-bg-fallback, #252830) 0%,
-      var(--scirc-dir-bg-fallback, #252830) 46%,
-      var(--scirc-dir-bg-primary, #252830) 72%,
+      var(--scirc-dir-bg-fallback, #252830) var(--scirc-dir-bg-fallback-stop, 46%),
+      var(--scirc-dir-bg-primary, #252830) var(--scirc-dir-bg-primary-stop, 72%),
       var(--scirc-dir-bg-secondary, #252830) 100%) !important;
   box-shadow: none !important;
 }
