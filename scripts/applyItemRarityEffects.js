@@ -74,7 +74,7 @@ export function applyItemRarityEffects(moduleId) {
 
     const sheetType = getSheetType(app) || getSheetType(html);
     const textStyleStrategy = getItemSheetTextStyleStrategy(sheetType);
-    const spellStyle = getActiveSpellStyleForItem(item, moduleId);
+    const spellStyle = getActiveSpellStyleForItem(item, moduleId, "sheet");
     if (spellStyle) {
       applyRarityStyles(sheetEl, spellStyle.settings, {
         textStyleStrategy,

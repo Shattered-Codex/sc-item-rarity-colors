@@ -60,13 +60,14 @@ function mixColors(colorA, colorB, ratio = 0.5) {
   });
 }
 
-// Layout choices, not colors: a theme neither sets nor compares them.
+// Layout choices, not colors: a theme neither sets nor compares them. The
+// same goes for fields marked `themeable: false` (the color intensity).
 const NON_THEME_FIELD_KEYS = new Set(["tidy-background-area", "effect-placement"]);
 
 function buildBaseSpellFieldValues() {
   const values = {};
   for (const field of getRarityFieldDefinitions("spell")) {
-    if (NON_THEME_FIELD_KEYS.has(field.key)) continue;
+    if (NON_THEME_FIELD_KEYS.has(field.key) || field.themeable === false) continue;
     values[field.key] = field.defaultValue;
   }
   return values;

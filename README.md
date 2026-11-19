@@ -70,6 +70,12 @@ The module shows three buttons there — **Open settings**, **Configure items**,
 
 Open **Configure items**, select a rarity, and use the **Colors** tab to adjust its item sheet, inventory, and sidebar appearance. Choose a built-in theme preset to apply a palette across the built-in rarity tiers, then fine-tune individual fields.
 
+Each rarity (and each spell school or level) also has display sliders, all with a live preview and none changing the stored colors or being set by theme presets. Their defaults keep the original look:
+
+- **Color intensity** for the item sheet, inventory rows, and sidebar rows (10–100%): softens the background and border colors on that surface. Lower values are less saturated at the same luminance, so text keeps its contrast.
+- **Gradient coverage** for inventory and sidebar rows (50–180%): how far the colors reach into the row.
+- **Inventory: glow size** on the Effects tab (2–20 px, default 8 px): how far the inventory icon border glow spreads.
+
 ![Uncommon item color editor with sheet, inventory, and sidebar previews](assets/imgs/screenshots/item-color-editor.png)
 
 ### Animated Effects

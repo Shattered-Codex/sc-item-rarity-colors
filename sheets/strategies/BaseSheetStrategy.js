@@ -70,6 +70,9 @@ export class BaseSheetStrategy {
     const rarity = options?.rarity ?? null;
     const preview = options?.preview === true;
     const useRarityCapabilities = options?.useRarityCapabilities === true;
+    // Inline only in preview mode (spell styles, the editor); rarity rows get
+    // it from the runtime CSS.
+    const glowSize = settings.inventoryBorderGlowSize ?? DEFAULT_GLOW_INTENSITY;
     let borderMode = "none";
 
     if (!settings.enableInventoryGradientEffects || !settings.enableItemColor) {
@@ -92,7 +95,7 @@ export class BaseSheetStrategy {
           gradientEnabled: settings.gradientEnabled,
           glowEnabled: settings.glowEnabled,
         };
-        applyInventoryBorder(icon, borderSettings, DEFAULT_GLOW_INTENSITY, { rarity, preview });
+        applyInventoryBorder(icon, borderSettings, glowSize, { rarity, preview });
       });
     } else if (settings.enableInventoryBorderColor && settings.inventoryBorderColor) {
       const hasBorderGradient = useRarityCapabilities
@@ -120,7 +123,7 @@ export class BaseSheetStrategy {
           glowEnabled: settings.enableInventoryBorderGlow && hasSecondaryColor && hasBorderGlow,
         };
         $borderElement.each((_, icon) => {
-          applyInventoryBorder(icon, borderSettings, DEFAULT_GLOW_INTENSITY, { rarity, preview });
+          applyInventoryBorder(icon, borderSettings, glowSize, { rarity, preview });
         });
       } else {
         borderMode = "border-color-solid";
@@ -132,7 +135,7 @@ export class BaseSheetStrategy {
           glowEnabled: false,
         };
         $borderElement.each((_, icon) => {
-          applyInventoryBorder(icon, borderSettings, DEFAULT_GLOW_INTENSITY, { rarity, preview });
+          applyInventoryBorder(icon, borderSettings, glowSize, { rarity, preview });
         });
       }
     } else {
@@ -178,7 +181,7 @@ export class BaseSheetStrategy {
     const rarity = getDisplayRarity(item);
     syncImageConceal($borderElement.get(), item, rarity, "inventory");
 
-    const spellStyle = getActiveSpellStyleForItem(item, moduleId);
+    const spellStyle = getActiveSpellStyleForItem(item, moduleId, "inventory");
     if (spellStyle) {
       // Spell styles color the row inline; drop any rarity class left on the
       // row or its icon by an earlier render.

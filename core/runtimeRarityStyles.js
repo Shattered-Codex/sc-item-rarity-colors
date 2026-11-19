@@ -4,6 +4,7 @@ import { normalizeColorWithFallback as normalizeColor } from "./colorUtils.js";
 import { getMergedRarityEntries, normalizeRarityKey } from "./rarityListConfig.js";
 import { buildRaritySettings } from "./settingsManager.js";
 import { resolveEffectColor } from "./itemEffects.js";
+import { withColorIntensity } from "./colorIntensity.js";
 import { ActorInventoryRuntimeStyleStrategy } from "./runtimeStyleStrategies/ActorInventoryRuntimeStyleStrategy.js";
 import { ItemDirectoryRuntimeStyleStrategy } from "./runtimeStyleStrategies/ItemDirectoryRuntimeStyleStrategy.js";
 import { ItemSheetRuntimeStyleStrategy } from "./runtimeStyleStrategies/ItemSheetRuntimeStyleStrategy.js";
@@ -73,8 +74,17 @@ function buildRuntimeStyleText(moduleId = MODULE_ID) {
     if (!rarityClass) continue;
 
     const settings = buildRaritySettings(normalizedRarity);
-    const sheetPrimary = normalizeColor(settings.backgroundColor, "#000000");
-    const sheetSecondary = normalizeColor(settings.gradientColor, "#ffffff");
+    // The colors as shown on each surface, after its color intensity. At 100%
+    // these are `settings` itself.
+    const sheetShown = withColorIntensity(settings, "sheet");
+    const inventoryShown = withColorIntensity(settings, "inventory");
+    const sidebarShown = withColorIntensity(settings, "sidebar");
+    const sheetPrimary = normalizeColor(sheetShown.backgroundColor, "#000000");
+    const sheetSecondary = normalizeColor(sheetShown.gradientColor, "#ffffff");
+    const inventoryPrimary = normalizeColor(inventoryShown.backgroundColor, "#000000");
+    const inventorySecondary = normalizeColor(inventoryShown.gradientColor, "#ffffff");
+    const directoryPrimary = normalizeColor(sidebarShown.backgroundColor, "#000000");
+    const directorySecondary = normalizeColor(sidebarShown.gradientColor, "#ffffff");
     const sheetText = normalizeColor(settings.itemSheetTextColor, "#000000");
     const sheetGold = normalizeColor(settings.goldAccentColor, "#9f9275");
     const sheetTableHeader = normalizeColor(settings.tableHeaderColor, "#491d25");
@@ -84,12 +94,16 @@ function buildRuntimeStyleText(moduleId = MODULE_ID) {
     const dirText = normalizeColor(settings.foundryInterfaceTextColor, "#000000");
     const inventoryTitle = normalizeColor(settings.inventoryTitleColor, "#000000");
     const inventoryDetails = normalizeColor(settings.inventoryDetailsColor, "#000000");
-    const inventoryBorderPrimary = normalizeColor(settings.inventoryBorderColor, "#ffffff");
-    const inventoryBorderSecondary = normalizeColor(settings.inventoryBorderSecondaryColor, inventoryBorderPrimary);
+    const inventoryBorderPrimary = normalizeColor(inventoryShown.inventoryBorderColor, "#ffffff");
+    const inventoryBorderSecondary = normalizeColor(inventoryShown.inventoryBorderSecondaryColor, inventoryBorderPrimary);
 
     const colors = {
       sheetPrimary,
       sheetSecondary,
+      inventoryPrimary,
+      inventorySecondary,
+      directoryPrimary,
+      directorySecondary,
       sheetText,
       sheetGold,
       sheetTableHeader,

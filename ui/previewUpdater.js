@@ -26,6 +26,9 @@ import { readEffectSettings } from "../core/effectSettingFields.js";
 import { UNIDENTIFIED_STYLE_KEY } from "../core/unidentifiedStyle.js";
 import { readConcealSettings } from "../core/unidentifiedImageConfig.js";
 import { previewImageConceal, SHEET_IMAGE_SELECTOR } from "../core/unidentifiedImageConceal.js";
+import { softenColor, withColorIntensity } from "../core/colorIntensity.js";
+import { readAppearanceSettings } from "../core/appearanceSettingFields.js";
+import { setGradientStopVariables } from "../core/gradientCoverage.js";
 
 const tidyStrategy = new Tidy5eSheetStrategy();
 
@@ -74,18 +77,20 @@ export function updateMiniSheetPreview(formElement, rarity, options = {}) {
     tableHeaderColor,
     enableTableHeaderTextColor,
     tableHeaderTextColor,
+    ...readAppearanceSettings((fieldKey) => valueOf(fieldKey)),
     ...readEffectSettings((fieldKey, field) => (field.type === "checkbox" ? isOn(fieldKey) : valueOf(fieldKey))),
   };
-
+  // Each surface shows the colors after its own color intensity, as at runtime.
   // One call per sheet: the D&D 5e and Tidy previews need different text
   // color strategies, which are detected from the element they are given.
+  const sheetSettings = withColorIntensity(settings, "sheet");
   $miniSheet.find(".application.sheet.item").each((_, sheet) => {
-    applyRarityStyles($(sheet), settings, { rarity, preview: true });
+    applyRarityStyles($(sheet), sheetSettings, { rarity, preview: true });
   });
 
-  updateInventoryPreview($form, rarity, settings);
+  updateInventoryPreview($form, rarity, withColorIntensity(settings, "inventory"));
   updateTidyInventoryPreview($form, rarity, settings, options);
-  updateFoundryInterfacePreview($form, rarity, settings);
+  updateFoundryInterfacePreview($form, rarity, withColorIntensity(settings, "sidebar"));
   updateUnidentifiedImagePreview($form, rarity, settings);
 }
 
@@ -129,7 +134,7 @@ function updateTidyInventoryPreview($form, rarity, itemSheetSettings, options = 
   const isChecked = (key) => $form.find(`input[type="checkbox"][name="${rarity}-${key}"]`).is(":checked");
   const colorOf = (key, fallback) => $form.find(`input[type="color"][name="${rarity}-${key}"]`).val() || fallback;
 
-  const settings = {
+  const settings = withColorIntensity({
     ...itemSheetSettings,
     enableInventoryGradientEffects: isChecked("enable-inventory-gradient-effects"),
     enableInventoryBorders: isChecked("enable-inventory-borders"),
@@ -141,7 +146,7 @@ function updateTidyInventoryPreview($form, rarity, itemSheetSettings, options = 
     inventoryTitleColor: colorOf("inventory-title-color", DEFAULT_COLORS.TEXT_DEFAULT),
     enableInventoryDetailsColor: isChecked("enable-inventory-details-color"),
     inventoryDetailsColor: colorOf("inventory-details-color", DEFAULT_COLORS.TEXT_DEFAULT),
-  };
+  }, "inventory");
 
   const isSpell = options.isSpell === true;
   $rows.each((_, row) => {
@@ -184,16 +189,20 @@ function updateInventoryPreview(formElement, rarity, itemSheetSettings) {
 
   const enableBorderColor = $form.find(`input[type="checkbox"][name="${rarity}-enable-inventory-border-color"]`).is(":checked");
   const borderColorInput = $form.find(`input[type="color"][name="${rarity}-inventory-border-color"]`);
-  const borderColor = borderColorInput.length ? borderColorInput.val() : DEFAULT_COLORS.BACKGROUND_FALLBACK;
+  // `itemSheetSettings` are already the inventory's shown colors; the border
+  // colors read here are softened the same way.
+  const intensity = itemSheetSettings.inventoryColorIntensity;
+  const borderColor = softenColor(borderColorInput.length ? borderColorInput.val() : DEFAULT_COLORS.BACKGROUND_FALLBACK, intensity);
   
   const borderSecondaryColorInput = $form.find(`input[type="color"][name="${rarity}-inventory-border-secondary-color"]`);
-  const borderSecondaryColor = borderSecondaryColorInput.length ? borderSecondaryColorInput.val() : undefined;
+  const borderSecondaryColor = borderSecondaryColorInput.length ? softenColor(borderSecondaryColorInput.val(), intensity) : undefined;
   
   const enableBorderGlowCheckbox = $form.find(`input[type="checkbox"][name="${rarity}-enable-inventory-border-glow"]`);
   const enableBorderGlow = enableBorderGlowCheckbox.length ? enableBorderGlowCheckbox.is(":checked") : false;
   const enableInventoryGradientEffects = $form.find(`input[type="checkbox"][name="${rarity}-enable-inventory-gradient-effects"]`).is(":checked");
   const enableInventoryBorders = $form.find(`input[type="checkbox"][name="${rarity}-enable-inventory-borders"]`).is(":checked");
 
+  const glowSize = itemSheetSettings.inventoryBorderGlowSize ?? DEFAULT_GLOW_INTENSITY;
   const raritySupportsGradientForBorder = raritySupportsBorderGradient(rarity);
   const raritySupportsGlowForBorder = raritySupportsBorderGlow(rarity);
   const $inventoryRow = $inventoryPreview.find(".item-row");
@@ -203,6 +212,7 @@ function updateInventoryPreview(formElement, rarity, itemSheetSettings) {
       backgroundColor: itemSheetSettings.backgroundColor,
       gradientEnabled: itemSheetSettings.gradientEnabled,
       gradientColor: itemSheetSettings.gradientColor,
+      inventoryGradientCoverage: itemSheetSettings.inventoryGradientCoverage,
     };
     applyInventoryGradient($inventoryRow, gradientSettings, { rarity, preview: true });
   } else {
@@ -224,7 +234,7 @@ function updateInventoryPreview(formElement, rarity, itemSheetSettings) {
       glowEnabled: itemSheetSettings.glowEnabled,
     };
       $inventoryImage.each((_, icon) => {
-      applyInventoryBorder(icon, borderSettings, DEFAULT_GLOW_INTENSITY, { rarity, preview: true });
+      applyInventoryBorder(icon, borderSettings, glowSize, { rarity, preview: true });
     });
   } else if (enableBorderColor && borderColor) {
     if (raritySupportsGradientForBorder) {
@@ -238,7 +248,7 @@ function updateInventoryPreview(formElement, rarity, itemSheetSettings) {
         glowEnabled: enableBorderGlow && hasSecondaryColor && raritySupportsGlowForBorder,
       };
       $inventoryImage.each((_, icon) => {
-        applyInventoryBorder(icon, borderSettings, DEFAULT_GLOW_INTENSITY, { rarity, preview: true });
+        applyInventoryBorder(icon, borderSettings, glowSize, { rarity, preview: true });
       });
     } else {
       const borderSettings = {
@@ -248,7 +258,7 @@ function updateInventoryPreview(formElement, rarity, itemSheetSettings) {
         glowEnabled: false,
       };
       $inventoryImage.each((_, icon) => {
-        applyInventoryBorder(icon, borderSettings, DEFAULT_GLOW_INTENSITY, { rarity, preview: true });
+        applyInventoryBorder(icon, borderSettings, glowSize, { rarity, preview: true });
       });
     }
   } else {
@@ -308,6 +318,7 @@ function updateFoundryInterfacePreview(formElement, rarity, itemSheetSettings) {
       row.style.removeProperty("--scirc-dir-bg-secondary");
       row.style.removeProperty("--scirc-dir-bg-fallback");
       row.style.removeProperty("--scirc-dir-text-color");
+      setGradientStopVariables(row, "sidebar", null);
     });
   };
 
@@ -326,6 +337,7 @@ function updateFoundryInterfacePreview(formElement, rarity, itemSheetSettings) {
     $directoryItem.css("--scirc-dir-bg-primary", primaryColor);
     $directoryItem.css("--scirc-dir-bg-secondary", secondaryColor);
     $directoryItem.css("--scirc-dir-bg-fallback", DEFAULT_COLORS.BACKGROUND_DEFAULT);
+    setGradientStopVariables($directoryItem[0], "sidebar", itemSheetSettings.sidebarGradientCoverage);
   } else {
     $directoryItem.removeClass("scirc-dir-gradient-enabled");
   }

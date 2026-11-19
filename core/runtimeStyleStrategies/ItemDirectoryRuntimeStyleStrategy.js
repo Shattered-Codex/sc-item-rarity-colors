@@ -1,4 +1,5 @@
 import { BaseRuntimeStyleStrategy } from "./BaseRuntimeStyleStrategy.js";
+import { gradientStopDeclarations } from "../gradientCoverage.js";
 
 /**
  * Runtime CSS strategy for Foundry item directory visuals.
@@ -9,7 +10,7 @@ export class ItemDirectoryRuntimeStyleStrategy extends BaseRuntimeStyleStrategy 
     const rules = [];
 
     if (settings.enableFoundryInterfaceGradientEffects && settings.enableItemColor) {
-      const dirSecondary = settings.gradientEnabled ? colors.sheetSecondary : "#252830";
+      const dirSecondary = settings.gradientEnabled ? colors.directorySecondary : "#252830";
       rules.push(`
 .directory-item.${rarityClass}.scirc-dir-gradient-enabled,
 .directory-item.document.${rarityClass}.scirc-dir-gradient-enabled,
@@ -17,9 +18,9 @@ export class ItemDirectoryRuntimeStyleStrategy extends BaseRuntimeStyleStrategy 
 .directory-item.item.${rarityClass}.scirc-dir-gradient-enabled,
 .directory-item.document.item.${rarityClass}.scirc-dir-gradient-enabled,
 .directory-item.entry.document.item.${rarityClass}.scirc-dir-gradient-enabled {
-  --scirc-dir-bg-primary: ${colors.sheetPrimary};
+  --scirc-dir-bg-primary: ${colors.directoryPrimary};
   --scirc-dir-bg-secondary: ${dirSecondary};
-  --scirc-dir-bg-fallback: #252830;
+  --scirc-dir-bg-fallback: #252830;${gradientStopDeclarations("sidebar", settings.sidebarGradientCoverage)}
 }`);
     }
 

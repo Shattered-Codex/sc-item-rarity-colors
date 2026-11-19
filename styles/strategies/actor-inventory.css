@@ -3,11 +3,13 @@
   color: inherit;
 }
 
+/* The stops can be moved by the gradient coverage setting
+   (core/gradientCoverage.js); the fallbacks are the original stops. */
 .scirc-inv-gradient-enabled {
   background: linear-gradient(-135deg,
-      var(--scirc-inv-bg-primary, #ffffff) 10%,
-      var(--scirc-inv-bg-secondary, #252830) 30%,
-      var(--scirc-inv-bg-fallback, #252830) 50%) !important;
+      var(--scirc-inv-bg-primary, #ffffff) var(--scirc-inv-bg-primary-stop, 10%),
+      var(--scirc-inv-bg-secondary, #252830) var(--scirc-inv-bg-secondary-stop, 30%),
+      var(--scirc-inv-bg-fallback, #252830) var(--scirc-inv-bg-fallback-stop, 50%)) !important;
   box-shadow: none !important;
 }
 

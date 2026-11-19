@@ -29,6 +29,25 @@
   </select>
 {{/inline}}
 
+{{#*inline "rangeControl"}}
+  <span class="scirc-range">
+    <input
+      type="range"
+      id="{{field.name}}"
+      name="{{field.name}}"
+      class="scirc-range__input"
+      min="{{field.range.min}}"
+      max="{{field.range.max}}"
+      step="{{field.range.step}}"
+      value="{{field.value}}"
+      data-range-control
+      data-range-unit="{{field.unit}}"
+      aria-label="{{field.label}}"
+    />
+    <output class="scirc-range__value" for="{{field.name}}" data-range-output="{{field.name}}">{{field.value}}{{field.unit}}</output>
+  </span>
+{{/inline}}
+
 {{#*inline "imageControl"}}
   <span class="scirc-image-control" data-image-control>
     <input type="hidden" id="{{field.name}}" name="{{field.name}}" value="{{field.value}}" data-image-path data-default-value="{{field.defaultValue}}" />
@@ -171,6 +190,9 @@
                       {{else if this.field.isSelect}}
                         <label class="scirc-style-row__label" for="{{this.field.name}}" {{#if this.hint}}data-tooltip="{{this.hint}}"{{/if}}>{{this.field.label}}</label>
                         {{> selectControl field=this.field}}
+                      {{else if this.field.isRange}}
+                        <label class="scirc-style-row__label" for="{{this.field.name}}" {{#if this.hint}}data-tooltip="{{this.hint}}"{{/if}}>{{this.field.label}}</label>
+                        {{> rangeControl field=this.field}}
                       {{else if this.field.isImage}}
                         <span class="scirc-style-row__label">{{this.field.label}}</span>
                         {{> imageControl field=this.field}}

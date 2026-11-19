@@ -44,6 +44,18 @@ function registerBooleanSetting(moduleId, key, name, defaultValue) {
   });
 }
 
+// Register number settings (slider fields).
+function registerNumberSetting(moduleId, key, name, defaultValue) {
+  if (game.settings.settings.has(`${moduleId}.${key}`)) return;
+  game.settings.register(moduleId, key, {
+    name,
+    scope: "world",
+    config: false,
+    type: Number,
+    default: defaultValue,
+  });
+}
+
 // Register object settings.
 function registerObjectSetting(moduleId, key, name, defaultValue, onChange = undefined) {
   if (game.settings.settings.has(`${moduleId}.${key}`)) return;
@@ -86,6 +98,11 @@ function registerRaritySettings(moduleId, rarityKey, rarityLabel, defaultOverrid
 
     if (field.type === "color") {
       registerColorSetting(moduleId, settingKey, settingName, String(field.defaultValue || "#000000"));
+      continue;
+    }
+
+    if (field.type === "range") {
+      registerNumberSetting(moduleId, settingKey, settingName, Number(field.defaultValue));
       continue;
     }
 

@@ -6,6 +6,7 @@
 import { getDisplayRarity } from "./itemRarityHelper.js";
 import { applyIconEmanation } from "../core/itemEffects.js";
 import { syncImageConceal } from "../core/unidentifiedImageConceal.js";
+import { setGradientStopVariables } from "../core/gradientCoverage.js";
 import { getActiveSpellStyleForItem } from "./spellSchoolHelper.js";
 import { buildRaritySettings } from "../core/settingsManager.js";
 import { isModuleSettingChange, registerSettingChangeHooks } from "../core/settingChangeHelper.js";
@@ -297,6 +298,7 @@ function clearRowVisuals(rowElement) {
   rowElement.style.removeProperty("--scirc-dir-bg-secondary");
   rowElement.style.removeProperty("--scirc-dir-bg-fallback");
   rowElement.style.removeProperty("--scirc-dir-text-color");
+  setGradientStopVariables(rowElement, "sidebar", null);
 }
 
 function resolveRootElement(htmlOrElement) {
@@ -510,7 +512,7 @@ export function applyItemDirectoryEffects(moduleId) {
     const thumbnails = getThumbnails(rowElement);
     syncThumbnailConceal(rowElement, item, thumbnails);
 
-    const spellStyle = getActiveSpellStyleForItem(item, moduleId);
+    const spellStyle = getActiveSpellStyleForItem(item, moduleId, "sidebar");
     if (spellStyle) {
       const spellSettings = spellStyle.settings;
 
@@ -525,6 +527,7 @@ export function applyItemDirectoryEffects(moduleId) {
         rowElement.style.setProperty("--scirc-dir-bg-primary", primaryColor);
         rowElement.style.setProperty("--scirc-dir-bg-secondary", secondaryColor);
         rowElement.style.setProperty("--scirc-dir-bg-fallback", "#252830");
+        setGradientStopVariables(rowElement, "sidebar", spellSettings.sidebarGradientCoverage);
       }
 
       if (spellSettings.enableFoundryInterfaceTextColor && spellSettings.foundryInterfaceTextColor) {
